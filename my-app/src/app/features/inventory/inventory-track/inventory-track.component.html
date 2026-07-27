@@ -1,0 +1,206 @@
+<div class="page">
+
+  <!-- Breadcrumb + top controls -->
+  <div class="top-row">
+    <div>
+      <div class="breadcrumb">
+        <span class="bc-parent">Inventory</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="bc-current">Overview</span>
+      </div>
+      <h1>Inventory Overview</h1>
+    </div>
+    <div class="top-controls">
+      <div class="wh-filter-wrap">
+        <span class="wh-label">Warehouse Filter</span>
+        <div class="select-wrap">
+          <select [(ngModel)]="filterWarehouse" (ngModelChange)="currentPage=1">
+            <option value="">All Warehouses</option>
+            <option *ngFor="let w of warehouseNames" [value]="w">{{ w }}</option>
+          </select>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <button class="btn-new">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        + New Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI cards row -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-body">
+        <span class="kpi-label">TOTAL SKUS</span>
+        <span class="kpi-value">{{ totalSKUs | number }}</span>
+      </div>
+      <div class="kpi-icon blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-body">
+        <span class="kpi-label">TOTAL AVAILABLE UNITS</span>
+        <span class="kpi-value">{{ totalAvailable | number }}</span>
+      </div>
+      <div class="kpi-icon slate">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card-amber">
+      <div class="kpi-body">
+        <span class="kpi-label">LOW-STOCK ITEMS</span>
+        <span class="kpi-value amber">{{ lowStockCount }}</span>
+      </div>
+      <div class="kpi-icon amber">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card-red">
+      <div class="kpi-body">
+        <span class="kpi-label">OUT-OF-STOCK ITEMS</span>
+        <span class="kpi-value red">{{ outOfStockCount }}</span>
+      </div>
+      <div class="kpi-icon red">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <h3>Product Inventory Details</h3>
+      <div class="table-actions">
+        <button class="tbl-icon-btn" title="Filter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        </button>
+        <button class="tbl-icon-btn" title="Export">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <table class="data-table" *ngIf="filtered.length > 0">
+      <thead>
+        <tr>
+          <th>PRODUCT ID</th>
+          <th>PRODUCT NAME</th>
+          <th>WAREHOUSE</th>
+          <th>AVAILABLE QTY</th>
+          <th>ALLOCATED QTY</th>
+          <th>THRESHOLD</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of paged">
+          <td class="pid">{{ row.productId }}</td>
+          <td class="product-name-cell">{{ row.productName }}</td>
+          <td class="warehouse-cell">{{ row.warehouseName }}</td>
+          <td>
+            <span class="qty-val"
+              [class.qty-ok]="stockStatus(row)==='in'"
+              [class.qty-low]="stockStatus(row)==='low'"
+              [class.qty-out]="stockStatus(row)==='out'">
+              {{ row.availableQty | number }}
+            </span>
+          </td>
+          <td class="alloc-cell">{{ row.allocatedQty | number }}</td>
+          <td class="threshold-cell">{{ row.threshold }}</td>
+          <td>
+            <span class="status-pill"
+              [class.pill-in]="stockStatus(row)==='in'"
+              [class.pill-low]="stockStatus(row)==='low'"
+              [class.pill-out]="stockStatus(row)==='out'">
+              {{ stockStatus(row) === 'in' ? 'IN STOCK' : stockStatus(row) === 'low' ? 'LOW STOCK' : 'OUT OF STOCK' }}
+            </span>
+          </td>
+          <td>
+            <button class="action-eye" title="View details">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="filtered.length === 0">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <p>No inventory records found</p>
+      <button class="btn-clear" (click)="searchTerm=''; filterWarehouse=''">Clear filters</button>
+    </div>
+
+    <!-- Pagination footer -->
+    <div class="table-footer" *ngIf="filtered.length > 0">
+      <span class="showing-text">Showing {{ pageStart }}-{{ pageEnd }} of {{ filtered.length | number }} items</span>
+      <div class="pagination">
+        <button class="page-btn icon-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <ng-container *ngFor="let p of pageNumbers">
+          <button class="page-btn" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        </ng-container>
+        <button class="page-btn icon-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom section: Trends chart + Capacity sidebar -->
+  <div class="bottom-grid">
+
+    <!-- Inventory Trends -->
+    <div class="card trends-card">
+      <div class="card-header">
+        <h3>Inventory Trends (30 Days)</h3>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot blue"></span> Inbound</span>
+          <span class="legend-item"><span class="legend-dot light"></span> Outbound</span>
+        </div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-group" *ngFor="let b of trendBars">
+          <div class="bar-pair">
+            <div class="bar inbound"  [style.height.px]="b.inbound"></div>
+            <div class="bar outbound" [style.height.px]="b.outbound"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Capacity by Location -->
+    <div class="card capacity-card">
+      <div class="card-header">
+        <h3>Capacity by Location</h3>
+      </div>
+      <div class="capacity-list">
+        <div class="cap-item" *ngFor="let c of capacityData">
+          <div class="cap-top">
+            <span class="cap-name">{{ c.name }}</span>
+            <span class="cap-pct" [class.pct-danger]="c.pct >= 85" [class.pct-warn]="c.pct >= 65 && c.pct < 85">{{ c.pct }}%</span>
+          </div>
+          <div class="cap-bar-wrap">
+            <div class="cap-bar"
+              [style.width.%]="c.pct"
+              [class.bar-danger]="c.pct >= 85"
+              [class.bar-warn]="c.pct >= 65 && c.pct < 85"
+              [class.bar-ok]="c.pct < 65">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" title="New Entry" (click)="openNewEntry = true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+</div>

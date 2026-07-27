@@ -1,0 +1,365 @@
+<div class="create-shipment-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-titles">
+      <h1 class="page-title">Create Shipment</h1>
+      <p class="page-subtitle">Configure shipping details and carrier assignment for approved orders.</p>
+    </div>
+    
+    <div class="shipment-id-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>Shipment ID: Auto-generated on save</span>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <div class="create-shipment-grid">
+    <!-- Left / Main Form Column -->
+    <div class="main-form-column">
+      
+      <!-- Step 1: Order Identification -->
+      <section class="card-step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Order Identification</h2>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Select Approved Order <span class="required-star">*</span></label>
+          
+          <div class="dropdown-wrapper">
+            <div class="search-input-box" (click)="toggleDropdown()">
+              <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input 
+                type="text"
+                class="dropdown-input"
+                placeholder="Search by Order ID or Customer..."
+                [(ngModel)]="searchTerm"
+                (focus)="isDropdownOpen = true"
+                (input)="isDropdownOpen = true"
+              />
+              <button *ngIf="selectedOrder" type="button" class="clear-btn" (click)="clearSelection($event)" title="Clear selection">
+                &times;
+              </button>
+              <svg class="chevron-icon" [class.open]="isDropdownOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+
+            <!-- Dropdown Options List -->
+            <div class="dropdown-menu" *ngIf="isDropdownOpen">
+              <div 
+                *ngFor="let order of filteredOrders" 
+                class="dropdown-option"
+                [class.selected]="selectedOrder?.id === order.id"
+                (click)="selectOrder(order)"
+              >
+                <div class="option-header">
+                  <span class="option-id">{{ order.id }}</span>
+                  <span class="option-badge">Approved</span>
+                </div>
+                <div class="option-customer">{{ order.customerName }}</div>
+                <div class="option-address">{{ order.address }}</div>
+              </div>
+              <div *ngIf="filteredOrders.length === 0" class="dropdown-no-results">
+                No approved orders found matching search criteria.
+              </div>
+            </div>
+          </div>
+          <div *ngIf="formSubmitted && !selectedOrder" class="validation-error">
+            Please select an approved order to proceed.
+          </div>
+        </div>
+
+        <!-- Read-only Order Preview Card -->
+        <div class="order-preview-card" *ngIf="selectedOrder">
+          <div class="preview-header-grid">
+            <div class="preview-field">
+              <span class="field-label">CUSTOMER</span>
+              <span class="field-value customer-name">{{ selectedOrder.customerName }}</span>
+            </div>
+
+            <div class="preview-field">
+              <span class="field-label">SHIPPING ADDRESS</span>
+              <span class="field-value address-text">{{ selectedOrder.address }}</span>
+            </div>
+
+            <div class="preview-status-col">
+              <span class="status-badge approved">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Approved
+              </span>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="items-table-section">
+            <div class="table-title">ITEMS TO SHIP</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th class="text-right">Quantity</th>
+                  <th class="text-right">Unit Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of selectedOrder.items">
+                  <td class="product-cell">{{ item.productName }}</td>
+                  <td class="text-right quantity-cell">{{ item.quantity | number }}</td>
+                  <td class="text-right unit-cell">৳ {{ item.unitPrice | number }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Logistics Configuration -->
+      <section class="card-step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Logistics Configuration</h2>
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label class="form-label">Shipment Date <span class="required-star">*</span></label>
+            <div class="input-icon-wrapper">
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="shipmentDate"
+              />
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div *ngIf="formSubmitted && !shipmentDate" class="validation-error">
+              Shipment Date is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Carrier/Method</label>
+            <div class="input-icon-wrapper">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="e.g. FedEx Ground, Air Freight"
+                [(ngModel)]="carrierMethod"
+              />
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group margin-top-16">
+          <label class="form-label">Notes</label>
+          <textarea 
+            class="form-textarea" 
+            rows="3"
+            placeholder="Add any special handling instructions or shipment notes here..."
+            [(ngModel)]="notes"
+          ></textarea>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right Sidebar Column -->
+    <div class="sidebar-column">
+      
+      <!-- Route Preview Card -->
+      <div class="sidebar-card route-preview-card">
+        <div class="sidebar-card-header">
+          <h3 class="sidebar-card-title">Route Preview</h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+        </div>
+
+        <div class="map-graphic-container">
+          <!-- Realistic SVG Map Representation -->
+          <svg class="map-svg" viewBox="0 0 400 220" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 2" />
+              </pattern>
+              <linearGradient id="route-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6" />
+                <stop offset="100%" stop-color="#2563eb" />
+              </linearGradient>
+            </defs>
+
+            <!-- Base map background styling -->
+            <rect width="400" height="220" fill="#f1f5f9" />
+            <rect width="400" height="220" fill="url(#grid-pattern)" opacity="0.7" />
+
+            <!-- Mock Land/Road shapes -->
+            <path d="M 0 40 Q 120 20 200 60 T 400 80 L 400 220 L 0 220 Z" fill="#e2e8f0" opacity="0.6" />
+            <path d="M 40 0 L 60 220" stroke="#ffffff" stroke-width="8" opacity="0.9" />
+            <path d="M 0 140 L 400 110" stroke="#ffffff" stroke-width="12" opacity="0.9" />
+            <path d="M 120 0 L 280 220" stroke="#ffffff" stroke-width="10" opacity="0.8" />
+            
+            <!-- Logistics Park Blocks -->
+            <rect x="60" y="30" width="50" height="40" rx="4" fill="#cbd5e1" />
+            <rect x="130" y="20" width="70" height="45" rx="4" fill="#cbd5e1" />
+            <rect x="220" y="40" width="60" height="35" rx="4" fill="#cbd5e1" />
+            <rect x="310" y="30" width="65" height="50" rx="4" fill="#cbd5e1" />
+            <rect x="80" y="150" width="70" height="40" rx="4" fill="#94a3b8" />
+            <rect x="260" y="140" width="90" height="50" rx="4" fill="#94a3b8" />
+
+            <!-- Route Line -->
+            <path 
+              d="M 95 160 Q 150 90 290 55" 
+              fill="none" 
+              stroke="url(#route-gradient)" 
+              stroke-width="5" 
+              stroke-linecap="round"
+              stroke-dasharray="6 4"
+            />
+
+            <!-- Origin Marker Pin (Warehouse) -->
+            <circle cx="95" cy="160" r="10" fill="#2563eb" opacity="0.2" />
+            <circle cx="95" cy="160" r="6" fill="#2563eb" />
+            <circle cx="95" cy="160" r="2.5" fill="#ffffff" />
+
+            <!-- Destination Pin -->
+            <g transform="translate(290, 40)">
+              <circle cx="0" cy="15" r="12" fill="#0284c7" opacity="0.2" />
+              <path d="M 0 0 C -6 0 -10 4 -10 10 C -10 16 0 24 0 24 C 0 24 10 16 10 10 C 10 4 6 0 0 0 Z" fill="#0284c7" />
+              <circle cx="0" cy="9" r="3.5" fill="#ffffff" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="route-info-footer">
+          <div class="location-pin-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+          <div class="route-details">
+            <div class="hub-name">{{ selectedOrder?.customerName ? 'Central Dispatch Hub' : 'Industrial Park Hub' }}</div>
+            <div class="transit-time">Estimated Transit: 4-6 hours</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Check Card -->
+      <div class="sidebar-card compliance-card">
+        <div class="compliance-header">
+          <svg class="compliance-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <polyline points="9 12 11 14 15 10"></polyline>
+          </svg>
+          <h3 class="compliance-title">Compliance Check</h3>
+        </div>
+
+        <ul class="compliance-list">
+          <li class="compliance-item">
+            <svg class="check-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <span>Weight limits verified against carrier capacity.</span>
+          </li>
+
+          <li class="compliance-item">
+            <svg class="check-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <span>Inventory reservation confirmed for all line items.</span>
+          </li>
+
+          <li class="compliance-item">
+            <svg class="check-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <span>Tax and customs compliance pre-validated.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <footer class="form-footer-bar">
+    <div class="footer-actions">
+      <button type="button" class="btn btn-outline" (click)="onCancel()">
+        Cancel
+      </button>
+      
+      <button type="button" class="btn btn-primary" (click)="onSubmit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Create Shipment</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Confirmation Success Modal -->
+  <div class="modal-overlay" *ngIf="showSuccessModal">
+    <div class="modal-card">
+      <div class="modal-icon-success">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h3 class="modal-title">Shipment Created Successfully!</h3>
+      <p class="modal-subtitle">
+        Shipment reference <strong>{{ createdShipmentId }}</strong> has been registered and assigned for dispatch.
+      </p>
+
+      <div class="modal-summary-box" *ngIf="selectedOrder">
+        <div class="modal-row">
+          <span>Order ID:</span>
+          <strong>{{ selectedOrder.id }}</strong>
+        </div>
+        <div class="modal-row">
+          <span>Customer:</span>
+          <strong>{{ selectedOrder.customerName }}</strong>
+        </div>
+        <div class="modal-row">
+          <span>Shipment Date:</span>
+          <strong>{{ shipmentDate }}</strong>
+        </div>
+        <div class="modal-row" *ngIf="carrierMethod">
+          <span>Carrier:</span>
+          <strong>{{ carrierMethod }}</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-full" (click)="closeSuccessModal()">
+          Done & Return to Shipments
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

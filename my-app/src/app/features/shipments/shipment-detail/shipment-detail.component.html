@@ -1,0 +1,417 @@
+<div class="shipment-detail-container" *ngIf="shipment">
+  <!-- Toast Notification -->
+  <div class="toast-notification" *ngIf="toastMessage">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>{{ toastMessage }}</span>
+  </div>
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <span class="breadcrumb-item" (click)="goBack()">Shipments</span>
+    <span class="breadcrumb-separator">&rsaquo;</span>
+    <span class="breadcrumb-current">{{ shipment.id }}</span>
+  </nav>
+
+  <!-- Detail Page Header -->
+  <header class="detail-header">
+    <div class="header-titles">
+      <h1 class="detail-title">Shipment Detail: {{ shipment.id }}</h1>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Print Manifest</span>
+      </button>
+
+      <button type="button" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        <span>Edit Details</span>
+      </button>
+
+      <!-- Report Delivery Failure Button (visible when In Transit) -->
+      <button 
+        *ngIf="shipment.status === 'In Transit'" 
+        type="button" 
+        class="btn btn-danger" 
+        (click)="openFailureModal()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Report Delivery Failure</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Card 1: Shipment Journey Horizontal Stepper -->
+  <section class="card-section journey-card">
+    <div class="card-header-flex">
+      <h2 class="card-title">Shipment Journey</h2>
+      <div class="eta-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Estimated Arrival: {{ shipment.estimatedArrival }}</span>
+      </div>
+    </div>
+
+    <!-- Stepper Track -->
+    <div class="stepper-wrapper">
+      <div class="stepper-track">
+        
+        <!-- Step 1: Created -->
+        <div class="step-item" [class.completed]="isStepCompleted('Created')" [class.active]="isStepActive('Created')">
+          <div class="step-circle">
+            <svg *ngIf="isStepCompleted('Created')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span *ngIf="!isStepCompleted('Created') && !isStepActive('Created')">1</span>
+          </div>
+          <div class="step-label">Created</div>
+          <div class="step-timestamp">Oct 20, 09:15</div>
+        </div>
+
+        <div class="step-line" [class.active-line]="isStepCompleted('Ready for Dispatch') || isStepActive('Ready for Dispatch')"></div>
+
+        <!-- Step 2: Ready for Dispatch -->
+        <div class="step-item" [class.completed]="isStepCompleted('Ready for Dispatch')" [class.active]="isStepActive('Ready for Dispatch')">
+          <div class="step-circle">
+            <svg *ngIf="isStepCompleted('Ready for Dispatch')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span *ngIf="!isStepCompleted('Ready for Dispatch') && !isStepActive('Ready for Dispatch')">2</span>
+          </div>
+          <div class="step-label">Ready for Dispatch</div>
+          <div class="step-timestamp">Oct 21, 14:30</div>
+        </div>
+
+        <div class="step-line" [class.active-line]="isStepCompleted('In Transit') || isStepActive('In Transit')"></div>
+
+        <!-- Step 3: In Transit -->
+        <div class="step-item" [class.completed]="isStepCompleted('In Transit')" [class.active]="isStepActive('In Transit')" [class.returned]="shipment.status === 'Returned'">
+          <div class="step-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="step-label">In Transit</div>
+          <div class="step-status-tag" *ngIf="isStepActive('In Transit')">Active</div>
+        </div>
+
+        <div class="step-line" [class.active-line]="isStepCompleted('Delivered') || isStepActive('Delivered')"></div>
+
+        <!-- Step 4: Delivered / Returned -->
+        <div class="step-item" [class.completed]="isStepCompleted('Delivered')" [class.active]="isStepActive('Delivered')" [class.returned]="shipment.status === 'Returned'">
+          <div class="step-circle">
+            <svg *ngIf="shipment.status === 'Delivered'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <svg *ngIf="shipment.status === 'Returned'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            </svg>
+            <svg *ngIf="shipment.status !== 'Delivered' && shipment.status !== 'Returned'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+          </div>
+          <div class="step-label">{{ shipment.status === 'Returned' ? 'Returned' : 'Delivered' }}</div>
+          <div class="step-status-tag pending" *ngIf="shipment.status !== 'Delivered' && shipment.status !== 'Returned'">Pending</div>
+          <div class="step-status-tag active" *ngIf="shipment.status === 'Delivered'">Completed</div>
+          <div class="step-status-tag alert" *ngIf="shipment.status === 'Returned'">Failed</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Middle Grid Section (Left Details vs Right Status History) -->
+  <div class="middle-grid">
+    <!-- Left Column: Route & Carrier Cards -->
+    <div class="left-cards-column">
+      
+      <!-- Route Details Card -->
+      <div class="card-section route-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+          <h3 class="card-title">Route Details</h3>
+        </div>
+
+        <div class="route-nodes">
+          <div class="route-node">
+            <div class="node-icon origin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              </svg>
+            </div>
+            <div class="node-content">
+              <span class="node-type">ORIGIN</span>
+              <strong class="node-name">{{ shipment.originHub }}</strong>
+              <p class="node-address">{{ shipment.originAddress }}</p>
+            </div>
+          </div>
+
+          <div class="route-line-vertical"></div>
+
+          <div class="route-node">
+            <div class="node-icon destination">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="node-content">
+              <span class="node-type">DESTINATION</span>
+              <strong class="node-name">{{ shipment.customerName }}</strong>
+              <p class="node-address">{{ shipment.customerAddress }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carrier Information Card -->
+      <div class="card-section carrier-card">
+        <div class="section-subtitle">CARRIER INFORMATION</div>
+        
+        <div class="carrier-box">
+          <div class="carrier-logo-badge">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="carrier-details">
+            <h4 class="carrier-name">{{ shipment.carrierName }}</h4>
+            <a href="javascript:void(0)" class="carrier-tracking">Tracking: {{ shipment.carrierTracking }}</a>
+          </div>
+        </div>
+
+        <div class="carrier-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Service Level</span>
+            <strong class="meta-value">{{ shipment.serviceLevel }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Vehicle ID</span>
+            <strong class="meta-value">{{ shipment.vehicleId }}</strong>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Status History Log -->
+    <div class="right-history-column">
+      <div class="card-section history-card">
+        <div class="card-header-flex">
+          <div class="header-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <h3 class="card-title">Status History</h3>
+          </div>
+          <a href="javascript:void(0)" class="download-link">Download Log</a>
+        </div>
+
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Changed By</th>
+              <th>Timestamp</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let event of shipment.history">
+              <td>
+                <span class="history-badge" [class.badge-returned]="event.status === 'Returned' || event.status === 'Delivery Failure Reported'">
+                  {{ event.status }}
+                </span>
+              </td>
+              <td class="changed-by-cell">{{ event.changedBy }}</td>
+              <td class="timestamp-cell">{{ event.timestamp }}</td>
+              <td class="notes-cell">
+                <em>{{ event.notes }}</em>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section: Live Tracking Map -->
+  <section class="card-section map-card">
+    <div class="card-header-flex">
+      <div class="header-left">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+        <h3 class="card-title">Live Tracking</h3>
+      </div>
+      <div class="live-location-badge">
+        <span class="live-dot"></span>
+        <span>Live Location</span>
+      </div>
+    </div>
+
+    <div class="live-map-container">
+      <svg class="live-map-svg" viewBox="0 0 900 320" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="live-map-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#334155" stroke-width="0.5" stroke-dasharray="2 2" />
+          </pattern>
+          <linearGradient id="map-route-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2563eb" />
+            <stop offset="60%" stop-color="#0284c7" />
+            <stop offset="100%" stop-color="#38bdf8" />
+          </linearGradient>
+        </defs>
+
+        <!-- Dark sleek map background -->
+        <rect width="900" height="320" fill="#0f172a" />
+        <rect width="900" height="320" fill="url(#live-map-grid)" opacity="0.4" />
+
+        <!-- US Highway Lines -->
+        <path d="M 100 180 Q 300 120 500 200 T 800 140" fill="none" stroke="#1e293b" stroke-width="14" />
+        <path d="M 220 50 L 350 300" stroke="#1e293b" stroke-width="8" />
+        <path d="M 600 40 L 680 310" stroke="#1e293b" stroke-width="10" />
+
+        <!-- Route Polyline -->
+        <path 
+          d="M 180 210 C 320 140 450 250 680 140" 
+          fill="none" 
+          stroke="url(#map-route-gradient)" 
+          stroke-width="5" 
+          stroke-linecap="round" 
+          stroke-dasharray="8 6"
+        />
+
+        <!-- Origin Node (Chicago) -->
+        <circle cx="180" cy="210" r="8" fill="#2563eb" />
+        <circle cx="180" cy="210" r="3" fill="#ffffff" />
+        <text x="180" y="235" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Chicago Hub</text>
+
+        <!-- Current Live Location Node (Midway) -->
+        <g transform="translate(480, 195)">
+          <circle cx="0" cy="0" r="20" fill="#0284c7" opacity="0.25">
+            <animate attributeName="r" values="10;25;10" dur="2s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="0" cy="0" r="10" fill="#38bdf8" />
+          <circle cx="0" cy="0" r="4" fill="#ffffff" />
+          <rect x="-45" y="-35" width="90" height="22" rx="4" fill="#0284c7" />
+          <text x="0" y="-20" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">TRK-2940-X</text>
+        </g>
+
+        <!-- Destination Node (San Francisco) -->
+        <g transform="translate(680, 140)">
+          <path d="M 0 0 C -5 0 -8 3 -8 8 C -8 13 0 20 0 20 C 0 20 8 13 8 8 C 8 3 5 0 0 0 Z" fill="#22c55e" />
+          <circle cx="0" cy="7" r="2.5" fill="#ffffff" />
+          <text x="0" y="38" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">San Francisco</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Report Delivery Failure Modal -->
+  <div class="modal-overlay" *ngIf="showFailureModal">
+    <div class="modal-card failure-modal">
+      
+      <div class="modal-header-danger">
+        <div class="icon-danger-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Report Delivery Failure</h3>
+          <p class="modal-subtitle">Log a delivery exception and specify recovery action for {{ shipment.id }}.</p>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Failure Reason Dropdown -->
+        <div class="form-group">
+          <label class="form-label">Failure Reason <span class="required-star">*</span></label>
+          <select class="form-select" [(ngModel)]="failureReason">
+            <option *ngFor="let reason of reasonOptions" [value]="reason">
+              {{ reason }}
+            </option>
+          </select>
+          <div *ngIf="modalSubmitted && !failureReason" class="validation-error">
+            Please select a failure reason.
+          </div>
+        </div>
+
+        <!-- Next Action Radio Options -->
+        <div class="form-group margin-top-16">
+          <label class="form-label">Next Action <span class="required-star">*</span></label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="nextAction" value="Reschedule" [(ngModel)]="nextAction" />
+              <span class="radio-custom"></span>
+              <div class="radio-text">
+                <strong>Reschedule Delivery</strong>
+                <p>Keep shipment active and queue for next delivery attempt.</p>
+              </div>
+            </label>
+
+            <label class="radio-label">
+              <input type="radio" name="nextAction" value="Return" [(ngModel)]="nextAction" />
+              <span class="radio-custom"></span>
+              <div class="radio-text">
+                <strong>Return to Warehouse</strong>
+                <p>Mark shipment as Returned and return stock back to inventory.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="form-group margin-top-16">
+          <label class="form-label">Additional Notes</label>
+          <textarea 
+            class="form-textarea" 
+            rows="3" 
+            placeholder="Add driver comments or incident details..."
+            [(ngModel)]="failureNotes"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="closeFailureModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" (click)="submitFailureReport()">
+          Submit Failure Report
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

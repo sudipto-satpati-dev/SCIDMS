@@ -1,0 +1,93 @@
+<div class="shipments-page-container">
+  <!-- Top Bar / Header -->
+  <header class="page-header">
+    <div class="header-titles">
+      <h1 class="page-title">Shipments</h1>
+      <p class="page-subtitle">Track, monitor, and manage logistics dispatches across distribution networks.</p>
+    </div>
+
+    <button type="button" class="btn btn-primary" (click)="createShipment()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Create Shipment</span>
+    </button>
+  </header>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="toolbar-card">
+    <div class="search-input-wrapper">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search by Shipment ID or Order ID..." 
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+
+    <div class="status-pills-filter">
+      <button 
+        *ngFor="let status of statusOptions"
+        type="button"
+        class="pill-btn"
+        [class.active]="selectedStatus === status"
+        (click)="setStatusFilter(status)"
+      >
+        {{ status }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Shipments Table -->
+  <div class="table-card">
+    <table class="shipment-table">
+      <thead>
+        <tr>
+          <th>Shipment ID</th>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Dispatch Date</th>
+          <th>Last Updated</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let shipment of filteredShipments" (click)="viewShipment(shipment.id)" class="clickable-row">
+          <td class="shipment-id-cell">
+            <strong>{{ shipment.id }}</strong>
+          </td>
+          <td class="order-id-cell">{{ shipment.orderId }}</td>
+          <td class="customer-cell">{{ shipment.customerName }}</td>
+          <td class="status-cell">
+            <span class="status-pill" [ngClass]="getStatusClass(shipment.status)">
+              <span class="dot"></span>
+              {{ shipment.status }}
+            </span>
+          </td>
+          <td class="dispatch-cell">{{ shipment.dispatchDate }}</td>
+          <td class="updated-cell">{{ shipment.lastUpdated }}</td>
+          <td class="text-right actions-cell" (click)="$event.stopPropagation()">
+            <button type="button" class="btn-action" (click)="viewShipment(shipment.id)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              View
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredShipments.length === 0">
+          <td colspan="7" class="empty-table-cell">
+            No shipments found matching the selected search criteria or status filter.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

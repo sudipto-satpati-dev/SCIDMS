@@ -1,0 +1,263 @@
+<div class="page">
+
+  <!-- Breadcrumb + Header row -->
+  <div class="breadcrumb">
+    <span class="bc-parent">Administration</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="bc-current">User Management</span>
+  </div>
+
+  <div class="page-header">
+    <h1>User Management</h1>
+    <div class="header-controls">
+      <div class="filter-select-wrap">
+        <select [(ngModel)]="filterRole">
+          <option value="">Role: All</option>
+          <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+        </select>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="filter-select-wrap">
+        <select [(ngModel)]="filterStatus">
+          <option value="">Status: All</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <button class="btn-add" (click)="openAddModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <span class="kpi-label">TOTAL USERS</span>
+        <span class="kpi-value">{{ users.length }}</span>
+        <span class="kpi-trend positive">↑+12% from last month</span>
+      </div>
+      <div class="kpi-icon-wrap blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <span class="kpi-label">ACTIVE NOW</span>
+        <span class="kpi-value">{{ activeCount }}</span>
+        <span class="kpi-sub">{{ activePercent }}% of total population</span>
+      </div>
+      <div class="kpi-icon-wrap green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <span class="kpi-label">PENDING INVITES</span>
+        <span class="kpi-value">{{ inactiveCount }}</span>
+        <span class="kpi-sub">Expiring in &lt; 24h</span>
+      </div>
+      <div class="kpi-icon-wrap orange">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-left">
+        <span class="kpi-label">STORAGE USED</span>
+        <span class="kpi-value">1.2 TB</span>
+        <div class="storage-bar"><div class="storage-fill"></div></div>
+      </div>
+      <div class="kpi-icon-wrap gray">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>USER ID</th>
+          <th>USERNAME</th>
+          <th>EMAIL</th>
+          <th>ROLE</th>
+          <th>STATUS</th>
+          <th>CREATED DATE</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of paged">
+          <td class="uid">{{ user.id }}</td>
+          <td>
+            <div class="user-cell">
+              <div class="avatar" [style.background]="avatarBg(user.username)">{{ user.username[0].toUpperCase() }}</div>
+              <span class="username">{{ user.username }}</span>
+            </div>
+          </td>
+          <td class="email">{{ user.email }}</td>
+          <td><span class="role-badge" [ngClass]="roleClass(user.role)">{{ user.role.toUpperCase() }}</span></td>
+          <td>
+            <span class="status-dot" [ngClass]="user.status === 'Active' ? 'dot-active' : 'dot-inactive'"></span>
+            <span class="status-text" [ngClass]="user.status === 'Active' ? 'text-active' : 'text-inactive'">{{ user.status.toUpperCase() }}</span>
+          </td>
+          <td class="date">{{ user.createdAt }}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-icon" title="Edit" (click)="openEditModal(user)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="btn-icon" [title]="user.status === 'Active' ? 'Deactivate' : 'Activate'" (click)="toggleStatus(user)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+              </button>
+              <button class="btn-icon btn-icon-danger" title="Delete" (click)="confirmDelete(user)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="7" class="empty-state">No users found matching your criteria.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="table-footer">
+      <span class="showing-text">Showing <strong>{{ pageStart }}-{{ pageEnd }}</strong> of <strong>{{ filtered.length }}</strong> users</span>
+      <div class="pagination">
+        <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+        <button class="page-btn" *ngFor="let p of pageNumbers" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" *ngIf="showFormModal" (click)="showFormModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-title-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <h3>{{ isEditMode ? 'Edit User' : 'Add New User' }}</h3>
+          <p class="modal-subtitle">{{ isEditMode ? 'Update user account details.' : 'Fill in the details to create a new system user.' }}</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="showFormModal = false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body" *ngIf="selectedUser">
+
+      <!-- Username -->
+      <div class="form-row">
+        <div class="form-group" [class.has-error]="formErrors['username']">
+          <label>Username <span class="req">*</span></label>
+          <div class="input-wrap">
+            <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" [(ngModel)]="selectedUser.username" (blur)="validateField('username')" placeholder="e.g. john.doe" />
+          </div>
+          <span class="field-error" *ngIf="formErrors['username']">{{ formErrors['username'] }}</span>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group" [class.has-error]="formErrors['email']">
+          <label>Email Address <span class="req">*</span></label>
+          <div class="input-wrap">
+            <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" [(ngModel)]="selectedUser.email" (blur)="validateField('email')" placeholder="e.g. john@scidms.io" />
+          </div>
+          <span class="field-error" *ngIf="formErrors['email']">{{ formErrors['email'] }}</span>
+        </div>
+      </div>
+
+      <!-- Role -->
+      <div class="form-group" [class.has-error]="formErrors['role']">
+        <label>User Role <span class="req">*</span></label>
+        <div class="select-wrap">
+          <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          <select [(ngModel)]="selectedUser.role" (change)="validateField('role')" [class.placeholder-selected]="!selectedUser.role">
+            <option value="" disabled>Select assigned role</option>
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+          <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span class="field-error" *ngIf="formErrors['role']">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ formErrors['role'] }}
+        </span>
+      </div>
+
+      <!-- Status toggle -->
+      <div class="form-group">
+        <label>Account Status</label>
+        <div class="status-toggle-row">
+          <button class="toggle-option" [class.toggle-active]="selectedUser.status === 'Active'" (click)="selectedUser.status = 'Active'">
+            <span class="toggle-dot green"></span> Active
+          </button>
+          <button class="toggle-option" [class.toggle-inactive]="selectedUser.status === 'Inactive'" (click)="selectedUser.status = 'Inactive'">
+            <span class="toggle-dot gray"></span> Inactive
+          </button>
+        </div>
+        <p class="field-hint">Active users can log in immediately. Inactive users are blocked from access.</p>
+      </div>
+
+      <!-- Temporary Password -->
+      <div class="form-group" [class.has-error]="formErrors['password']">
+        <label>Temporary Password <span class="req">*</span></label>
+        <div class="input-wrap">
+          <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input [type]="showModalPassword ? 'text' : 'password'" [(ngModel)]="modalPassword" (blur)="validateField('password')" placeholder="Min 8 chars, include uppercase &amp; number" />
+          <button type="button" class="pw-toggle" (click)="showModalPassword = !showModalPassword">
+            <svg *ngIf="!showModalPassword" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg *ngIf="showModalPassword" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+        <span class="field-error" *ngIf="formErrors['password']">{{ formErrors['password'] }}</span>
+        <p class="field-hint" *ngIf="!formErrors['password']">User will be prompted to change this on first login.</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="showFormModal = false">Cancel</button>
+      <button class="btn-primary" (click)="saveUser()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ isEditMode ? 'Save Changes' : 'Save User' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="showDeleteModal = false">
+  <div class="modal modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Delete User</h3>
+      <button class="modal-close" (click)="showDeleteModal = false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong>{{ selectedUser?.username }}</strong>? This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="showDeleteModal = false">Cancel</button>
+      <button class="btn-danger" (click)="deleteUser()">Delete User</button>
+    </div>
+  </div>
+</div>

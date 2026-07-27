@@ -1,0 +1,209 @@
+<div class="page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="bc-parent">Orders</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="bc-current">Track Order Status</span>
+  </div>
+
+  <!-- Search + Filter bar -->
+  <div class="search-bar">
+    <div class="search-field">
+      <label class="field-label">Search by Order ID</label>
+      <div class="search-input-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="e.g. ORD-1022" />
+      </div>
+    </div>
+    <div class="status-field">
+      <label class="field-label">Status Filter</label>
+      <div class="select-wrap">
+        <select [(ngModel)]="filterStatus">
+          <option value="">All Statuses</option>
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
+        <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <button class="btn-apply" (click)="applyFilters()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Apply Filters
+    </button>
+  </div>
+
+  <!-- Orders quick list + main panel -->
+  <div class="main-layout">
+
+    <!-- Left sidebar: orders list -->
+    <div class="orders-sidebar">
+      <div class="sidebar-label">{{ filteredOrders.length }} orders</div>
+      <div class="sidebar-list">
+        <div class="sidebar-item"
+          *ngFor="let o of filteredOrders"
+          [class.active]="o.id === selectedOrderId"
+          (click)="selectOrder(o)">
+          <div class="si-top">
+            <span class="si-id">{{ o.id }}</span>
+            <span class="si-status" [ngClass]="statusPillClass(o.status)">{{ o.status }}</span>
+          </div>
+          <div class="si-customer">{{ o.customerName }}</div>
+          <div class="si-date">{{ o.items[0].productName }} · {{ o.items.length }} line{{ o.items.length === 1 ? '' : 's' }}</div>
+        </div>
+        <div class="sidebar-empty" *ngIf="filteredOrders.length === 0">No orders match filters.</div>
+      </div>
+    </div>
+
+    <!-- Right: Order lifecycle panel -->
+    <div class="lifecycle-panel" *ngIf="selected">
+
+      <!-- Panel header -->
+      <div class="lp-header">
+        <div class="lp-title">
+          <h2>Order Lifecycle: <span class="order-id-highlight">{{ selected.id }}</span></h2>
+        </div>
+        <span class="priority-badge" [ngClass]="priorityClass(selected.priority)">
+          Priority: {{ selected.priority }}
+        </span>
+      </div>
+
+      <!-- ── Status stepper ── -->
+      <div class="stepper-wrap">
+        <div class="stepper">
+          <ng-container *ngFor="let step of stepFlow; let last = last">
+            <!-- Step node -->
+            <div class="step-node" [ngClass]="'step-' + stepState(step)">
+              <div class="step-circle">
+                <!-- Completed -->
+                <svg *ngIf="stepState(step) === 'completed'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <!-- Current -->
+                <div *ngIf="stepState(step) === 'current'" class="step-pulse"></div>
+                <!-- Pending -->
+                <div *ngIf="stepState(step) === 'pending'" class="step-empty"></div>
+              </div>
+              <div class="step-label">
+                <span class="step-name">{{ step }}</span>
+                <span class="step-time">{{ stepTimestamp(step) }}</span>
+                <span class="step-sub" *ngIf="stepState(step) === 'current' && step === 'Dispatched'">In Transit</span>
+                <span class="step-sub" *ngIf="stepState(step) === 'pending' && step === 'Delivered' && !isTerminated">Expected soon</span>
+              </div>
+            </div>
+            <!-- Connector line -->
+            <div class="step-connector" *ngIf="!last" [ngClass]="stepState(step) === 'completed' ? 'connector-done' : 'connector-pending'"></div>
+          </ng-container>
+        </div>
+
+        <!-- Terminated branch -->
+        <div class="terminated-branch" *ngIf="isTerminated">
+          <div class="branch-line"></div>
+          <div class="branch-pill">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            {{ selected.status }} — Branch Scenario
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Bottom two-column: Order Details + Status History ── -->
+      <div class="detail-grid">
+
+        <!-- Order Details card -->
+        <div class="detail-card">
+          <div class="dc-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <h3>Order Details</h3>
+          </div>
+
+          <div class="dc-section">
+            <span class="dc-lbl">CUSTOMER</span>
+            <span class="dc-val strong">{{ selected.customerName }}</span>
+            <span class="dc-val muted">{{ selected.contactNumber }}</span>
+            <span class="dc-val muted">{{ selected.address }}</span>
+          </div>
+
+          <div class="dc-section">
+            <span class="dc-lbl">ITEMS</span>
+            <div class="item-row" *ngFor="let item of selected.items">
+              <span class="item-name">{{ item.productName }}</span>
+              <span class="item-qty">{{ item.quantity | number }} units</span>
+            </div>
+          </div>
+
+          <div class="dc-section" *ngIf="selected.approvedBy !== '—'">
+            <span class="dc-lbl">VERIFICATION</span>
+            <div class="verifier-row">
+              <div class="verifier-avatar">{{ selected.approvedBy[0].toUpperCase() }}</div>
+              <div>
+                <div class="dc-val strong">{{ selected.approvedBy }}</div>
+                <div class="dc-val muted">Approved {{ selected.approvedDate }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dc-total">
+            <span>Order Total</span>
+            <span class="total-val">{{ fmt(orderTotal(selected)) }}</span>
+          </div>
+
+          <button class="btn-print">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print Invoice
+          </button>
+        </div>
+
+        <!-- Status History card -->
+        <div class="history-card">
+          <div class="hc-header">
+            <h3>Status History</h3>
+            <div class="hc-actions">
+              <button class="hc-icon-btn" title="Download">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+              <button class="hc-icon-btn" title="Refresh">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.87"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>STATUS</th>
+                <th>CHANGED BY</th>
+                <th>TIMESTAMP</th>
+                <th>NOTES</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ev of selected.history">
+                <td>
+                  <span class="status-pill" [ngClass]="statusPillClass(ev.status)">{{ ev.status }}</span>
+                </td>
+                <td>
+                  <div class="changed-by">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    {{ ev.changedBy }}
+                  </div>
+                </td>
+                <td class="ts-cell">{{ ev.timestamp }}</td>
+                <td class="notes-cell">{{ ev.notes }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="hc-footer">
+            <span class="hc-count">Showing last {{ selected.history.length }} status changes</span>
+            <button class="btn-audit-log">View Full Audit Log</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- No order selected -->
+    <div class="no-selection" *ngIf="!selected">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p>Select an order from the list to view its lifecycle.</p>
+    </div>
+
+  </div>
+</div>

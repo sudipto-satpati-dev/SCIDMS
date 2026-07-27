@@ -1,0 +1,366 @@
+.page { max-width: 1300px; }
+
+// ── Breadcrumb ────────────────────────────────────────────
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  .bc-parent  { color: #94a3b8; cursor: pointer; &:hover { color: #2563eb; } }
+  svg         { color: #94a3b8; }
+  .bc-current { color: #2563eb; font-weight: 500; }
+}
+
+// ── Page header ───────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+
+  h1       { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #64748b; }
+}
+
+.overall-badge {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 160px;
+  flex-shrink: 0;
+
+  .overall-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #94a3b8; }
+  .overall-pct   { font-size: 32px; font-weight: 800; line-height: 1; }
+  .overall-sub   { font-size: 11px; color: #94a3b8; }
+
+  .pct-ok   { color: #16a34a; }
+  .pct-warn { color: #d97706; }
+  .pct-crit { color: #dc2626; }
+}
+
+// ── Gauge cards row ───────────────────────────────────────
+.gauge-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.gauge-card {
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+  min-width: 200px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+  }
+
+  &.selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.12);
+  }
+}
+
+// SVG gauge colour classes applied via ngClass
+.gauge-ok       { stroke: #22c55e; }
+.gauge-warning  { stroke: #f59e0b; }
+.gauge-critical { stroke: #ef4444; }
+
+// SVG text elements
+.gauge-pct-text {
+  font-size: 15px;
+  font-weight: 700;
+  fill: #0f172a;
+  font-family: 'Inter', sans-serif;
+
+  &.gauge-ok       { fill: #16a34a; }
+  &.gauge-warning  { fill: #d97706; }
+  &.gauge-critical { fill: #dc2626; }
+}
+
+.gauge-sub-text {
+  font-size: 9px;
+  fill: #94a3b8;
+  font-family: 'Inter', sans-serif;
+}
+
+.gauge-wrap { flex-shrink: 0; }
+
+.gauge-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+
+  .gauge-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gauge-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: #64748b;
+    svg { color: #94a3b8; flex-shrink: 0; }
+  }
+
+  .gauge-numbers {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 12px;
+
+    .occ { font-weight: 700; font-size: 14px;
+      &.gauge-ok       { color: #16a34a; }
+      &.gauge-warning  { color: #d97706; }
+      &.gauge-critical { color: #dc2626; }
+    }
+    .sep { color: #cbd5e1; }
+    .tot { color: #94a3b8; font-size: 11.5px; }
+  }
+}
+
+.health-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  width: fit-content;
+
+  &.gauge-ok       { background: #dcfce7; color: #15803d; }
+  &.gauge-warning  { background: #fef3c7; color: #b45309; }
+  &.gauge-critical { background: #fee2e2; color: #b91c1c; }
+}
+
+// ── Detail section ────────────────────────────────────────
+.detail-section { }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.detail-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+
+  h2 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
+  .detail-id { font-size: 12px; color: #94a3b8; font-family: monospace; }
+}
+
+.detail-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #94a3b8; }
+  .stat-val   { font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1; }
+  .green-val  { color: #16a34a; }
+
+  .gauge-ok       { color: #16a34a; }
+  .gauge-warning  { color: #d97706; }
+  .gauge-critical { color: #dc2626; }
+}
+
+// ── Selected warehouse big bar ────────────────────────────
+.selected-bar-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.bar-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.bar-pct {
+  font-size: 15px;
+  font-weight: 800;
+  &.gauge-ok       { color: #16a34a; }
+  &.gauge-warning  { color: #d97706; }
+  &.gauge-critical { color: #dc2626; }
+}
+
+.big-bar-track {
+  height: 16px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.big-bar-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+  &.avail-seg { background: #e0f2fe; flex: 1; }
+
+  &.occupied-seg {
+    &.gauge-ok       { background: #22c55e; }
+    &.gauge-warning  { background: #f59e0b; }
+    &.gauge-critical { background: #ef4444; }
+  }
+}
+
+.bar-legend {
+  display: flex;
+  gap: 20px;
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+
+  &.avail-dot { background: #e0f2fe; border: 1px solid #bae6fd; }
+  &.occ-dot {
+    &.gauge-ok       { background: #22c55e; }
+    &.gauge-warning  { background: #f59e0b; }
+    &.gauge-critical { background: #ef4444; }
+  }
+}
+
+// ── Product breakdown table ───────────────────────────────
+.table-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+
+  h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
+  .product-count { font-size: 12px; color: #94a3b8; }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead tr {
+    background: #f8fafc;
+    border-bottom: 1px solid #e8edf2;
+  }
+
+  th {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 13.5px;
+    color: #374151;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #fafbff; }
+}
+
+.pid          { font-size: 12px; color: #2563eb; font-weight: 600; font-family: monospace; }
+.product-name { font-weight: 600; color: #0f172a; }
+.qty-cell     { font-weight: 700; font-size: 14px; }
+.pct-cell     { font-weight: 700; color: #374151; }
+
+.cat-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.bar-cell { min-width: 140px; }
+
+.mini-bar-track {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  gap: 10px;
+  p { font-size: 13px; color: #94a3b8; margin: 0; }
+}

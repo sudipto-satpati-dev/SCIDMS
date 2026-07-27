@@ -1,0 +1,165 @@
+<div class="page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="bc-parent" routerLink="/warehouses">Warehouses</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="bc-current">Capacity Monitor</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>Warehouse Capacity</h1>
+      <p class="subtitle">Real-time capacity utilization across all storage nodes.</p>
+    </div>
+    <div class="overall-badge">
+      <span class="overall-label">Overall Utilization</span>
+      <span class="overall-pct" [class.pct-ok]="overallPct < 70" [class.pct-warn]="overallPct >= 70 && overallPct <= 90" [class.pct-crit]="overallPct > 90">
+        {{ overallPct }}%
+      </span>
+      <span class="overall-sub">{{ grandOccupied | number }} / {{ grandTotal | number }} units</span>
+    </div>
+  </div>
+
+  <!-- Gauge cards row -->
+  <div class="gauge-row">
+    <div class="gauge-card"
+      *ngFor="let w of warehouses"
+      [class.selected]="w.id === selectedWarehouseId"
+      (click)="selectWarehouse(w.id)">
+
+      <!-- SVG circular gauge -->
+      <div class="gauge-wrap">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <!-- Track circle -->
+          <circle cx="48" cy="48" r="36" fill="none" stroke="#f1f5f9" stroke-width="8"/>
+          <!-- Progress arc -->
+          <circle cx="48" cy="48" r="36" fill="none"
+            [attr.stroke]="w.id === selectedWarehouseId ? 'currentColor' : '#94a3b8'"
+            stroke-width="8"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="gaugeDash(w) + ' ' + gaugeCircumference"
+            [attr.stroke-dashoffset]="gaugeCircumference / 4"
+            [ngClass]="colorClass(w)"
+            transform="rotate(-90 48 48)"
+          />
+          <!-- Center text -->
+          <text x="48" y="44" text-anchor="middle" class="gauge-pct-text" [ngClass]="colorClass(w)">{{ utilPct(w) }}%</text>
+          <text x="48" y="58" text-anchor="middle" class="gauge-sub-text">used</text>
+        </svg>
+      </div>
+
+      <div class="gauge-info">
+        <div class="gauge-name">{{ w.name }}</div>
+        <div class="gauge-location">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ w.location }}
+        </div>
+        <div class="gauge-numbers">
+          <span class="occ" [ngClass]="colorClass(w)">{{ w.occupied | number }}</span>
+          <span class="sep">/</span>
+          <span class="tot">{{ w.total | number }} units</span>
+        </div>
+        <span class="health-pill" [ngClass]="colorClass(w)">{{ colorLabel(w) }}</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Detail section -->
+  <div class="detail-section" *ngIf="selectedWarehouse">
+
+    <!-- Selected warehouse summary -->
+    <div class="detail-header">
+      <div class="detail-title">
+        <h2>{{ selectedWarehouse.name }}</h2>
+        <span class="detail-id">{{ selectedWarehouseId }}</span>
+      </div>
+      <div class="detail-stats">
+        <div class="stat-box">
+          <span class="stat-label">Total Capacity</span>
+          <span class="stat-val">{{ selectedWarehouse.total | number }}</span>
+        </div>
+        <div class="stat-box occupied">
+          <span class="stat-label">Occupied</span>
+          <span class="stat-val" [ngClass]="colorClass(selectedWarehouse)">{{ selectedWarehouse.occupied | number }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Available</span>
+          <span class="stat-val green-val">{{ selectedWarehouse.available | number }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Reserved</span>
+          <span class="stat-val">{{ selectedWarehouse.reserved | number }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall bar for selected warehouse -->
+    <div class="selected-bar-section">
+      <div class="bar-label-row">
+        <span>Capacity Utilization</span>
+        <span class="bar-pct" [ngClass]="colorClass(selectedWarehouse)">{{ utilPct(selectedWarehouse) }}%</span>
+      </div>
+      <div class="big-bar-track">
+        <div class="big-bar-segment occupied-seg" [style.width.%]="utilPct(selectedWarehouse)" [ngClass]="colorClass(selectedWarehouse)"></div>
+        <div class="big-bar-segment avail-seg"   [style.width.%]="availPct(selectedWarehouse)"></div>
+      </div>
+      <div class="bar-legend">
+        <span class="leg-item"><span class="leg-dot occ-dot" [ngClass]="colorClass(selectedWarehouse)"></span>Occupied ({{ utilPct(selectedWarehouse) }}%)</span>
+        <span class="leg-item"><span class="leg-dot avail-dot"></span>Available ({{ availPct(selectedWarehouse) }}%)</span>
+      </div>
+    </div>
+
+    <!-- Product breakdown table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <h3>Product Stock Breakdown</h3>
+        <span class="product-count">{{ selectedProducts.length }} products stored</span>
+      </div>
+
+      <table class="data-table" *ngIf="selectedProducts.length > 0">
+        <thead>
+          <tr>
+            <th>Product ID</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Quantity (units)</th>
+            <th>% of Warehouse</th>
+            <th>Capacity Bar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of selectedProducts">
+            <td class="pid">{{ p.productId }}</td>
+            <td class="product-name">{{ p.productName }}</td>
+            <td>
+              <span class="cat-tag" [style.background]="categoryColor(p.category) + '20'" [style.color]="categoryColor(p.category)">
+                {{ p.category }}
+              </span>
+            </td>
+            <td class="qty-cell">{{ p.quantity | number }}</td>
+            <td class="pct-cell">{{ productPct(p.quantity) }}%</td>
+            <td class="bar-cell">
+              <div class="mini-bar-track">
+                <div class="mini-bar-fill"
+                  [style.width.%]="productPct(p.quantity)"
+                  [style.background]="categoryColor(p.category)">
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty -->
+      <div class="empty-state" *ngIf="selectedProducts.length === 0">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <p>No products currently stored in this warehouse.</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>

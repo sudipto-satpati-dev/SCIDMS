@@ -1,0 +1,288 @@
+<div class="transfer-page">
+
+  <!-- Form card -->
+  <div class="form-card" *ngIf="!success">
+
+    <!-- Title -->
+    <div class="card-title">
+      <div class="title-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+          <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Transfer Stock Between Warehouses</h2>
+        <p>Move inventory from one warehouse to another. Both locations are validated before transfer.</p>
+      </div>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Row 1: Source + Destination warehouses -->
+      <div class="form-row wh-row">
+
+        <!-- Source -->
+        <div class="form-group" [class.has-error]="formErrors['sourceId']">
+          <label>
+            <span class="wh-badge src-badge">FROM</span>
+            Source Warehouse <span class="req">*</span>
+          </label>
+          <div class="select-wrap">
+            <svg class="sel-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <select [(ngModel)]="form.sourceId" (change)="validateField('sourceId'); onSourceChange()">
+              <option value="" disabled>Select source…</option>
+              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }} — {{ w.location }}</option>
+            </select>
+            <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <span class="field-error" *ngIf="formErrors['sourceId']">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ formErrors['sourceId'] }}
+          </span>
+        </div>
+
+        <!-- Arrow divider -->
+        <div class="wh-arrow">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+
+        <!-- Destination -->
+        <div class="form-group" [class.has-error]="formErrors['destinationId']">
+          <label>
+            <span class="wh-badge dst-badge">TO</span>
+            Destination Warehouse <span class="req">*</span>
+          </label>
+          <div class="select-wrap">
+            <svg class="sel-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <select [(ngModel)]="form.destinationId" (change)="validateField('destinationId'); onDestChange()" [disabled]="!form.sourceId">
+              <option value="" disabled>Select destination…</option>
+              <option *ngFor="let w of destinationWarehouses" [value]="w.id">{{ w.name }} — {{ w.location }}</option>
+            </select>
+            <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <span class="field-error" *ngIf="formErrors['destinationId']">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ formErrors['destinationId'] }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div class="form-group" [class.has-error]="formErrors['productId']">
+        <label>Product <span class="req">*</span></label>
+        <p class="field-hint" *ngIf="!form.sourceId">Select a source warehouse first.</p>
+        <div class="select-wrap" *ngIf="form.sourceId">
+          <svg class="sel-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <select [(ngModel)]="form.productId" (change)="validateField('productId')">
+            <option value="" disabled>Select product…</option>
+            <option *ngFor="let p of products" [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+          </select>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span class="field-error" *ngIf="formErrors['productId']">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ formErrors['productId'] }}
+        </span>
+      </div>
+
+      <!-- Quantity + Reason -->
+      <div class="form-row">
+        <div class="form-group" [class.has-error]="formErrors['quantity']">
+          <label>Transfer Quantity <span class="req">*</span></label>
+          <div class="qty-row">
+            <input
+              type="number"
+              [(ngModel)]="form.quantity"
+              (ngModelChange)="validateField('quantity')"
+              placeholder="0"
+              min="1"
+              class="qty-input"
+            />
+            <span class="qty-unit">units</span>
+          </div>
+          <span class="field-error" *ngIf="formErrors['quantity']">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ formErrors['quantity'] }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Reason / Reference <span class="optional">(optional)</span></label>
+          <input type="text" [(ngModel)]="form.reason" placeholder="e.g. Rebalance stock, demand surge…" />
+        </div>
+      </div>
+
+      <!-- ── Live preview panel ── -->
+      <div class="preview-panel" *ngIf="showPreview && form.productId">
+
+        <!-- Source card -->
+        <div class="preview-card src-card">
+          <div class="pc-header">
+            <div class="pc-badge src-badge-sm">FROM</div>
+            <div class="pc-wh-name">{{ sourceWarehouse?.name }}</div>
+          </div>
+
+          <!-- Stock stats -->
+          <div class="pc-stat-row">
+            <div class="pc-stat">
+              <span class="pc-stat-lbl">AVAILABLE STOCK</span>
+              <span class="pc-stat-val"
+                [class.val-low]="sourceAvailable <= 10 && sourceAvailable > 0"
+                [class.val-zero]="sourceAvailable === 0">
+                {{ sourceAvailable | number }}
+                <span class="pc-stat-unit">units</span>
+              </span>
+            </div>
+            <div class="pc-stat-arrow" *ngIf="qty > 0">→</div>
+            <div class="pc-stat" *ngIf="qty > 0">
+              <span class="pc-stat-lbl">AFTER TRANSFER</span>
+              <span class="pc-stat-val post-val"
+                [class.val-low]="sourceAfter <= 10 && sourceAfter > 0"
+                [class.val-zero]="sourceAfter === 0">
+                {{ sourceAfter | number }}
+                <span class="pc-stat-unit">units</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Change indicator -->
+          <div class="change-indicator src-change" *ngIf="qty > 0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            <span>Outgoing: <strong>{{ qty | number }} units</strong> will be removed</span>
+          </div>
+
+          <!-- Bar -->
+          <div class="pc-bar-label">
+            <span>Stock level</span>
+            <span class="pc-bar-pct" *ngIf="qty > 0 && sourceAvailable > 0">
+              {{ sourceAvailable > 0 ? ((sourceAfter / sourceAvailable) * 100).toFixed(0) : 0 }}% remaining
+            </span>
+          </div>
+          <div class="pc-bar-track">
+            <div class="pc-bar-remaining src-remaining"
+              [style.width.%]="sourceAvailable > 0 ? (sourceAfter / sourceAvailable) * 100 : 0">
+            </div>
+            <div class="pc-bar-dispatched"
+              [style.width.%]="sourceAvailable > 0 ? (qty / sourceAvailable) * 100 : 0"
+              [class.over-dispatch]="exceedsStock">
+            </div>
+          </div>
+
+          <div class="pc-alert" *ngIf="exceedsStock">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Insufficient stock — only {{ sourceAvailable | number }} units available.
+          </div>
+        </div>
+
+        <!-- Destination card -->
+        <div class="preview-card dst-card">
+          <div class="pc-header">
+            <div class="pc-badge dst-badge-sm">TO</div>
+            <div class="pc-wh-name">{{ destinationWarehouse?.name }}</div>
+          </div>
+
+          <!-- Stock stats -->
+          <div class="pc-stat-row">
+            <div class="pc-stat">
+              <span class="pc-stat-lbl">CURRENT STOCK</span>
+              <span class="pc-stat-val">
+                {{ destCurrentStock | number }}
+                <span class="pc-stat-unit">units</span>
+              </span>
+            </div>
+            <div class="pc-stat-arrow" *ngIf="qty > 0">→</div>
+            <div class="pc-stat" *ngIf="qty > 0">
+              <span class="pc-stat-lbl">AFTER TRANSFER</span>
+              <span class="pc-stat-val post-val dst-post">
+                {{ destStockAfter | number }}
+                <span class="pc-stat-unit">units</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Change indicator -->
+          <div class="change-indicator dst-change" *ngIf="qty > 0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            <span>Incoming: <strong>{{ qty | number }} units</strong> will be added</span>
+          </div>
+
+          <!-- Capacity row -->
+          <div class="pc-capacity-row">
+            <div class="pc-stat-small">
+              <span class="pc-stat-lbl">AVAILABLE CAPACITY</span>
+              <span class="pc-stat-val-sm">{{ destAvailableCapacity | number }} units</span>
+            </div>
+            <div class="pc-stat-small" *ngIf="qty > 0">
+              <span class="pc-stat-lbl">CAPACITY AFTER</span>
+              <span class="pc-stat-val-sm"
+                [class.cap-warn]="destCapacityAfter < 500"
+                [class.cap-crit]="destCapacityAfter <= 0">
+                {{ destCapacityAfter | number }} units
+              </span>
+            </div>
+          </div>
+
+          <!-- Capacity bar -->
+          <div class="pc-bar-label">
+            <span>Warehouse capacity</span>
+            <span class="pc-bar-pct"
+              [class.pct-warn]="destPctAfter >= 70"
+              [class.pct-crit]="destPctAfter > 90">
+              {{ destPctAfter }}%
+            </span>
+          </div>
+          <div class="pc-bar-track">
+            <div class="pc-bar-current dst-current" [style.width.%]="destPctUsed"></div>
+            <div class="pc-bar-incoming"
+              [style.width.%]="destinationWarehouse ? (qty / destinationWarehouse.totalCapacity) * 100 : 0"
+              [class.over-capacity]="exceedsCapacity">
+            </div>
+          </div>
+
+          <div class="pc-alert" *ngIf="exceedsCapacity">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Exceeds available capacity — only {{ destAvailableCapacity | number }} units free.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Same warehouse inline warning (without needing to submit) -->
+      <div class="same-wh-alert" *ngIf="sameWarehouse">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Source and destination must be different warehouses.</span>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <button class="btn-cancel" (click)="cancel()" [disabled]="submitted">Cancel</button>
+      <button class="btn-transfer" (click)="submit()" [disabled]="submitted || sameWarehouse || exceedsStock || exceedsCapacity">
+        <span *ngIf="!submitted">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Confirm Transfer
+        </span>
+        <span class="spinner" *ngIf="submitted"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-card" *ngIf="success">
+    <div class="success-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h3>Stock transferred successfully!</h3>
+    <p>
+      {{ selectedProduct?.name }} — {{ form.quantity | number }} units moved from
+      <strong>{{ sourceWarehouse?.name }}</strong> to <strong>{{ destinationWarehouse?.name }}</strong>.
+    </p>
+    <div class="success-actions">
+      <button class="btn-cancel" (click)="cancel()">Back to Inventory</button>
+      <button class="btn-transfer" (click)="reset()">New Transfer</button>
+    </div>
+  </div>
+
+</div>

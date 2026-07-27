@@ -1,0 +1,178 @@
+<div class="page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="bc-parent">Inventory</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="bc-current">Transaction History</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>Inventory Transaction History</h1>
+      <p class="subtitle">Full audit log of all stock movements — receipts, dispatches and transfers.</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill green">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+        {{ receivedCount }} Received
+      </div>
+      <div class="stat-pill blue">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+        {{ dispatchedCount }} Dispatched
+      </div>
+      <div class="stat-pill purple">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        {{ transferredCount }} Transferred
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-card">
+    <!-- Product search -->
+    <div class="filter-col flex-1">
+      <label class="filter-label">PRODUCT</label>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search by product name or ID…" [(ngModel)]="searchProduct" (ngModelChange)="currentPage=1" />
+        <button class="clear-x" *ngIf="searchProduct" (click)="searchProduct=''; currentPage=1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Warehouse -->
+    <div class="filter-col">
+      <label class="filter-label">WAREHOUSE</label>
+      <div class="select-wrap">
+        <select [(ngModel)]="filterWarehouse" (ngModelChange)="currentPage=1">
+          <option value="">All Warehouses</option>
+          <option *ngFor="let w of warehouseNames" [value]="w">{{ w }}</option>
+        </select>
+        <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+
+    <!-- Type -->
+    <div class="filter-col">
+      <label class="filter-label">TYPE</label>
+      <div class="type-toggle">
+        <button [class.active-all]="!filterType" (click)="filterType=''; currentPage=1">All</button>
+        <button [class.active-received]="filterType==='Received'" (click)="filterType='Received'; currentPage=1">Received</button>
+        <button [class.active-dispatched]="filterType==='Dispatched'" (click)="filterType='Dispatched'; currentPage=1">Dispatched</button>
+        <button [class.active-transferred]="filterType==='Transferred'" (click)="filterType='Transferred'; currentPage=1">Transferred</button>
+      </div>
+    </div>
+
+    <!-- Date range -->
+    <div class="filter-col">
+      <label class="filter-label">DATE RANGE</label>
+      <div class="date-range">
+        <div class="date-input-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <input type="date" [(ngModel)]="filterDateFrom" />
+        </div>
+        <span class="date-sep">→</span>
+        <div class="date-input-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <input type="date" [(ngModel)]="filterDateTo" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <button class="btn-reset" (click)="clearFilters()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.87"/></svg>
+      Reset
+    </button>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    <div class="table-header">
+      <span class="result-count">{{ filtered.length }} transactions found</span>
+      <button class="btn-export">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Table -->
+    <table class="data-table" *ngIf="filtered.length > 0">
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Type</th>
+          <th>Product</th>
+          <th>Warehouse</th>
+          <th>Quantity</th>
+          <th>Actor</th>
+          <th>Reason</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tx of paged">
+          <td class="tx-id">{{ tx.id }}</td>
+          <td>
+            <span class="type-tag" [ngClass]="typeClass(tx.type)">
+              {{ tx.type }}
+            </span>
+          </td>
+          <td>
+            <div class="product-cell">
+              <span class="product-name">{{ tx.productName }}</span>
+              <span class="product-id">{{ tx.productId }}</span>
+            </div>
+          </td>
+          <td class="warehouse-cell">{{ tx.warehouseName }}</td>
+          <td>
+            <span class="qty-display" [ngClass]="qtyClass(tx.type)">
+              {{ qtySign(tx.type) }}{{ tx.quantity }}
+            </span>
+          </td>
+          <td>
+            <div class="actor-cell">
+              <div class="actor-avatar">{{ tx.actor[0].toUpperCase() }}</div>
+              <span class="actor-name">{{ tx.actor }}</span>
+            </div>
+          </td>
+          <td class="reason-cell">{{ tx.reason }}</td>
+          <td class="timestamp-cell">{{ tx.timestamp }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="filtered.length === 0">
+      <div class="empty-icon">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <h3>No transactions found</h3>
+      <p>No transactions found for selected filters. Try adjusting or clearing the filters.</p>
+      <button class="btn-clear" (click)="clearFilters()">Clear all filters</button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="table-footer" *ngIf="filtered.length > 0">
+      <span class="showing-text">Showing <strong>{{ pageStart }}–{{ pageEnd }}</strong> of <strong>{{ filtered.length }}</strong> transactions</span>
+      <div class="pagination">
+        <button class="page-btn icon-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="page-btn" *ngFor="let p of pageNumbers" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+        <button class="page-btn icon-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
