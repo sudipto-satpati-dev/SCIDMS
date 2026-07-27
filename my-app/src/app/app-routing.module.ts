@@ -1,62 +1,104 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
+import { AuthGuard } from './core/guards/auth.guard';
+import { RoleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
-  // Auth routes (no layout)
+  // ── Public routes (no layout, no guard) ──────────────────────────────────
   {
     path: 'auth',
-    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
+    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule),
   },
-  // Protected routes (inside main layout)
+
+  // ── Protected routes (inside main layout) ────────────────────────────────
   {
     path: '',
     component: MainLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+      // ALL roles
       {
         path: 'dashboard',
-        loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
+        canActivate: [RoleGuard],
+        data: { role: 'dashboard' },
+        loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
       },
+
+      // Administrator only
       {
         path: 'users',
-        loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
+        canActivate: [RoleGuard],
+        data: { role: 'users' },
+        loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule),
       },
+
+      // Administrator, Management, Warehouse Manager, Sales Executive, Distribution Manager (readonly per role)
       {
         path: 'products',
-        loadChildren: () => import('./features/products/products.module').then(m => m.ProductsModule)
+        canActivate: [RoleGuard],
+        data: { role: 'products' },
+        loadChildren: () => import('./features/products/products.module').then(m => m.ProductsModule),
       },
+
+      // Administrator, Management, Warehouse Manager
       {
         path: 'warehouses',
-        loadChildren: () => import('./features/warehouses/warehouses.module').then(m => m.WarehousesModule)
+        canActivate: [RoleGuard],
+        data: { role: 'warehouses' },
+        loadChildren: () => import('./features/warehouses/warehouses.module').then(m => m.WarehousesModule),
       },
+
+      // Administrator, Management, Warehouse Manager
       {
         path: 'inventory',
-        loadChildren: () => import('./features/inventory/inventory.module').then(m => m.InventoryModule)
+        canActivate: [RoleGuard],
+        data: { role: 'inventory' },
+        loadChildren: () => import('./features/inventory/inventory.module').then(m => m.InventoryModule),
       },
+
+      // Administrator, Management, Sales Executive, Distribution Manager
       {
         path: 'orders',
-        loadChildren: () => import('./features/orders/orders.module').then(m => m.OrdersModule)
+        canActivate: [RoleGuard],
+        data: { role: 'orders' },
+        loadChildren: () => import('./features/orders/orders.module').then(m => m.OrdersModule),
       },
+
+      // Administrator, Management, Distribution Manager
       {
         path: 'shipments',
-        loadChildren: () => import('./features/shipments/shipments.module').then(m => m.ShipmentsModule)
+        canActivate: [RoleGuard],
+        data: { role: 'shipments' },
+        loadChildren: () => import('./features/shipments/shipments.module').then(m => m.ShipmentsModule),
       },
+
+      // Administrator, Management, Warehouse Manager, Sales Executive, Distribution Manager
       {
         path: 'reports',
-        loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule)
+        canActivate: [RoleGuard],
+        data: { role: 'reports' },
+        loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule),
       },
+
+      // Administrator, Management
       {
         path: 'audit',
-        loadChildren: () => import('./features/audit/audit.module').then(m => m.AuditModule)
-      }
-    ]
+        canActivate: [RoleGuard],
+        data: { role: 'audit' },
+        loadChildren: () => import('./features/audit/audit.module').then(m => m.AuditModule),
+      },
+    ],
   },
-  { path: '**', redirectTo: 'auth/login' }
+
+  // Catch-all
+  { path: '**', redirectTo: 'auth/login' },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
 export class AppRoutingModule {}

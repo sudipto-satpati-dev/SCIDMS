@@ -1,46 +1,65 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+
+interface DemoUser {
+  role:     string;
+  username: string;
+  password: string;
+  color:    string;
+}
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
-  credentials = { username: '', password: '' };
+  credentials  = { username: '', password: '' };
   showPassword = false;
-  isLoading = false;
+  isLoading    = false;
   errorMessage = '';
 
-  constructor(private router: Router) {}
+  /** Quick-access demo accounts shown below the login form */
+  readonly demoUsers: DemoUser[] = [
+    { role: 'Administrator',        username: 'alex.rivera',  password: 'Admin@2026',   color: '#7c3aed' },
+    { role: 'Management',           username: 'james.wright', password: 'Manage@2026',  color: '#0284c7' },
+    { role: 'Warehouse Manager',    username: 'sarah.j_mgmt', password: 'Warehouse@1',  color: '#059669' },
+    { role: 'Sales Executive',      username: 'ben.kline',    password: 'Sales@2026',   color: '#d97706' },
+    { role: 'Distribution Manager', username: 'priya.sharma', password: 'Distrib@2026', color: '#dc2626' },
+  ];
+
+  constructor(
+    private auth:   AuthService,
+    private router: Router,
+    private route:  ActivatedRoute,
+  ) {}
+
+  /** Fill credentials from a demo card and auto-submit */
+  fillDemo(user: DemoUser): void {
+    this.credentials.username = user.username;
+    this.credentials.password = user.password;
+    this.onSubmit();
+  }
 
   onSubmit(): void {
     this.errorMessage = '';
-
-    if (!this.credentials.username || !this.credentials.password) {
+    if (!this.credentials.username.trim() || !this.credentials.password.trim()) {
       this.errorMessage = 'Username and password are required.';
       return;
     }
-
     this.isLoading = true;
 
-    // Simulate login API call
-    // In production: call auth service, check isFirstTimeLogin flag from server response.
-    // If server returns isFirstTimeLogin=true, redirect to change-password.
-    setTimeout(() => {
-      this.isLoading = false;
-
-      // Demo: passwords ending with '!' or containing 'Temp' are treated as temporary
-      const isTemporaryPassword =
-        this.credentials.password.includes('Temp') ||
-        this.credentials.password.endsWith('!');
-
-      if (isTemporaryPassword) {
-        // Force mandatory password change before granting dashboard access
-        this.router.navigate(['/auth/change-password']);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
-    }, 800);
+    this.auth.login(this.credentials.username, this.credentials.password).subscribe({
+      next: () => {
+        this.isLoading = false;
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(returnUrl || this.auth.homeRoute());
+      },
+      error: (err) => {
+        this.isLoading    = false;
+        this.errorMessage = err?.message || 'Invalid username or password.';
+      },
+    });
   }
 }

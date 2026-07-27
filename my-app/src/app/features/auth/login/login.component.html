@@ -122,6 +122,28 @@
       <div class="form-footer">
         <p>User accounts are managed by System Administrators. Contact your Administrator if you need access credentials.</p>
       </div>
+
+      <!-- ── Demo quick-login panel ───────────────────────────────────────── -->
+      <div class="demo-panel">
+        <div class="demo-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Demo accounts — click any card to sign in
+        </div>
+        <div class="demo-grid">
+          <button
+            *ngFor="let u of demoUsers"
+            class="demo-card"
+            type="button"
+            (click)="fillDemo(u)"
+            [style.border-left-color]="u.color"
+          >
+            <span class="demo-role" [style.color]="u.color">{{ u.role }}</span>
+            <span class="demo-user">{{ u.username }}</span>
+            <span class="demo-pass">{{ u.password }}</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 

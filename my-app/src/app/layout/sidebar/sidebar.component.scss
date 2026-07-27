@@ -76,7 +76,6 @@
   flex-direction: column;
   gap: 2px;
 }
-
 .nav-bottom-item {
   display: flex;
   align-items: center;
@@ -143,5 +142,40 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+// Role badge
+.role-badge-wrap {
+  padding: 0 16px 10px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(37,99,235,0.25);
+  color: #93c5fd;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+// Logout button — same look as nav-bottom-item but is a <button>
+.logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.45);
+
+  &:hover {
+    background: rgba(239,68,68,0.12);
+    color: #fca5a5;
   }
 }
