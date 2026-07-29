@@ -12,13 +12,13 @@
 // ─────────────────────────────────────────────────────────────
 export type UserRole =
   | 'ADMIN'
-  | 'Warehouse Manager'
-  | 'Sales Executive'
-  | 'Distribution Manager'
-  | 'Management';
+  | 'WAREHOUSE MANAGER'
+  | 'SALES EXECUTIVE'
+  | 'DISTRIBUTION MANAGER'
+  | 'MANAGER';
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   email: string;
   role: UserRole;
@@ -31,13 +31,34 @@ export interface AuthCredentials {
   password: string;
 }
 
+/** POST /api/users — request body */
+export interface CreateUserRequest {
+  username: string;
+  email:    string;
+  password: string;
+  role:     UserRole;
+}
+
+/** POST /api/users — response envelope */
+export interface CreateUserApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id:        number;
+    email:     string;
+    role:      string;
+    status:    string;
+    createdAt: string;
+  };
+}
+
 /** Exact shape returned by POST /api/auth/login */
 export interface LoginApiResponse {
   data: {
     token: string;
     tokenType: string;
     expiresIn: number;
-    userId: string;
+    userId: number;
     username: string;
     email: string;
     role: string;

@@ -35,7 +35,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule),
       },
 
-      // Administrator, Management, Warehouse Manager, Sales Executive, Distribution Manager (readonly per role)
+      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER (readonly per role)
       {
         path: 'products',
         canActivate: [RoleGuard],
@@ -43,7 +43,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/products/products.module').then(m => m.ProductsModule),
       },
 
-      // Administrator, Management, Warehouse Manager
+      // Administrator, MANAGER, WAREHOUSE MANAGER
       {
         path: 'warehouses',
         canActivate: [RoleGuard],
@@ -51,7 +51,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/warehouses/warehouses.module').then(m => m.WarehousesModule),
       },
 
-      // Administrator, Management, Warehouse Manager
+      // Administrator, MANAGER, WAREHOUSE MANAGER
       {
         path: 'inventory',
         canActivate: [RoleGuard],
@@ -59,7 +59,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/inventory/inventory.module').then(m => m.InventoryModule),
       },
 
-      // Administrator, Management, Sales Executive, Distribution Manager
+      // Administrator, MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER
       {
         path: 'orders',
         canActivate: [RoleGuard],
@@ -67,7 +67,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/orders/orders.module').then(m => m.OrdersModule),
       },
 
-      // Administrator, Management, Distribution Manager
+      // Administrator, MANAGER, DISTRIBUTION MANAGER
       {
         path: 'shipments',
         canActivate: [RoleGuard],
@@ -75,7 +75,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/shipments/shipments.module').then(m => m.ShipmentsModule),
       },
 
-      // Administrator, Management, Warehouse Manager, Sales Executive, Distribution Manager
+      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER
       {
         path: 'reports',
         canActivate: [RoleGuard],
@@ -83,7 +83,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule),
       },
 
-      // Administrator, Management
+      // Administrator, MANAGER
       {
         path: 'audit',
         canActivate: [RoleGuard],

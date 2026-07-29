@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
-import { User, UserRole } from '../../../core/models/index';
+import { User, UserRole, CreateUserRequest } from '../../../core/models/index';
+
+type Userform = Omit<User, 'id'> & {
+  id?:number;
+}
 
 @Component({
   selector: 'app-user-list',
@@ -16,7 +21,7 @@ export class UserListComponent implements OnInit {
   filterStatus = '';
   showFormModal   = false;
   showDeleteModal = false;
-  selectedUser: User | null = null;
+  selectedUser: Userform | null = null;
   isEditMode     = false;
   currentPage    = 1;
   pageSize       = 10;
@@ -26,7 +31,7 @@ export class UserListComponent implements OnInit {
   saving   = false;
   errorMsg = '';
 
-  roles: UserRole[] = ['ADMIN', 'Warehouse Manager', 'Sales Executive', 'Distribution Manager', 'Management'];
+  roles: UserRole[] = ['ADMIN', 'WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
 
   private avatarColors: Record<string, string> = {};
   private palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#f5f3ff', '#ffedd5'];
@@ -71,7 +76,7 @@ export class UserListComponent implements OnInit {
 
   openAddModal(): void {
     this.isEditMode   = false;
-    this.selectedUser = { id: '', username: '', email: '', role: 'Sales Executive', status: 'Active', createdAt: '' };
+    this.selectedUser = { username: '', email: '', role: 'SALES EXECUTIVE', status: 'Active', createdAt: '' };
     this.modalPassword = '';
     this.formErrors    = {};
     this.errorMsg      = '';
@@ -115,16 +120,25 @@ export class UserListComponent implements OnInit {
     if (Object.keys(this.formErrors).length) return;
     this.saving = true;
 
-    const payload: Omit<User, 'id' | 'createdAt'> = {
-      username: this.selectedUser.username,
-      email:    this.selectedUser.email,
-      role:     this.selectedUser.role,
-      status:   this.selectedUser.status,
-    };
+    let action$: Observable<User>;
 
-    const action$ = this.isEditMode
-      ? this.userService.update(this.selectedUser.id, payload)
-      : this.userService.create(payload);
+    if (this.isEditMode) {
+      const editPayload: Omit<User, 'id' | 'createdAt'> = {
+        username: this.selectedUser.username,
+        email:    this.selectedUser.email,
+        role:     this.selectedUser.role,
+        status:   this.selectedUser.status,
+      };
+      action$ = this.userService.update(this.selectedUser.id!, editPayload);
+    } else {
+      const createPayload: CreateUserRequest = {
+        username: this.selectedUser.username,
+        email:    this.selectedUser.email,
+        password: this.modalPassword,
+        role:     this.selectedUser.role,
+      };
+      action$ = this.userService.create(createPayload);
+    }
 
     action$.subscribe({
       next: (saved) => {
@@ -152,7 +166,7 @@ export class UserListComponent implements OnInit {
   deleteUser(): void {
     if (!this.selectedUser) return;
     // Soft-delete via status toggle (BRD BR021: soft deletion)
-    this.userService.toggleStatus(this.selectedUser.id).subscribe({
+    this.userService.toggleStatus(this.selectedUser.id!).subscribe({
       next: (updated) => {
         const idx = this.users.findIndex(u => u.id === updated.id);
         if (idx > -1) this.users[idx] = updated;
@@ -173,10 +187,10 @@ export class UserListComponent implements OnInit {
   roleClass(role: string): string {
     const map: Record<string, string> = {
       'ADMIN':        'role-admin',
-      'Warehouse Manager':    'role-wm',
-      'Sales Executive':      'role-sales',
-      'Distribution Manager': 'role-dist',
-      'Management':           'role-mgmt',
+      'WAREHOUSE MANAGER':    'role-wm',
+      'SALES EXECUTIVE':      'role-sales',
+      'DISTRIBUTION MANAGER': 'role-dist',
+      'MANAGER':           'role-mgmt',
     };
     return map[role] || '';
   }

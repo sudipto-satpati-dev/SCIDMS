@@ -82,29 +82,29 @@ export class MockApiService {
   // ─────────────────────────────────────────────────────────────
   getUsers(): Observable<User[]> { return this.respond(this.users); }
 
-  createUser(data: Omit<User, 'id' | 'createdAt'>): Observable<User> {
-    const duplicate = this.users.find(u => u.username === data.username || u.email === data.email);
-    if (duplicate) return this.fail('Username or email already exists.');
-    const newUser: User = {
-      ...data,
-      id: `USR-${1000 + this.users.length + 1}`,
-      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-    };
-    this.users.push(newUser);
-    this._addAudit('Created', 'USERS', newUser.id, 'NULL', `[${newUser.username}]`, 'User created', newUser.username);
-    return this.respond(newUser);
-  }
+  // createUser(data: Omit<User, 'id' | 'createdAt'>): Observable<User> {
+  //   const duplicate = this.users.find(u => u.username === data.username || u.email === data.email);
+  //   if (duplicate) return this.fail('Username or email already exists.');
+  //   const newUser: User = {
+  //     ...data,
+  //     id: `USR-${1000 + this.users.length + 1}`,
+  //     createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+  //   };
+  //   this.users.push(newUser);
+  //   this._addAudit('Created', 'USERS', newUser.id, 'NULL', `[${newUser.username}]`, 'User created', newUser.username);
+  //   return this.respond(newUser);
+  // }
 
-  updateUser(id: string, data: Partial<User>): Observable<User> {
+  updateUser(id: number, data: Partial<User>): Observable<User> {
     const idx = this.users.findIndex(u => u.id === id);
     if (idx === -1) return this.fail('User not found.');
     const old = { ...this.users[idx] };
     this.users[idx] = { ...this.users[idx], ...data };
-    this._addAudit('Updated', 'USERS', id, `[${old.status}]`, `[${this.users[idx].status}]`, 'User updated', data.username || id);
+   // this._addAudit('Updated', 'USERS', id, `[${old.status}]`, `[${this.users[idx].status}]`, 'User updated', data.username || id);
     return this.respond(this.users[idx]);
   }
 
-  toggleUserStatus(id: string): Observable<User> {
+  toggleUserStatus(id: number): Observable<User> {
     const idx = this.users.findIndex(u => u.id === id);
     if (idx === -1) return this.fail('User not found.');
     const newStatus = this.users[idx].status === 'Active' ? 'Inactive' : 'Active';

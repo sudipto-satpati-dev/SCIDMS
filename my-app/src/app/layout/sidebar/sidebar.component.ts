@@ -24,7 +24,7 @@ export class SidebarComponent {
     { label: 'Warehouses',       route: '/warehouses', role: 'warehouses', icon: 'home'  },
     { label: 'Orders',           route: '/orders',     role: 'orders',     icon: 'cart'  },
     { label: 'Shipments',        route: '/shipments',  role: 'shipments',  icon: 'truck' },
-    { label: 'User Management',  route: '/users',      role: 'users',      icon: 'users' },
+    { label: 'User MANAGER',  route: '/users',      role: 'users',      icon: 'users' },
     { label: 'Inventory',        route: '/inventory',  role: 'inventory',  icon: 'list'  },
     { label: 'Reports',          route: '/reports',    role: 'reports',    icon: 'bar'   },
     { label: 'Audit',            route: '/audit',      role: 'audit',      icon: 'file'  },

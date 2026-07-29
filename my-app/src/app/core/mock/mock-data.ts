@@ -15,14 +15,14 @@ import {
 // USERS
 // ─────────────────────────────────────────────────────────────
 export const MOCK_USERS: User[] = [
-  { id: 'USR-1001', username: 'alex.rivera',   email: 'a.rivera@scidms-logistics.com', role: 'ADMIN',        status: 'Active',   createdAt: 'Oct 12, 2023' },
-  { id: 'USR-1002', username: 'sarah.j_mgmt',  email: 's.jordan@scidms.io',            role: 'Warehouse Manager',    status: 'Active',   createdAt: 'Oct 15, 2023' },
-  { id: 'USR-1003', username: 'mark.h_sales',  email: 'm.hendricks@scidms.io',         role: 'Sales Executive',      status: 'Inactive', createdAt: 'Nov 02, 2023' },
-  { id: 'USR-1004', username: 'lindsey.wu',     email: 'l.wu@scidms.io',               role: 'ADMIN',        status: 'Active',   createdAt: 'Nov 10, 2023' },
-  { id: 'USR-1005', username: 'ben.kline',      email: 'b.kline@scidms.io',            role: 'Sales Executive',      status: 'Active',   createdAt: 'Dec 01, 2023' },
-  { id: 'USR-1006', username: 'priya.sharma',   email: 'p.sharma@scidms.io',           role: 'Distribution Manager', status: 'Active',   createdAt: 'Dec 14, 2023' },
-  { id: 'USR-1007', username: 'james.wright',   email: 'j.wright@scidms.io',           role: 'Management',           status: 'Active',   createdAt: 'Jan 03, 2024' },
-  { id: 'USR-1008', username: 'nina.patel',     email: 'n.patel@scidms.io',            role: 'Warehouse Manager',    status: 'Inactive', createdAt: 'Jan 20, 2024' },
+  { id: 1001, username: 'alex.rivera',   email: 'a.rivera@scidms-logistics.com', role: 'ADMIN',        status: 'Active',   createdAt: 'Oct 12, 2023' },
+  { id: 1002, username: 'sarah.j_mgmt',  email: 's.jordan@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Active',   createdAt: 'Oct 15, 2023' },
+  { id: 1003, username: 'mark.h_sales',  email: 'm.hendricks@scidms.io',         role: 'SALES EXECUTIVE',      status: 'Inactive', createdAt: 'Nov 02, 2023' },
+  { id: 1004, username: 'lindsey.wu',     email: 'l.wu@scidms.io',               role: 'ADMIN',        status: 'Active',   createdAt: 'Nov 10, 2023' },
+  { id: 1005, username: 'ben.kline',      email: 'b.kline@scidms.io',            role: 'SALES EXECUTIVE',      status: 'Active',   createdAt: 'Dec 01, 2023' },
+  { id: 1006, username: 'priya.sharma',   email: 'p.sharma@scidms.io',           role: 'DISTRIBUTION MANAGER', status: 'Active',   createdAt: 'Dec 14, 2023' },
+  { id: 1007, username: 'james.wright',   email: 'j.wright@scidms.io',           role: 'MANAGER',           status: 'Active',   createdAt: 'Jan 03, 2024' },
+  { id: 1008, username: 'nina.patel',     email: 'n.patel@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Inactive', createdAt: 'Jan 20, 2024' },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -244,7 +244,7 @@ export const MOCK_SHIPMENTS: Shipment[] = [
     estimatedArrival: 'Returned to Warehouse',
     failureReason: 'Customer Unavailable / Premises Closed', nextAction: 'Return to Warehouse',
     history: [
-      { status: 'Returned',           changedBy: 'Distribution Manager', timestamp: 'Oct 17, 2026 • 11:00 AM', notes: 'Delivery failed: Premises closed. Stock returned to hub.' },
+      { status: 'Returned',           changedBy: 'DISTRIBUTION MANAGER', timestamp: 'Oct 17, 2026 • 11:00 AM', notes: 'Delivery failed: Premises closed. Stock returned to hub.' },
       { status: 'In Transit',         changedBy: 'System Auto-Scan',     timestamp: 'Oct 16, 2026 • 09:00 AM', notes: 'Delivery attempt failed'                               },
       { status: 'Ready for Dispatch', changedBy: 'David Miller',         timestamp: 'Oct 15, 2026 • 01:15 PM', notes: 'Dispatched to route 4'                                  },
       { status: 'Created',            changedBy: 'Inventory Manager',    timestamp: 'Oct 14, 2026 • 03:00 PM', notes: 'Initial order shipment creation'                        },
@@ -258,7 +258,7 @@ export const MOCK_SHIPMENTS: Shipment[] = [
     vehicleId: 'Unassigned', originHub: 'South Central Hub', originAddress: '50 Industrial Blvd, Rajshahi',
     estimatedArrival: 'TBD',
     history: [
-      { status: 'Created', changedBy: 'Distribution Manager', timestamp: 'Oct 26, 2026 • 09:00 AM', notes: 'Shipment created and queued for allocation' }
+      { status: 'Created', changedBy: 'DISTRIBUTION MANAGER', timestamp: 'Oct 26, 2026 • 09:00 AM', notes: 'Shipment created and queued for allocation' }
     ]
   },
 ];
