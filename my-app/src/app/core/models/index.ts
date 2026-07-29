@@ -11,7 +11,7 @@
 // Auth / Users
 // ─────────────────────────────────────────────────────────────
 export type UserRole =
-  | 'Administrator'
+  | 'ADMIN'
   | 'Warehouse Manager'
   | 'Sales Executive'
   | 'Distribution Manager'
@@ -23,12 +23,28 @@ export interface User {
   email: string;
   role: UserRole;
   status: 'Active' | 'Inactive';
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface AuthCredentials {
-  username: string;
+  usernameOrEmail: string;
   password: string;
+}
+
+/** Exact shape returned by POST /api/auth/login */
+export interface LoginApiResponse {
+  data: {
+    token: string;
+    tokenType: string;
+    expiresIn: number;
+    userId: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+  message: string;
+  success: boolean;
+  timestamp: string;
 }
 
 export interface AuthResponse {

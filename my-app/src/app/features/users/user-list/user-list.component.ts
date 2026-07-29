@@ -26,7 +26,7 @@ export class UserListComponent implements OnInit {
   saving   = false;
   errorMsg = '';
 
-  roles: UserRole[] = ['Administrator', 'Warehouse Manager', 'Sales Executive', 'Distribution Manager', 'Management'];
+  roles: UserRole[] = ['ADMIN', 'Warehouse Manager', 'Sales Executive', 'Distribution Manager', 'Management'];
 
   private avatarColors: Record<string, string> = {};
   private palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#f5f3ff', '#ffedd5'];
@@ -172,7 +172,7 @@ export class UserListComponent implements OnInit {
 
   roleClass(role: string): string {
     const map: Record<string, string> = {
-      'Administrator':        'role-admin',
+      'ADMIN':        'role-admin',
       'Warehouse Manager':    'role-wm',
       'Sales Executive':      'role-sales',
       'Distribution Manager': 'role-dist',
