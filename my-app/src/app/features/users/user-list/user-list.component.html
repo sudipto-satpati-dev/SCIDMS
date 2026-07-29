@@ -11,14 +11,14 @@
     <h1>User MANAGER</h1>
     <div class="header-controls">
       <div class="filter-select-wrap">
-        <select [(ngModel)]="filterRole">
+        <select [(ngModel)]="filterRole" (ngModelChange)="onFilterChange()">
           <option value="">Role: All</option>
           <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
         </select>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="filter-select-wrap">
-        <select [(ngModel)]="filterStatus">
+        <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()">
           <option value="">Status: All</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
@@ -37,7 +37,7 @@
     <div class="kpi-card">
       <div class="kpi-left">
         <span class="kpi-label">TOTAL USERS</span>
-        <span class="kpi-value">{{ users.length }}</span>
+        <span class="kpi-value">{{ totalElements }}</span>
         <span class="kpi-trend positive">↑+12% from last month</span>
       </div>
       <div class="kpi-icon-wrap blue">

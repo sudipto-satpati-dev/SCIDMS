@@ -52,6 +52,37 @@ export interface CreateUserApiResponse {
   };
 }
 
+/** Query params accepted by GET /api/users */
+export interface UserListParams {
+  search?:  string;
+  role?:    string;
+  status?:  string;
+  page?:    number;
+  size?:    number;
+  sort?:    string;   // e.g. 'createdAt,desc'
+}
+
+/** GET /api/users — response envelope */
+export interface UserListApiResponse {
+  success:   boolean;
+  message:   string;
+  timestamp: string;
+  data: {
+    users: {
+      id:        number;
+      username:  string;
+      email:     string;
+      role:      string;
+      status:    string;
+      createdAt: string;
+    }[];
+    page:          number;
+    size:          number;
+    totalElements: number;
+    totalPages:    number;
+  };
+}
+
 /** Exact shape returned by POST /api/auth/login */
 export interface LoginApiResponse {
   data: {

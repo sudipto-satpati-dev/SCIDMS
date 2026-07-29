@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { User, UserRole, CreateUserRequest } from '../../../core/models/index';
 
+
 type Userform = Omit<User, 'id'> & {
   id?:number;
 }
@@ -19,6 +20,8 @@ export class UserListComponent implements OnInit {
 
   filterRole   = '';
   filterStatus = '';
+  totalElements = 0;
+  totalPages    = 1;
   showFormModal   = false;
   showDeleteModal = false;
   selectedUser: Userform | null = null;
@@ -39,10 +42,34 @@ export class UserListComponent implements OnInit {
   constructor(private userService: UserService) {}
 
   ngOnInit(): void {
-    this.userService.getAll().subscribe(data => {
-      this.users   = data;
-      this.loading = false;
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.loading = true;
+    this.userService.getAll({
+      role:   this.filterRole   || undefined,
+      status: this.filterStatus || undefined,
+      page:   this.currentPage - 1,   // API is 0-indexed
+      size:   this.pageSize,
+      sort:   'createdAt,desc',
+    }).subscribe({
+      next: (result) => {
+        this.users         = result.users;
+        this.totalElements = result.totalElements;
+        this.totalPages    = result.totalPages;
+        this.loading       = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not load users.';
+        this.loading  = false;
+      },
     });
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadUsers();
   }
 
   avatarBg(username: string): string {
@@ -53,26 +80,21 @@ export class UserListComponent implements OnInit {
   }
 
   get filtered(): User[] {
-    return this.users.filter(u => {
-      const matchRole   = !this.filterRole   || u.role === this.filterRole;
-      const matchStatus = !this.filterStatus || u.status === this.filterStatus;
-      return matchRole && matchStatus;
-    });
+    return this.users;   // filtering is now server-side
   }
 
-  get totalPages(): number  { return Math.ceil(this.filtered.length / this.pageSize) || 1; }
-  get pageStart():  number  { return (this.currentPage - 1) * this.pageSize + 1; }
-  get pageEnd():    number  { return Math.min(this.currentPage * this.pageSize, this.filtered.length); }
-  get paged():      User[]  { return this.filtered.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize); }
-  get pageNumbers(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
+  get pageStart():    number  { return this.totalElements === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1; }
+  get pageEnd():      number  { return Math.min(this.currentPage * this.pageSize, this.totalElements); }
+  get paged():        User[]  { return this.users; }   // server already returns one page
+  get pageNumbers():  number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
 
   get activeCount():   number { return this.users.filter(u => u.status === 'Active').length; }
   get inactiveCount(): number { return this.users.filter(u => u.status === 'Inactive').length; }
   get activePercent(): number { return this.users.length ? Math.round((this.activeCount / this.users.length) * 100) : 0; }
 
-  goToPage(p: number): void  { this.currentPage = p; }
-  prevPage(): void { if (this.currentPage > 1) this.currentPage--; }
-  nextPage(): void { if (this.currentPage < this.totalPages) this.currentPage++; }
+  goToPage(p: number): void  { this.currentPage = p; this.loadUsers(); }
+  prevPage(): void { if (this.currentPage > 1)               { this.currentPage--; this.loadUsers(); } }
+  nextPage(): void { if (this.currentPage < this.totalPages) { this.currentPage++; this.loadUsers(); } }
 
   openAddModal(): void {
     this.isEditMode   = false;
