@@ -22,6 +22,7 @@ import {
   UserListApiResponse,
   ToggleUserStatusRequest,
   ToggleUserStatusApiResponse,
+  ArchiveUserApiResponse,
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
@@ -44,6 +45,33 @@ export class UserService {
   // (all methods now use real API — MockApiService can be removed)
 
   // ── Real API ──────────────────────────────────────────────────────────────
+
+  /**
+   * PATCH /api/users/{id}/archive
+   * Soft-deletes a user — archived users are removed from the active list.
+   * Returns the archived user record.
+   */
+  archive(id: number): Observable<User> {
+    return this.http
+      .patch<ArchiveUserApiResponse>(`${this.usersUrl}/${id}/archive`, {})
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to archive user.' };
+          }
+          const d = res.data;
+          return {
+            id:        d.id,
+            username:  d.username,
+            email:     d.email,
+            role:      d.role as UserRole,
+            status:    d.status as 'Active' | 'Inactive',
+            createdAt: d.createdAt,
+          } as User;
+        }),
+        catchError(this._handleError),
+      );
+  }
 
   /**
    * PATCH /api/users/{id}/status

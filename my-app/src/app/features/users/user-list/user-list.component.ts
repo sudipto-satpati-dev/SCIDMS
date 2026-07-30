@@ -190,11 +190,15 @@ export class UserListComponent implements OnInit {
 
   deleteUser(): void {
     if (!this.selectedUser) return;
-    // Soft-delete via status toggle (BRD BR021: soft deletion)
-    this.userService.toggleStatus(this.selectedUser.id!, this.selectedUser.status).subscribe({
-      next: (updated) => {
-        const idx = this.users.findIndex(u => u.id === updated.id);
-        if (idx > -1) this.users[idx] = updated;
+    this.userService.archive(this.selectedUser.id!).subscribe({
+      next: (archived) => {
+        // Remove the archived user from the local list
+        this.users = this.users.filter(u => u.id !== archived.id);
+        this.totalElements = Math.max(0, this.totalElements - 1);
+        this.showDeleteModal = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not archive user.';
         this.showDeleteModal = false;
       },
     });

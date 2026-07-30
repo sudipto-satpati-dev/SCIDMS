@@ -108,3 +108,18 @@ export interface ToggleUserStatusApiResponse {
     createdAt: string;
   };
 }
+
+/** PATCH /api/users/{id}/archive — response envelope */
+export interface ArchiveUserApiResponse {
+  success:   boolean;
+  message:   string;
+  timestamp: string;
+  data: {
+    id:        number;
+    username:  string;
+    email:     string;
+    role:      string;
+    status:    string;
+    createdAt: string;
+  };
+}
