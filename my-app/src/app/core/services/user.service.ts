@@ -28,18 +28,18 @@ import { environment } from '../../../environments/environment';
 
 /** Paginated result returned by getAll() */
 export interface UserListResult {
-  users:         User[];
-  page:          number;
-  size:          number;
+  users: User[];
+  page: number;
+  size: number;
   totalElements: number;
-  totalPages:    number;
+  totalPages: number;
 }
 @Injectable({ providedIn: 'root' })
 export class UserService {
 
   private readonly usersUrl = `${environment.apiBaseUrl}/api/users`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ── Still using mock ──────────────────────────────────────────────────────
   // (all methods now use real API — MockApiService can be removed)
@@ -61,11 +61,11 @@ export class UserService {
           }
           const d = res.data;
           return {
-            id:        d.id,
-            username:  d.username,
-            email:     d.email,
-            role:      d.role as UserRole,
-            status:    d.status as 'Active' | 'Inactive',
+            id: d.id,
+            username: d.username,
+            email: d.email,
+            role: d.role as UserRole,
+            status: d.status as 'Active' | 'Inactive',
             createdAt: d.createdAt,
           } as User;
         }),
@@ -91,11 +91,11 @@ export class UserService {
           }
           const d = res.data;
           return {
-            id:        d.id,
-            username:  d.username,
-            email:     d.email,
-            role:      d.role as UserRole,
-            status:    d.status === 'ACTIVE' ? 'Active' : 'Inactive',
+            id: d.id,
+            username: d.username,
+            email: d.email,
+            role: d.role as UserRole,
+            status: d.status === 'ACTIVE' ? 'Active' : 'Inactive',
             createdAt: d.createdAt,
           } as User;
         }),
@@ -123,11 +123,11 @@ export class UserService {
           }
           const d = res.data;
           return {
-            id:        d.id,
-            username:  d.username,
-            email:     d.email,
-            role:      d.role as UserRole,
-            status:    d.status as 'Active' | 'Inactive',
+            id: d.id,
+            username: d.username,
+            email: d.email,
+            role: d.role as UserRole,
+            status: d.status as 'Active' | 'Inactive',
             createdAt: d.createdAt,
           } as User;
         }),
@@ -149,12 +149,12 @@ export class UserService {
    */
   getAll(params: UserListParams = {}): Observable<UserListResult> {
     let httpParams = new HttpParams();
-    if (params.search)  httpParams = httpParams.set('search',  params.search);
-    if (params.role)    httpParams = httpParams.set('role',    params.role);
-    if (params.status)  httpParams = httpParams.set('status',  params.status);
-    if (params.sort)    httpParams = httpParams.set('sort',    params.sort);
-    if (params.page  != null) httpParams = httpParams.set('page', params.page.toString());
-    if (params.size  != null) httpParams = httpParams.set('size', params.size.toString());
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.role) httpParams = httpParams.set('role', params.role);
+    if (params.status) httpParams = httpParams.set('status', params.status);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+    if (params.page != null) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size != null) httpParams = httpParams.set('size', params.size.toString());
 
     return this.http
       .get<UserListApiResponse>(this.usersUrl, { params: httpParams })
@@ -166,17 +166,18 @@ export class UserService {
           const d = res.data;
           return {
             users: d.users.map(u => ({
-              id:        u.id,
-              username:  u.username,
-              email:     u.email,
-              role:      u.role as UserRole,
-              status:    u.status as 'Active' | 'Inactive',
+              id: u.id,
+              username: u.username,
+              email: u.email,
+              role: u.role as UserRole,
+              status: u.status as 'Active' | 'Inactive',
               createdAt: u.createdAt,
+              hasChangedPassword: u.hasChangedPassword,
             } as User)),
-            page:          d.page,
-            size:          d.size,
+            page: d.page,
+            size: d.size,
             totalElements: d.totalElements,
-            totalPages:    d.totalPages,
+            totalPages: d.totalPages,
           };
         }),
         catchError(this._handleError),
@@ -197,11 +198,11 @@ export class UserService {
           }
           const d = res.data;
           return {
-            id:        d.id,
-            username:  data.username,
-            email:     d.email,
-            role:      d.role as UserRole,
-            status:    d.status as 'Active' | 'Inactive',
+            id: d.id,
+            username: data.username,
+            email: d.email,
+            role: d.role as UserRole,
+            status: d.status as 'Active' | 'Inactive',
             createdAt: d.createdAt,
           } as User;
         }),
@@ -215,11 +216,11 @@ export class UserService {
     if (err instanceof HttpErrorResponse) {
       const msg =
         err.error?.message ||
-        (err.status === 409 ? 'Username or email already exists.'  :
-         err.status === 400 ? 'Invalid request. Please check the form.' :
-         err.status === 403 ? 'You do not have permission to perform this action.' :
-         err.status === 0   ? 'Cannot connect to server. Please try again.' :
-         'An unexpected error occurred.');
+        (err.status === 409 ? 'Username or email already exists.' :
+          err.status === 400 ? 'Invalid request. Please check the form.' :
+            err.status === 403 ? 'You do not have permission to perform this action.' :
+              err.status === 0 ? 'Cannot connect to server. Please try again.' :
+                'An unexpected error occurred.');
       return throwError(() => ({ message: msg }));
     }
     return throwError(() => err);
