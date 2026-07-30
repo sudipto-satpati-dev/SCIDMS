@@ -88,3 +88,23 @@ export interface UserListApiResponse {
     totalPages:    number;
   };
 }
+
+/** PATCH /api/users/{id}/status — request body */
+export interface ToggleUserStatusRequest {
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+/** PATCH /api/users/{id}/status — response envelope */
+export interface ToggleUserStatusApiResponse {
+  success:   boolean;
+  message:   string;
+  timestamp: string;
+  data: {
+    id:        number;
+    username:  string;
+    email:     string;
+    role:      string;
+    status:    'ACTIVE' | 'INACTIVE';
+    createdAt: string;
+  };
+}

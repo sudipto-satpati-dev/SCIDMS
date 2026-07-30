@@ -191,7 +191,7 @@ export class UserListComponent implements OnInit {
   deleteUser(): void {
     if (!this.selectedUser) return;
     // Soft-delete via status toggle (BRD BR021: soft deletion)
-    this.userService.toggleStatus(this.selectedUser.id!).subscribe({
+    this.userService.toggleStatus(this.selectedUser.id!, this.selectedUser.status).subscribe({
       next: (updated) => {
         const idx = this.users.findIndex(u => u.id === updated.id);
         if (idx > -1) this.users[idx] = updated;
@@ -201,7 +201,8 @@ export class UserListComponent implements OnInit {
   }
 
   toggleStatus(user: User): void {
-    this.userService.toggleStatus(user.id).subscribe({
+    if (user.role === 'ADMIN') return;
+    this.userService.toggleStatus(user.id, user.status).subscribe({
       next: (updated) => {
         const idx = this.users.findIndex(u => u.id === updated.id);
         if (idx > -1) this.users[idx] = updated;

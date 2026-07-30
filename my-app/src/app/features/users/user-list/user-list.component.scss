@@ -282,6 +282,7 @@
 
   &:hover { background: #f1f5f9; color: #0f172a; }
   &.btn-icon-danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 }
 
 // ── Pagination / footer ───────────────────────────────────

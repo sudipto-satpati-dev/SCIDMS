@@ -11,8 +11,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-
-import { MockApiService } from './mock-api.service';
 import {
   User,
   UserRole,
@@ -22,6 +20,8 @@ import {
   UpdateUserApiResponse,
   UserListParams,
   UserListApiResponse,
+  ToggleUserStatusRequest,
+  ToggleUserStatusApiResponse,
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
@@ -38,13 +38,42 @@ export class UserService {
 
   private readonly usersUrl = `${environment.apiBaseUrl}/api/users`;
 
-  constructor(
-    private http: HttpClient,
-    private api:  MockApiService,   // remove once update() & toggleStatus() are real
-  ) {}
+  constructor(private http: HttpClient) {}
 
   // ── Still using mock ──────────────────────────────────────────────────────
-  toggleStatus(id: number): Observable<User> { return this.api.toggleUserStatus(id); }
+  // (all methods now use real API — MockApiService can be removed)
+
+  // ── Real API ──────────────────────────────────────────────────────────────
+
+  /**
+   * PATCH /api/users/{id}/status
+   * Toggles between Active and Inactive.
+   * Backend expects ACTIVE/INACTIVE; frontend model uses Active/Inactive.
+   */
+  toggleStatus(id: number, currentStatus: 'Active' | 'Inactive'): Observable<User> {
+    const next: ToggleUserStatusRequest = {
+      status: currentStatus === 'Active' ? 'INACTIVE' : 'ACTIVE',
+    };
+    return this.http
+      .patch<ToggleUserStatusApiResponse>(`${this.usersUrl}/${id}/status`, next)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to update user status.' };
+          }
+          const d = res.data;
+          return {
+            id:        d.id,
+            username:  d.username,
+            email:     d.email,
+            role:      d.role as UserRole,
+            status:    d.status === 'ACTIVE' ? 'Active' : 'Inactive',
+            createdAt: d.createdAt,
+          } as User;
+        }),
+        catchError(this._handleError),
+      );
+  }
 
   // ── Real API ──────────────────────────────────────────────────────────────
 
