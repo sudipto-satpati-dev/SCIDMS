@@ -523,6 +523,18 @@
   gap: 8px;
 }
 
+// Read-only status display (used inside add/edit modal)
+.status-locked-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: not-allowed;
+  user-select: none;
+}
 .toggle-option {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
-import { User, UserRole, CreateUserRequest } from '../../../core/models/index';
+import { User, UserRole, CreateUserRequest, UpdateUserRequest } from '../../../core/models/index';
 
 
 type Userform = Omit<User, 'id'> & {
@@ -34,7 +34,11 @@ export class UserListComponent implements OnInit {
   saving   = false;
   errorMsg = '';
 
+  // Roles available in the page filter (includes ADMIN for searching existing admins)
   roles: UserRole[] = ['ADMIN', 'WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
+
+  // Roles assignable when creating/editing a user — ADMIN excluded (assigned via backend only)
+  assignableRoles: UserRole[] = ['WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
 
   private avatarColors: Record<string, string> = {};
   private palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#f5f3ff', '#ffedd5'];
@@ -145,11 +149,10 @@ export class UserListComponent implements OnInit {
     let action$: Observable<User>;
 
     if (this.isEditMode) {
-      const editPayload: Omit<User, 'id' | 'createdAt'> = {
+      const editPayload: UpdateUserRequest = {
         username: this.selectedUser.username,
         email:    this.selectedUser.email,
         role:     this.selectedUser.role,
-        status:   this.selectedUser.status,
       };
       action$ = this.userService.update(this.selectedUser.id!, editPayload);
     } else {

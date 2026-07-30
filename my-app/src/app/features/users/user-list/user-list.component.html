@@ -186,36 +186,66 @@
       <!-- Role -->
       <div class="form-group" [class.has-error]="formErrors['role']">
         <label>User Role <span class="req">*</span></label>
-        <div class="select-wrap">
-          <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-          <select [(ngModel)]="selectedUser.role" (change)="validateField('role')" [class.placeholder-selected]="!selectedUser.role">
-            <option value="" disabled>Select assigned role</option>
-            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
-          </select>
-          <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <span class="field-error" *ngIf="formErrors['role']">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {{ formErrors['role'] }}
-        </span>
+
+        <!-- Editing an ADMIN: role is locked, cannot be changed -->
+        <ng-container *ngIf="isEditMode && selectedUser!.role === 'ADMIN'">
+          <div class="select-wrap">
+            <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <select [(ngModel)]="selectedUser!.role" disabled>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+            <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <p class="field-hint">Admin role cannot be changed from this panel.</p>
+        </ng-container>
+
+        <!-- Add mode or editing a non-admin: show assignable roles -->
+        <ng-container *ngIf="!isEditMode || selectedUser!.role !== 'ADMIN'">
+          <div class="select-wrap">
+            <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <select [(ngModel)]="selectedUser!.role" (change)="validateField('role')" [class.placeholder-selected]="!selectedUser!.role">
+              <option value="" disabled>Select assigned role</option>
+              <option *ngFor="let r of assignableRoles" [value]="r">{{ r }}</option>
+            </select>
+            <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <span class="field-error" *ngIf="formErrors['role']">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ formErrors['role'] }}
+          </span>
+        </ng-container>
       </div>
 
-      <!-- Status toggle -->
+      <!-- Status — locked field, behaviour differs by mode -->
       <div class="form-group">
         <label>Account Status</label>
-        <div class="status-toggle-row">
-          <button class="toggle-option" [class.toggle-active]="selectedUser.status === 'Active'" (click)="selectedUser.status = 'Active'">
-            <span class="toggle-dot green"></span> Active
-          </button>
-          <button class="toggle-option" [class.toggle-inactive]="selectedUser.status === 'Inactive'" (click)="selectedUser.status = 'Inactive'">
-            <span class="toggle-dot gray"></span> Inactive
-          </button>
-        </div>
-        <p class="field-hint">Active users can log in immediately. Inactive users are blocked from access.</p>
+
+        <!-- ADD mode: always Active, cannot change -->
+        <ng-container *ngIf="!isEditMode">
+          <div class="status-locked-row">
+            <span class="status-dot dot-active"></span>
+            <span class="status-text text-active">ACTIVE</span>
+          </div>
+          <p class="field-hint">New users are always created as Active. You can disable them later from this page.</p>
+        </ng-container>
+
+        <!-- EDIT mode: show current status as read-only -->
+        <ng-container *ngIf="isEditMode">
+          <div class="status-locked-row">
+            <span class="status-dot" [ngClass]="selectedUser!.status === 'Active' ? 'dot-active' : 'dot-inactive'"></span>
+            <span class="status-text" [ngClass]="selectedUser!.status === 'Active' ? 'text-active' : 'text-inactive'">
+              {{ selectedUser!.status === 'Active' ? 'ACTIVE' : 'INACTIVE' }}
+            </span>
+          </div>
+          <p class="field-hint">
+            This is an {{ selectedUser!.status === 'Active' ? 'active' : 'inactive' }} user.
+            To change their status, use the toggle button on the User Management page.
+          </p>
+        </ng-container>
       </div>
 
-      <!-- Temporary Password -->
-      <div class="form-group" [class.has-error]="formErrors['password']">
+      <!-- Temporary Password — only shown when creating a new user -->
+      <div class="form-group" *ngIf="!isEditMode" [class.has-error]="formErrors['password']">
         <label>Temporary Password <span class="req">*</span></label>
         <div class="input-wrap">
           <svg class="input-prefix-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>

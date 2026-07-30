@@ -18,6 +18,8 @@ import {
   UserRole,
   CreateUserRequest,
   CreateUserApiResponse,
+  UpdateUserRequest,
+  UpdateUserApiResponse,
   UserListParams,
   UserListApiResponse,
 } from '../models/index';
@@ -42,8 +44,39 @@ export class UserService {
   ) {}
 
   // ── Still using mock ──────────────────────────────────────────────────────
-  update(id: number, data: Partial<User>): Observable<User>  { return this.api.updateUser(id, data); }
-  toggleStatus(id: number): Observable<User>                 { return this.api.toggleUserStatus(id); }
+  toggleStatus(id: number): Observable<User> { return this.api.toggleUserStatus(id); }
+
+  // ── Real API ──────────────────────────────────────────────────────────────
+
+  /**
+   * PUT /api/users/{id}
+   * Body: { username, email, role }
+   * Role is omitted when editing an ADMIN — backend blocks that field for admins.
+   */
+  update(id: number, data: UpdateUserRequest): Observable<User> {
+    const payload: Partial<UpdateUserRequest> = { username: data.username, email: data.email };
+    if (data.role !== 'ADMIN') payload.role = data.role;
+
+    return this.http
+      .put<UpdateUserApiResponse>(`${this.usersUrl}/${id}`, payload)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to update user.' };
+          }
+          const d = res.data;
+          return {
+            id:        d.id,
+            username:  d.username,
+            email:     d.email,
+            role:      d.role as UserRole,
+            status:    d.status as 'Active' | 'Inactive',
+            createdAt: d.createdAt,
+          } as User;
+        }),
+        catchError(this._handleError),
+      );
+  }
 
   // ── Real API ──────────────────────────────────────────────────────────────
 

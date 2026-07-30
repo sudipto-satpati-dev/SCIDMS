@@ -52,6 +52,28 @@ export interface CreateUserApiResponse {
   };
 }
 
+/** PUT /api/users/{id} — request body */
+export interface UpdateUserRequest {
+  username: string;
+  email:    string;
+  role?:    UserRole;   // omitted when editing an ADMIN
+}
+
+/** PUT /api/users/{id} — response envelope */
+export interface UpdateUserApiResponse {
+  success:   boolean;
+  message:   string;
+  timestamp: string;
+  data: {
+    id:        number;
+    username:  string;
+    email:     string;
+    role:      string;
+    status:    string;
+    createdAt: string;
+  };
+}
+
 /** Query params accepted by GET /api/users */
 export interface UserListParams {
   search?:  string;
