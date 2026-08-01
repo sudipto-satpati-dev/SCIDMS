@@ -1,0 +1,25 @@
+<button
+  type="button"
+  class="btn-th-sort"
+  (click)="toggleSort()"
+  [class.active]="isActive"
+  [title]="direction === 'asc' ? 'Sorted Ascending (Click for Descending)' : direction === 'desc' ? 'Sorted Descending (Click for Ascending)' : 'Sort Column'"
+>
+  <!-- Inactive / Default Sort Arrows Icon -->
+  <svg *ngIf="!direction" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m7 15 5 5 5-5"></path>
+    <path d="m7 9 5-5 5 5"></path>
+  </svg>
+
+  <!-- Active Ascending Arrow ↑ -->
+  <svg *ngIf="direction === 'asc'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 19V5"></path>
+    <path d="m5 12 7-7 7 7"></path>
+  </svg>
+
+  <!-- Active Descending Arrow ↓ -->
+  <svg *ngIf="direction === 'desc'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14"></path>
+    <path d="m19 12-7 7-7-7"></path>
+  </svg>
+</button>

@@ -107,7 +107,16 @@
           </th>
           <th>ROLE</th>
           <th>STATUS</th>
-          <th>CREATED DATE</th>
+          <th>
+            <div class="th-with-search">
+              <span>CREATED DATE</span>
+              <app-table-sort
+                field="createdAt"
+                [currentSort]="sortParam"
+                (sortChange)="onSortChange($event)"
+              ></app-table-sort>
+            </div>
+          </th>
           <th>ACTIONS</th>
         </tr>
       </thead>

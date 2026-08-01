@@ -21,6 +21,7 @@ export class UserListComponent implements OnInit {
   filterRole = '';
   filterStatus = '';
   searchTerm = '';
+  sortParam = 'createdAt,desc';
 
   totalElements = 0;
   totalPages = 1;
@@ -57,6 +58,12 @@ export class UserListComponent implements OnInit {
     this.loadUsers();
   }
 
+  onSortChange(newSort: string): void {
+    this.sortParam = newSort;
+    this.currentPage = 1;
+    this.loadUsers();
+  }
+
   loadUsers(): void {
     this.loading = true;
     this.userService.getAll({
@@ -65,7 +72,7 @@ export class UserListComponent implements OnInit {
       status: this.filterStatus || undefined,
       page: this.currentPage - 1,   // API is 0-indexed
       size: this.pageSize,
-      sort: 'createdAt,desc',
+      sort: this.sortParam,
     }).subscribe({
       next: (result) => {
         this.users = result.users;
