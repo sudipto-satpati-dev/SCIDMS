@@ -16,6 +16,7 @@ export interface LoginApiResponse {
     username: string;
     email: string;
     role: string;
+    hasChangedPassword?: boolean;
   };
   message: string;
   success: boolean;

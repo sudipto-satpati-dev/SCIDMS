@@ -12,9 +12,16 @@ export class AuthGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    if (this.auth.isLoggedIn) return true;
+    if (this.auth.isLoggedIn) {
+      if (this.auth.currentUser?.hasChangedPassword === false) {
+        this.router.navigate(['/auth/change-password']);
+        return false;
+      }
+      return true;
+    }
     // Store attempted URL so we can redirect back after login
     this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 }
+ 

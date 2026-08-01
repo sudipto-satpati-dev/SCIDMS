@@ -33,10 +33,14 @@ export class LoginComponent {
     this.auth
       .login(this.credentials.usernameOrEmail.trim(), this.credentials.password)
       .subscribe({
-        next: () => {
+        next: (user) => {
           this.isLoading = false;
-          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-          this.router.navigateByUrl(returnUrl ?? this.auth.homeRoute());
+          if (user.hasChangedPassword === false) {
+            this.router.navigate(['/auth/change-password']);
+          } else {
+            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+            this.router.navigateByUrl(returnUrl ?? this.auth.homeRoute());
+          }
         },
         error: (err) => {
           this.isLoading    = false;

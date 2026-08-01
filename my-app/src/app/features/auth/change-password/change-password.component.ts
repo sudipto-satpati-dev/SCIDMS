@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-change-password',
@@ -19,7 +20,7 @@ export class ChangePasswordComponent {
   errorMessage = '';
   successMessage = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private auth: AuthService) {}
 
   // ── Live validation getters ────────────────────────────────
   get hasMinLength(): boolean {
@@ -71,15 +72,18 @@ export class ChangePasswordComponent {
 
     this.isLoading = true;
 
-    // TODO: wire up auth service — POST to /api/auth/change-password
-    // Body: { currentPassword, newPassword }
-    // On success: clear session flag isFirstTimeLogin, redirect to dashboard
-    setTimeout(() => {
-      this.isLoading = false;
-      this.successMessage = 'Password updated successfully. Redirecting to your dashboard...';
-      setTimeout(() => {
-        this.router.navigate(['/dashboard']);
-      }, 1800);
-    }, 900);
+    this.auth.changePassword(this.currentPassword, this.newPassword).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.successMessage = res.message || 'Password updated successfully. Redirecting to your dashboard...';
+        setTimeout(() => {
+          this.router.navigateByUrl(this.auth.homeRoute());
+        }, 1500);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err?.message || 'Failed to update password. Please try again.';
+      }
+    });
   }
 }

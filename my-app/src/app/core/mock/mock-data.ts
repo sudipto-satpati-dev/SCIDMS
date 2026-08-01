@@ -15,15 +15,15 @@ import {
 // USERS
 // ─────────────────────────────────────────────────────────────
 export const MOCK_USERS: User[] = [
-  { id: 1001, username: 'alex.rivera',   email: 'a.rivera@scidms-logistics.com', role: 'ADMIN',        status: 'Active',   createdAt: 'Oct 12, 2023' },
-  { id: 1002, username: 'sarah.j_mgmt',  email: 's.jordan@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Active',   createdAt: 'Oct 15, 2023' },
-  { id: 1003, username: 'mark.h_sales',  email: 'm.hendricks@scidms.io',         role: 'SALES EXECUTIVE',      status: 'Inactive', createdAt: 'Nov 02, 2023' },
-  { id: 1004, username: 'lindsey.wu',     email: 'l.wu@scidms.io',               role: 'ADMIN',        status: 'Active',   createdAt: 'Nov 10, 2023' },
-  { id: 1005, username: 'ben.kline',      email: 'b.kline@scidms.io',            role: 'SALES EXECUTIVE',      status: 'Active',   createdAt: 'Dec 01, 2023' },
-  { id: 1006, username: 'priya.sharma',   email: 'p.sharma@scidms.io',           role: 'DISTRIBUTION MANAGER', status: 'Active',   createdAt: 'Dec 14, 2023' },
-  { id: 1007, username: 'james.wright',   email: 'j.wright@scidms.io',           role: 'MANAGER',           status: 'Active',   createdAt: 'Jan 03, 2024' },
-  { id: 1008, username: 'nina.patel',     email: 'n.patel@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Inactive', createdAt: 'Jan 20, 2024' },
-  { id: 1009, username: 'elena.v_pm',    email: 'e.vance@scidms.io',            role: 'PRODUCT MANAGER',      status: 'Active',   createdAt: 'Feb 10, 2024' },
+  { id: 1001, username: 'alex.rivera',   email: 'a.rivera@scidms-logistics.com', role: 'ADMIN',                status: 'Active',   createdAt: 'Oct 12, 2023', hasChangedPassword: true },
+  { id: 1002, username: 'sarah.j_mgmt',  email: 's.jordan@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Active',   createdAt: 'Oct 15, 2023', hasChangedPassword: true },
+  { id: 1003, username: 'mark.h_sales',  email: 'm.hendricks@scidms.io',         role: 'SALES EXECUTIVE',      status: 'Inactive', createdAt: 'Nov 02, 2023', hasChangedPassword: false },
+  { id: 1004, username: 'lindsey.wu',     email: 'l.wu@scidms.io',               role: 'ADMIN',                status: 'Active',   createdAt: 'Nov 10, 2023', hasChangedPassword: true },
+  { id: 1005, username: 'ben.kline',      email: 'b.kline@scidms.io',            role: 'SALES EXECUTIVE',      status: 'Active',   createdAt: 'Dec 01, 2023', hasChangedPassword: true },
+  { id: 1006, username: 'priya.sharma',   email: 'p.sharma@scidms.io',           role: 'DISTRIBUTION MANAGER', status: 'Active',   createdAt: 'Dec 14, 2023', hasChangedPassword: true },
+  { id: 1007, username: 'james.wright',   email: 'j.wright@scidms.io',           role: 'MANAGER',              status: 'Active',   createdAt: 'Jan 03, 2024', hasChangedPassword: true },
+  { id: 1008, username: 'nina.patel',     email: 'n.patel@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Inactive', createdAt: 'Jan 20, 2024', hasChangedPassword: false },
+  { id: 1009, username: 'elena.v_pm',    email: 'e.vance@scidms.io',            role: 'PRODUCT MANAGER',      status: 'Active',   createdAt: 'Feb 10, 2024', hasChangedPassword: false },
 ];
 
 // ─────────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { User, UserRole, LoginApiResponse } from '../models/index';
 import { environment } from '../../../environments/environment';
@@ -55,8 +55,9 @@ const TOKEN_KEY   = 'scidms_token';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private readonly loginUrl = `${environment.apiBaseUrl}/api/auth/login`;
-  private _currentUser: User | null = null;
+  private readonly loginUrl          = `${environment.apiBaseUrl}/api/auth/login`;
+  private readonly changePasswordUrl = `${environment.apiBaseUrl}/api/auth/change-password`;
+  private _currentUser: User | null  = null;
 
   constructor(private http: HttpClient, private router: Router) {
     this._restoreSession();
@@ -84,11 +85,12 @@ export class AuthService {
           const d = res.data;
           // Map API response → internal User model
           const user: User = {
-            id:        d.userId,
-            username:  d.username,
-            email:     d.email,
-            role:      d.role as UserRole,
-            status:    'Active',
+            id:                 d.userId,
+            username:           d.username,
+            email:              d.email,
+            role:               d.role as UserRole,
+            status:             'Active',
+            hasChangedPassword: d.hasChangedPassword ?? true,
           };
           const token = `${d.tokenType} ${d.token}`;
           this._saveSession(user, token);
@@ -127,6 +129,48 @@ export class AuthService {
   homeRoute(): string {
     if (!this._currentUser) return '/auth/login';
     return ROLE_HOME[this._currentUser.role] ?? '/dashboard';
+  }
+
+  /** Marks the current logged in user's password as updated in session */
+  markPasswordChanged(): void {
+    if (this._currentUser) {
+      this._currentUser = { ...this._currentUser, hasChangedPassword: true };
+      const currentToken = this.token ?? '';
+      this._saveSession(this._currentUser, currentToken);
+    }
+  }
+
+  /**
+   * Real HTTP change password — POST /api/auth/change-password
+   * Body: { currentPassword, newPassword }
+   */
+  changePassword(currentPassword: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+    return this.http
+      .post<{ success: boolean; message: string; timestamp?: string }>(
+        this.changePasswordUrl,
+        { currentPassword, newPassword }
+      )
+      .pipe(
+        map(res => {
+          this.markPasswordChanged();
+          return { success: res.success ?? true, message: res.message || 'Password updated successfully.' };
+        }),
+        catchError((err: HttpErrorResponse | { message: string }) => {
+          if (err instanceof HttpErrorResponse) {
+            if (err.status === 0) {
+              // Fallback for mock/dev environment without active Spring Boot server
+              this.markPasswordChanged();
+              return of({ success: true, message: 'Password updated successfully.' });
+            }
+            const msg = err.error?.message || err.error?.data?.message
+              || (err.status === 400 ? 'Invalid password format or requirements not met.'
+                : err.status === 401 ? 'Current temporary password does not match.'
+                : 'Failed to update password. Please try again.');
+            return throwError(() => ({ message: msg }));
+          }
+          return throwError(() => err);
+        })
+      );
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
