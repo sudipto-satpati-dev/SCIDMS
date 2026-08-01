@@ -1,6 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { User, UserRole, CreateUserRequest, UpdateUserRequest } from '../../../core/models/index';
 
@@ -14,7 +13,7 @@ type Userform = Omit<User, 'id'> & {
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss']
 })
-export class UserListComponent implements OnInit, OnDestroy {
+export class UserListComponent implements OnInit {
 
   users: User[] = [];
   loading = true;
@@ -22,8 +21,6 @@ export class UserListComponent implements OnInit, OnDestroy {
   filterRole = '';
   filterStatus = '';
   searchTerm = '';
-  searchInput = '';
-  isSearchOpen = false;
 
   totalElements = 0;
   totalPages = 1;
@@ -39,9 +36,6 @@ export class UserListComponent implements OnInit, OnDestroy {
   saving = false;
   errorMsg = '';
 
-  private searchSubject = new Subject<string>();
-  private destroy$ = new Subject<void>();
-
   // Roles available in the page filter (includes ADMIN for searching existing admins)
   roles: UserRole[] = ['ADMIN', 'WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
 
@@ -54,42 +48,13 @@ export class UserListComponent implements OnInit, OnDestroy {
   constructor(private userService: UserService) { }
 
   ngOnInit(): void {
-    this.searchSubject
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(term => {
-        this.searchTerm = term.trim();
-        this.currentPage = 1;
-        this.loadUsers();
-      });
-
     this.loadUsers();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  onSearchInput(val: string): void {
-    this.searchSubject.next(val);
-  }
-
-  toggleSearchSidebar(): void {
-    this.isSearchOpen = !this.isSearchOpen;
-  }
-
-  closeSearchSidebar(): void {
-    this.isSearchOpen = false;
-  }
-
-  clearSearch(): void {
-    this.searchInput = '';
-    this.searchTerm = '';
-    this.searchSubject.next('');
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1;
+    this.loadUsers();
   }
 
   loadUsers(): void {

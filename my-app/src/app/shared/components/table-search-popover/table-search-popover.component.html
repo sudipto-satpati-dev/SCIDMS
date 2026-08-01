@@ -1,0 +1,58 @@
+<div class="th-search-container">
+  <!-- TH Search Button Trigger -->
+  <button
+    type="button"
+    class="btn-th-search"
+    (click)="togglePopover($event)"
+    [class.active]="appliedSearchTerm || isOpen"
+    [title]="title"
+  >
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <span class="active-dot" *ngIf="appliedSearchTerm"></span>
+  </button>
+
+  <!-- Floating Search Popover Card Modal -->
+  <div class="th-search-popover" *ngIf="isOpen" (click)="$event.stopPropagation()">
+    <div class="popover-arrow"></div>
+
+    <div class="popover-header">
+      <div class="popover-title-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span class="popover-title">{{ title }}</span>
+      </div>
+      <button type="button" class="popover-close-btn" (click)="closePopover()">&times;</button>
+    </div>
+
+    <div class="popover-body">
+      <div class="popover-input-wrap">
+        <input
+          type="text"
+          [ngModel]="searchInput"
+          (ngModelChange)="onInput($event)"
+          [placeholder]="placeholder"
+          autofocus
+        />
+        <button type="button" class="popover-clear-btn" *ngIf="searchInput" (click)="clearSearch()" title="Clear search">&times;</button>
+      </div>
+
+      <div class="popover-meta" *ngIf="appliedSearchTerm">
+        <span class="popover-term">"{{ appliedSearchTerm }}"</span>
+        <span class="popover-count" *ngIf="totalResults !== null">{{ totalResults }} result(s)</span>
+      </div>
+    </div>
+
+    <div class="popover-footer">
+      <button type="button" class="btn-popover-sub" (click)="clearSearch()" [disabled]="!searchInput && !appliedSearchTerm">Reset</button>
+      <button type="button" class="btn-popover-main" (click)="closePopover()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop to close on click outside -->
+<div class="popover-backdrop" *ngIf="isOpen" (click)="closePopover()"></div>
