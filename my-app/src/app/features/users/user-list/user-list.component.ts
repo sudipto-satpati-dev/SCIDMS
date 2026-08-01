@@ -38,10 +38,10 @@ export class UserListComponent implements OnInit {
   errorMsg = '';
 
   // Roles available in the page filter (includes ADMIN for searching existing admins)
-  roles: UserRole[] = ['ADMIN', 'WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
+  roles: UserRole[] = ['ADMIN', 'WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER', 'PRODUCT MANAGER'];
 
   // Roles assignable when creating/editing a user — ADMIN excluded (assigned via backend only)
-  assignableRoles: UserRole[] = ['WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER'];
+  assignableRoles: UserRole[] = ['WAREHOUSE MANAGER', 'SALES EXECUTIVE', 'DISTRIBUTION MANAGER', 'MANAGER', 'PRODUCT MANAGER'];
 
   private avatarColors: Record<string, string> = {};
   private palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#f5f3ff', '#ffedd5'];
@@ -237,6 +237,7 @@ export class UserListComponent implements OnInit {
       'SALES EXECUTIVE': 'role-sales',
       'DISTRIBUTION MANAGER': 'role-dist',
       'MANAGER': 'role-mgmt',
+      'PRODUCT MANAGER': 'role-pm',
     };
     return map[role] || '';
   }

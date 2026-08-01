@@ -34,15 +34,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   'DISTRIBUTION MANAGER': [
     'dashboard', 'products', 'orders', 'shipments', 'reports',
   ],
+  'PRODUCT MANAGER': [
+    'dashboard', 'products', 'reports',
+  ],
 };
 
 // Default landing route per role after login
 export const ROLE_HOME: Record<UserRole, string> = {
-  'ADMIN':        '/dashboard',
-  'MANAGER':           '/dashboard',
+  'ADMIN':                '/dashboard',
+  'MANAGER':              '/dashboard',
   'WAREHOUSE MANAGER':    '/inventory',
   'SALES EXECUTIVE':      '/orders',
   'DISTRIBUTION MANAGER': '/shipments',
+  'PRODUCT MANAGER':      '/products',
 };
 
 const SESSION_KEY = 'scidms_user';

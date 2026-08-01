@@ -35,7 +35,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule),
       },
 
-      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER (readonly per role)
+      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER, PRODUCT MANAGER
       {
         path: 'products',
         canActivate: [RoleGuard],
@@ -75,7 +75,7 @@ const routes: Routes = [
         loadChildren: () => import('./features/shipments/shipments.module').then(m => m.ShipmentsModule),
       },
 
-      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER
+      // Administrator, MANAGER, WAREHOUSE MANAGER, SALES EXECUTIVE, DISTRIBUTION MANAGER, PRODUCT MANAGER
       {
         path: 'reports',
         canActivate: [RoleGuard],

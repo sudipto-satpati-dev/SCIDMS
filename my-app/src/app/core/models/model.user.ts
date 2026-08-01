@@ -3,7 +3,8 @@ export type UserRole =
   | 'WAREHOUSE MANAGER'
   | 'SALES EXECUTIVE'
   | 'DISTRIBUTION MANAGER'
-  | 'MANAGER';
+  | 'MANAGER'
+  | 'PRODUCT MANAGER';
 
 export interface User {
   id: number;

@@ -23,6 +23,7 @@ export const MOCK_USERS: User[] = [
   { id: 1006, username: 'priya.sharma',   email: 'p.sharma@scidms.io',           role: 'DISTRIBUTION MANAGER', status: 'Active',   createdAt: 'Dec 14, 2023' },
   { id: 1007, username: 'james.wright',   email: 'j.wright@scidms.io',           role: 'MANAGER',           status: 'Active',   createdAt: 'Jan 03, 2024' },
   { id: 1008, username: 'nina.patel',     email: 'n.patel@scidms.io',            role: 'WAREHOUSE MANAGER',    status: 'Inactive', createdAt: 'Jan 20, 2024' },
+  { id: 1009, username: 'elena.v_pm',    email: 'e.vance@scidms.io',            role: 'PRODUCT MANAGER',      status: 'Active',   createdAt: 'Feb 10, 2024' },
 ];
 
 // ─────────────────────────────────────────────────────────────
