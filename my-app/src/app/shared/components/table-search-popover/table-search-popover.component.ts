@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
@@ -21,6 +21,8 @@ export class TableSearchPopoverComponent implements OnInit, OnDestroy {
   isOpen: boolean = false;
   searchInput: string = '';
   appliedSearchTerm: string = '';
+  popoverTop: string = '0px';
+  popoverLeft: string = '0px';
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -53,11 +55,33 @@ export class TableSearchPopoverComponent implements OnInit, OnDestroy {
     this.searchSubject.next(val);
   }
 
-  togglePopover(event?: Event): void {
+  togglePopover(event?: MouseEvent): void {
     if (event) {
       event.stopPropagation();
+      const target = event.currentTarget as HTMLElement;
+      this.updatePosition(target);
     }
     this.isOpen = !this.isOpen;
+  }
+
+  updatePosition(target: HTMLElement): void {
+    const rect = target.getBoundingClientRect();
+    const popoverWidth = 270;
+    const top = rect.bottom + 6;
+    let left = rect.left;
+    if (left + popoverWidth > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - popoverWidth - 16);
+    }
+    this.popoverTop = `${top}px`;
+    this.popoverLeft = `${left}px`;
+  }
+
+  @HostListener('window:resize')
+  @HostListener('window:scroll')
+  onWindowScrollResize(): void {
+    if (this.isOpen) {
+      this.closePopover();
+    }
   }
 
   closePopover(): void {
@@ -70,3 +94,4 @@ export class TableSearchPopoverComponent implements OnInit, OnDestroy {
     this.searchSubject.next('');
   }
 }
+

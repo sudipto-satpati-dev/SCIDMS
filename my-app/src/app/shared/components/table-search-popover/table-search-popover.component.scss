@@ -58,10 +58,8 @@
 }
 
 .th-search-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 1000;
+  position: fixed;
+  z-index: 1001;
   width: 270px;
   background: #ffffff;
   border: 1px solid #e2e8f0;

@@ -14,8 +14,14 @@
     <span class="active-dot" *ngIf="appliedSearchTerm"></span>
   </button>
 
-  <!-- Floating Search Popover Card Modal -->
-  <div class="th-search-popover" *ngIf="isOpen" (click)="$event.stopPropagation()">
+  <!-- Floating Search Popover Card Modal using position: fixed -->
+  <div
+    class="th-search-popover"
+    *ngIf="isOpen"
+    [style.top]="popoverTop"
+    [style.left]="popoverLeft"
+    (click)="$event.stopPropagation()"
+  >
     <div class="popover-arrow"></div>
 
     <div class="popover-header">
