@@ -101,7 +101,16 @@
           <th>Category</th>
           <th>Unit Price</th>
           <th>Status</th>
-          <th>Created At</th>
+          <th>
+            <div class="th-with-search" style="display: flex; align-items: center; gap: 6px;">
+              <span>Created At</span>
+              <app-table-sort
+                field="createdAt"
+                [currentSort]="sortParam"
+                (sortChange)="onSortChange($event)"
+              ></app-table-sort>
+            </div>
+          </th>
           <th>Actions</th>
         </tr>
       </thead>
