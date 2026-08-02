@@ -1,0 +1,189 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-title">
+        <div class="header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <line x1="12" y1="11" x2="12" y2="17"></line>
+            <line x1="9" y1="14" x2="15" y2="14"></line>
+          </svg>
+        </div>
+        <div>
+          <h2>Manage Product Categories</h2>
+          <p class="subtitle">View existing categories or add a new category to the system.</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Alert Messages -->
+    <div class="alert alert-error" *ngIf="errorMsg">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMsg }}</span>
+    </div>
+
+    <div class="alert alert-success" *ngIf="successMsg">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <span>{{ successMsg }}</span>
+    </div>
+
+    <!-- Modal Body with Split / Stacked Sections -->
+    <div class="modal-body">
+
+      <!-- Form Section: Add Category -->
+      <div class="section-card form-section">
+        <div class="section-header">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add New Category
+          </h3>
+          <span class="badge-tag">API: POST /api/categories</span>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #categoryForm="ngForm" novalidate>
+          <div class="form-grid">
+
+            <!-- Category Name -->
+            <div class="form-group" [class.has-error]="formErrors['name']">
+              <label for="cat-name">Category Name <span class="req">*</span></label>
+              <input
+                id="cat-name"
+                type="text"
+                class="form-control"
+                placeholder="e.g. Industrial Equipment, Safety Gear"
+                [(ngModel)]="formData.name"
+                name="name"
+                autocomplete="off"
+              />
+              <span class="error-text" *ngIf="formErrors['name']">{{ formErrors['name'] }}</span>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group full-width" [class.has-error]="formErrors['description']">
+              <label for="cat-desc">Description</label>
+              <textarea
+                id="cat-desc"
+                rows="2"
+                class="form-control"
+                placeholder="Brief description of products in this category..."
+                [(ngModel)]="formData.description"
+                name="description"
+              ></textarea>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="saving">
+              <span class="spinner" *ngIf="saving"></span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" *ngIf="!saving">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              {{ saving ? 'Saving Category...' : 'Save Category' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Categories Table Section -->
+      <div class="section-card list-section">
+        <div class="section-header space-between">
+          <div class="title-with-count">
+            <h3>Existing Categories</h3>
+            <span class="count-pill">{{ categories.length }}</span>
+          </div>
+
+          <!-- Quick Search -->
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search categories..."
+              [(ngModel)]="searchTerm"
+            />
+            <button type="button" class="btn-clear-search" *ngIf="searchTerm" (click)="searchTerm=''">×</button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="loading">
+          <div class="spinner-large"></div>
+          <p>Loading categories...</p>
+        </div>
+
+        <!-- Table View -->
+        <div class="table-container" *ngIf="!loading">
+          <table class="categories-table" *ngIf="filteredCategories.length > 0">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th style="width: 100px;">Status</th>
+                <th style="width: 140px;">Created Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cat of filteredCategories">
+                <td class="id-cell">#{{ cat.id }}</td>
+                <td class="name-cell">
+                  <strong>{{ cat.name }}</strong>
+                </td>
+                <td class="desc-cell">
+                  {{ cat.description || '—' }}
+                </td>
+                <td class="status-cell">
+                  <span class="status-badge" [class.active]="cat.status === 'ACTIVE'" [class.inactive]="cat.status === 'INACTIVE'">
+                    {{ cat.status }}
+                  </span>
+                </td>
+                <td class="date-cell">
+                  {{ cat.createdAt ? (cat.createdAt | date:'shortDate') : '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Empty search results -->
+          <div class="empty-state" *ngIf="filteredCategories.length === 0">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <p *ngIf="searchTerm">No categories match your search "{{ searchTerm }}"</p>
+            <p *ngIf="!searchTerm">No categories found. Add your first category above.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeModal()">Close</button>
+    </div>
+
+  </div>
+</div>

@@ -18,3 +18,4 @@ export * from './model.order';
 export * from './model.shipment';
 export * from './model.audit';
 export * from './model.dashboard';
+export * from './model.category';

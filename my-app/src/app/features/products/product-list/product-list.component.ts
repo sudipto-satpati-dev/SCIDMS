@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductService } from '../../../core/services/product.service';
-import { Product, ProductCategory } from '../../../core/models/index';
+import { CategoryService } from '../../../core/services/category.service';
+import { Product, Category } from '../../../core/models/index';
 
 @Component({
   selector: 'app-product-list',
@@ -17,6 +18,7 @@ export class ProductListComponent implements OnInit {
   filterStock    = '';
   showFormModal        = false;
   showDeactivateModal  = false;
+  showCategoryModal    = false;
   selectedProduct: Product | null = null;
   isEditMode   = false;
   currentPage  = 1;
@@ -25,16 +27,52 @@ export class ProductListComponent implements OnInit {
   saving = false;
   errorMsg = '';
 
-  categories: ProductCategory[] = ['Electronics', 'Industrial', 'Packaging', 'Safety', 'Tools', 'Raw Materials'];
+  categories: string[] = ['Electronics', 'Industrial', 'Packaging', 'Safety', 'Tools', 'Raw Materials'];
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private categoryService: CategoryService
+  ) {}
 
   ngOnInit(): void {
     this.productService.getAll().subscribe(data => {
       this.products = data;
       this.loading  = false;
     });
+
+    this.loadCategories();
   }
+
+  loadCategories(): void {
+    this.categoryService.getAll().subscribe({
+      next: (data) => {
+        if (data && data.length > 0) {
+          const catNames = data.map(c => c.name);
+          const combined = Array.from(new Set([...this.categories, ...catNames]));
+          this.categories = combined;
+        }
+      },
+      error: (err) => {
+        console.warn('Could not fetch categories:', err?.message);
+      }
+    });
+  }
+
+
+  openCategoryModal(): void {
+    this.showCategoryModal = true;
+  }
+
+  closeCategoryModal(): void {
+    this.showCategoryModal = false;
+  }
+
+  onCategoryAdded(newCat: Category): void {
+    if (newCat && newCat.name && !this.categories.includes(newCat.name)) {
+      this.categories = [...this.categories, newCat.name];
+    }
+  }
+
 
   stockStatus(p: Product): 'out' | 'low' | 'ok' {
     if (p.availableQty === 0) return 'out';
