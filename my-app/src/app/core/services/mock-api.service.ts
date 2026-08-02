@@ -116,29 +116,31 @@ export class MockApiService {
   // ─────────────────────────────────────────────────────────────
   getProducts(): Observable<Product[]> { return this.respond(this.products); }
 
-  createProduct(data: Omit<Product, 'id'>): Observable<Product> {
+  createProduct(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Observable<Product> {
     const newProduct: Product = {
       ...data,
-      id: `PRD-${1000 + this.products.length + 1}`,
+      id: 1000 + this.products.length + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     this.products.push(newProduct);
-    this._addAudit('Created', 'PRODUCTS', newProduct.id, 'NULL', `[${newProduct.name}]`, 'Product added', 'admin');
+    this._addAudit('Created', 'PRODUCTS', String(newProduct.id), 'NULL', `[${newProduct.name}]`, 'Product added', 'admin');
     return this.respond(newProduct);
   }
 
-  updateProduct(id: string, data: Partial<Product>): Observable<Product> {
+  updateProduct(id: number, data: Partial<Product>): Observable<Product> {
     const idx = this.products.findIndex(p => p.id === id);
     if (idx === -1) return this.fail('Product not found.');
     const old = { ...this.products[idx] };
-    this.products[idx] = { ...this.products[idx], ...data };
-    this._addAudit('Updated', 'PRODUCTS', id, `[${old.status}]`, `[${this.products[idx].status}]`, 'Product updated', 'admin');
+    this.products[idx] = { ...this.products[idx], ...data, updatedAt: new Date().toISOString() };
+    this._addAudit('Updated', 'PRODUCTS', String(id), `[${old.status}]`, `[${this.products[idx].status}]`, 'Product updated', 'admin');
     return this.respond(this.products[idx]);
   }
 
-  toggleProductStatus(id: string): Observable<Product> {
+  toggleProductStatus(id: number): Observable<Product> {
     const idx = this.products.findIndex(p => p.id === id);
     if (idx === -1) return this.fail('Product not found.');
-    const newStatus = this.products[idx].status === 'Active' ? 'Inactive' : 'Active';
+    const newStatus = this.products[idx].status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     return this.updateProduct(id, { status: newStatus });
   }
 
@@ -192,16 +194,16 @@ export class MockApiService {
       return this.fail(`Warehouse capacity is insufficient. Available: ${available} units.`);
     }
     // Validate product (BR005)
-    const product = this.products.find(p => p.id === req.productId);
+    const product = this.products.find(p => String(p.id) === req.productId || p.sku === req.productId);
     if (!product) return this.fail('The selected product is unavailable.');
 
     // Update inventory row (create if absent)
     let row = this.inventory.find(r => r.warehouseId === req.warehouseId && r.productId === req.productId);
     if (!row) {
       row = {
-        productId: product.id, productName: product.name, sku: product.sku,
+        productId: String(product.id), productName: product.name, sku: product.sku,
         warehouseId: wh.id, warehouseName: wh.name,
-        availableQty: 0, allocatedQty: 0, threshold: product.threshold,
+        availableQty: 0, allocatedQty: 0, threshold: 10,
       };
       this.inventory.push(row);
     }
@@ -210,14 +212,11 @@ export class MockApiService {
     // Update warehouse occupied capacity
     wh.occupiedCapacity += req.quantity;
 
-    // Update product global qty
-    product.availableQty += req.quantity;
-
     // Log transaction
     const txn: InventoryTransaction = {
       id: `TXN-${3000 + this.transactions.length + 1}`,
       type: 'Received',
-      productId: product.id, productName: product.name,
+      productId: String(product.id), productName: product.name,
       warehouseId: wh.id, warehouseName: wh.name,
       quantity: req.quantity, actor: 'current.user',
       reason: req.reason,
@@ -232,7 +231,7 @@ export class MockApiService {
   dispatchStock(req: StockDispatchRequest): Observable<InventoryTransaction> {
     const wh = this.warehouses.find(w => w.id === req.warehouseId);
     if (!wh) return this.fail('Warehouse not found.');
-    const product = this.products.find(p => p.id === req.productId);
+    const product = this.products.find(p => String(p.id) === req.productId || p.sku === req.productId);
     if (!product) return this.fail('The selected product is unavailable.');
     const row = this.inventory.find(r => r.warehouseId === req.warehouseId && r.productId === req.productId);
     if (!row || row.availableQty < req.quantity) {
@@ -241,12 +240,11 @@ export class MockApiService {
 
     row.availableQty    -= req.quantity;
     wh.occupiedCapacity -= req.quantity;
-    product.availableQty -= req.quantity;
 
     const txn: InventoryTransaction = {
       id: `TXN-${3000 + this.transactions.length + 1}`,
       type: 'Dispatched',
-      productId: product.id, productName: product.name,
+      productId: String(product.id), productName: product.name,
       warehouseId: wh.id, warehouseName: wh.name,
       quantity: req.quantity, actor: 'current.user',
       reason: req.reason,
@@ -265,7 +263,7 @@ export class MockApiService {
     const src  = this.warehouses.find(w => w.id === req.sourceWarehouseId);
     const dest = this.warehouses.find(w => w.id === req.destinationWarehouseId);
     if (!src || !dest) return this.fail('Warehouse not found.');
-    const product = this.products.find(p => p.id === req.productId);
+    const product = this.products.find(p => String(p.id) === req.productId || p.sku === req.productId);
     if (!product) return this.fail('The selected product is unavailable.');
 
     const srcRow = this.inventory.find(r => r.warehouseId === req.sourceWarehouseId && r.productId === req.productId);
@@ -285,9 +283,9 @@ export class MockApiService {
     let destRow = this.inventory.find(r => r.warehouseId === req.destinationWarehouseId && r.productId === req.productId);
     if (!destRow) {
       destRow = {
-        productId: product.id, productName: product.name, sku: product.sku,
+        productId: String(product.id), productName: product.name, sku: product.sku,
         warehouseId: dest.id, warehouseName: dest.name,
-        availableQty: 0, allocatedQty: 0, threshold: product.threshold,
+        availableQty: 0, allocatedQty: 0, threshold: 10,
       };
       this.inventory.push(destRow);
     }
@@ -297,7 +295,7 @@ export class MockApiService {
     const txn: InventoryTransaction = {
       id: `TXN-${3000 + this.transactions.length + 1}`,
       type: 'Transferred',
-      productId: product.id, productName: product.name,
+      productId: String(product.id), productName: product.name,
       warehouseId: src.id, warehouseName: `${src.name} → ${dest.name}`,
       quantity: req.quantity, actor: 'current.user',
       reason: req.reason,
@@ -334,8 +332,8 @@ export class MockApiService {
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const newId = `ORD-${1024 + this.orders.length + 1}`;
     const items = req.items.map(i => {
-      const p = this.products.find(pr => pr.id === i.productId)!;
-      return { productId: p.id, productName: p.name, unitPrice: p.unitPrice, quantity: i.quantity };
+      const p = this.products.find(pr => String(pr.id) === String(i.productId));
+      return { productId: String(p?.id ?? i.productId), productName: p?.name ?? 'Product', unitPrice: p?.unitPrice ?? 0, quantity: i.quantity };
     });
     const order: Order = {
       id: newId, customerName: req.customerName,

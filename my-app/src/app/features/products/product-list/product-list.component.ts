@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
-import { Product, Category } from '../../../core/models/index';
+import { Product, Category, CreateProductRequest } from '../../../core/models/index';
 
 @Component({
   selector: 'app-product-list',
@@ -11,23 +11,32 @@ import { Product, Category } from '../../../core/models/index';
 export class ProductListComponent implements OnInit {
 
   products: Product[] = [];
+  categories: Category[] = [];
   loading = true;
-
-  searchTerm     = '';
-  filterCategory = '';
-  filterStock    = '';
-  showFormModal        = false;
-  showDeactivateModal  = false;
-  showCategoryModal    = false;
-  selectedProduct: Product | null = null;
-  isEditMode   = false;
-  currentPage  = 1;
-  pageSize     = 8;
-  formErrors: Record<string, string> = {};
   saving = false;
   errorMsg = '';
 
-  categories: string[] = ['Electronics', 'Industrial', 'Packaging', 'Safety', 'Tools', 'Raw Materials'];
+  // Filter params
+  searchTerm = '';
+  filterCategory: number | '' = '';
+  filterStatus: '' | 'ACTIVE' | 'INACTIVE' = '';
+  sortParam = 'createdAt,desc';
+
+  // Pagination params
+  currentPage = 1;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 1;
+
+  // Modal controls
+  showFormModal = false;
+  showCategoryModal = false;
+  newProduct: { name: string; categoryId: number | null; unitPrice: number | null } = {
+    name: '',
+    categoryId: null,
+    unitPrice: null
+  };
+  formErrors: Record<string, string> = {};
 
   constructor(
     private productService: ProductService,
@@ -35,22 +44,37 @@ export class ProductListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.productService.getAll().subscribe(data => {
-      this.products = data;
-      this.loading  = false;
-    });
-
+    this.loadProducts();
     this.loadCategories();
+  }
+
+  loadProducts(): void {
+    this.loading = true;
+    this.productService.getAll({
+      search: this.searchTerm || undefined,
+      categoryId: this.filterCategory !== '' ? Number(this.filterCategory) : undefined,
+      status: this.filterStatus || undefined,
+      page: this.currentPage - 1,
+      size: this.pageSize,
+      sort: this.sortParam,
+    }).subscribe({
+      next: (result) => {
+        this.products = result.products;
+        this.totalElements = result.totalElements;
+        this.totalPages = result.totalPages;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not load products.';
+        this.loading = false;
+      }
+    });
   }
 
   loadCategories(): void {
     this.categoryService.getAll().subscribe({
       next: (data) => {
-        if (data && data.length > 0) {
-          const catNames = data.map(c => c.name);
-          const combined = Array.from(new Set([...this.categories, ...catNames]));
-          this.categories = combined;
-        }
+        this.categories = data || [];
       },
       error: (err) => {
         console.warn('Could not fetch categories:', err?.message);
@@ -58,6 +82,68 @@ export class ProductListComponent implements OnInit {
     });
   }
 
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1;
+    this.loadProducts();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadProducts();
+  }
+
+  onSortChange(sort: string): void {
+    this.sortParam = sort;
+    this.currentPage = 1;
+    this.loadProducts();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.filterCategory = '';
+    this.filterStatus = '';
+    this.currentPage = 1;
+    this.loadProducts();
+  }
+
+  get pageStart(): number {
+    return this.totalElements === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalElements);
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  goToPage(p: number): void {
+    this.currentPage = p;
+    this.loadProducts();
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadProducts();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadProducts();
+    }
+  }
+
+  openAddModal(): void {
+    this.newProduct = { name: '', categoryId: null, unitPrice: null };
+    this.formErrors = {};
+    this.errorMsg = '';
+    this.showFormModal = true;
+  }
 
   openCategoryModal(): void {
     this.showCategoryModal = true;
@@ -68,125 +154,55 @@ export class ProductListComponent implements OnInit {
   }
 
   onCategoryAdded(newCat: Category): void {
-    if (newCat && newCat.name && !this.categories.includes(newCat.name)) {
-      this.categories = [...this.categories, newCat.name];
+    if (newCat) {
+      this.loadCategories();
     }
   }
 
-
-  stockStatus(p: Product): 'out' | 'low' | 'ok' {
-    if (p.availableQty === 0) return 'out';
-    if (p.availableQty <= p.threshold) return 'low';
-    return 'ok';
-  }
-
-  get filtered(): Product[] {
-    return this.products.filter(p => {
-      const s = this.searchTerm.toLowerCase();
-      const matchSearch = !s || p.id.toLowerCase().includes(s) || p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s);
-      const matchCat    = !this.filterCategory || p.category === this.filterCategory;
-      const stock       = this.stockStatus(p);
-      const matchStock  = !this.filterStock
-        || (this.filterStock === 'in'  && stock === 'ok')
-        || (this.filterStock === 'low' && stock === 'low')
-        || (this.filterStock === 'out' && stock === 'out');
-      return matchSearch && matchCat && matchStock;
-    });
-  }
-
-  get totalPages(): number  { return Math.ceil(this.filtered.length / this.pageSize) || 1; }
-  get pageStart():  number  { return (this.currentPage - 1) * this.pageSize + 1; }
-  get pageEnd():    number  { return Math.min(this.currentPage * this.pageSize, this.filtered.length); }
-  get paged():      Product[] { return this.filtered.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize); }
-  get pageNumbers(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
-
-  get totalActive():     number { return this.products.filter(p => p.status === 'Active').length; }
-  get lowStockCount():   number { return this.products.filter(p => this.stockStatus(p) === 'low').length; }
-  get outOfStockCount(): number { return this.products.filter(p => this.stockStatus(p) === 'out').length; }
-  get totalLowStock():   number { return this.lowStockCount + this.outOfStockCount; }
-
-  goToPage(p: number)  { this.currentPage = p; }
-  prevPage()           { if (this.currentPage > 1) this.currentPage--; }
-  nextPage()           { if (this.currentPage < this.totalPages) this.currentPage++; }
-
-  openAddModal(): void {
-    this.isEditMode = false;
-    this.selectedProduct = { id: '', name: '', category: 'Industrial', unitPrice: 0, availableQty: 0, threshold: 10, status: 'Active', sku: '' };
-    this.formErrors = {};
-    this.errorMsg   = '';
-    this.showFormModal = true;
-  }
-
-  openEditModal(p: Product): void {
-    this.isEditMode      = true;
-    this.selectedProduct = { ...p };
-    this.formErrors      = {};
-    this.errorMsg        = '';
-    this.showFormModal   = true;
-  }
-
-  confirmDeactivate(p: Product): void {
-    this.selectedProduct    = p;
-    this.showDeactivateModal = true;
-  }
-
-  deactivateProduct(): void {
-    if (!this.selectedProduct) return;
-    this.productService.toggleStatus(this.selectedProduct.id).subscribe({
-      next: (updated) => {
-        const idx = this.products.findIndex(p => p.id === updated.id);
-        if (idx > -1) this.products[idx] = updated;
-        this.showDeactivateModal = false;
-      },
-    });
-  }
-
   validateField(field: string): void {
-    if (!this.selectedProduct) return;
-    const e = { ...this.formErrors };
-    if (field === 'name')      e['name']      = !this.selectedProduct.name.trim()      ? 'Product name is required.'    : '';
-    if (field === 'category')  e['category']  = !this.selectedProduct.category         ? 'Category is required.'        : '';
-    if (field === 'unitPrice') e['unitPrice'] = this.selectedProduct.unitPrice <= 0    ? 'Price must be greater than 0.' : '';
-    if (field === 'sku')       e['sku']       = !this.selectedProduct.sku.trim()        ? 'SKU is required.'             : '';
-    Object.keys(e).forEach(k => { if (!e[k]) delete e[k]; });
-    this.formErrors = e;
+    const errors = { ...this.formErrors };
+    if (field === 'name') {
+      errors['name'] = !this.newProduct.name?.trim() ? 'Product name is required.' : '';
+    }
+    if (field === 'categoryId') {
+      errors['categoryId'] = !this.newProduct.categoryId ? 'Category selection is required.' : '';
+    }
+    if (field === 'unitPrice') {
+      errors['unitPrice'] = (this.newProduct.unitPrice == null || this.newProduct.unitPrice <= 0)
+        ? 'Price must be greater than 0.' : '';
+    }
+    Object.keys(errors).forEach(k => { if (!errors[k]) delete errors[k]; });
+    this.formErrors = errors;
   }
 
   saveProduct(): void {
-    ['name', 'category', 'unitPrice', 'sku'].forEach(f => this.validateField(f));
-    if (Object.keys(this.formErrors).length || !this.selectedProduct) return;
+    ['name', 'categoryId', 'unitPrice'].forEach(f => this.validateField(f));
+    if (Object.keys(this.formErrors).length || !this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.unitPrice) {
+      return;
+    }
     this.saving = true;
+    this.errorMsg = '';
 
-    const action$ = this.isEditMode
-      ? this.productService.update(this.selectedProduct.id, this.selectedProduct)
-      : this.productService.create(this.selectedProduct);
+    const payload: CreateProductRequest = {
+      name: this.newProduct.name.trim(),
+      categoryId: Number(this.newProduct.categoryId),
+      unitPrice: Number(this.newProduct.unitPrice),
+    };
 
-    action$.subscribe({
-      next: (saved) => {
-        if (this.isEditMode) {
-          const idx = this.products.findIndex(p => p.id === saved.id);
-          if (idx > -1) this.products[idx] = saved;
-        } else {
-          this.products.unshift(saved);
-        }
-        this.saving        = false;
+    this.productService.create(payload).subscribe({
+      next: () => {
+        this.saving = false;
         this.showFormModal = false;
+        this.loadProducts();
       },
       error: (err) => {
-        this.errorMsg = err?.message || 'Could not save product.';
-        this.saving   = false;
-      },
+        this.errorMsg = err?.message || 'Could not create product.';
+        this.saving = false;
+      }
     });
   }
 
-  formatPrice(n: number): string { return '৳ ' + n.toLocaleString('en-BD'); }
-
-  categoryColor(cat: string): string {
-    const map: Record<string, string> = {
-      'Electronics': '#3b82f6', 'Industrial': '#f59e0b',
-      'Packaging':   '#8b5cf6', 'Safety':     '#ef4444',
-      'Tools':       '#06b6d4', 'Raw Materials': '#10b981',
-    };
-    return map[cat] || '#94a3b8';
+  formatPrice(n: number): string {
+    return '৳ ' + (n ? n.toLocaleString('en-BD') : '0');
   }
 }

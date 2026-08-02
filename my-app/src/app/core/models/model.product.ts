@@ -1,18 +1,56 @@
-export type ProductCategory =
-  | 'Electronics'
-  | 'Industrial'
-  | 'Packaging'
-  | 'Safety'
-  | 'Tools'
-  | 'Raw Materials';
+export type ProductStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface Product {
-  id: string;
-  name: string;
+  id: number;
   sku: string;
-  category: ProductCategory;
+  name: string;
+  categoryId: number;
+  categoryName: string;
   unitPrice: number;
-  availableQty: number;
-  threshold: number;
-  status: 'Active' | 'Inactive';
+  status: ProductStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  categoryId: number;
+  unitPrice: number;
+}
+
+export interface ProductListParams {
+  search?: string;
+  categoryId?: number;
+  status?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface ProductListApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    products: Product[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface CreateProductApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: Product;
+}
+
+export interface ProductListResult {
+  products: Product[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

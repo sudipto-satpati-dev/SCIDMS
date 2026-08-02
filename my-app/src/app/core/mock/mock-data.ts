@@ -30,18 +30,18 @@ export const MOCK_USERS: User[] = [
 // PRODUCTS
 // ─────────────────────────────────────────────────────────────
 export const MOCK_PRODUCTS: Product[] = [
-  { id: 'PRD-1001', name: 'Industrial Pump Filter',  sku: 'IPF-001', category: 'Industrial',    unitPrice: 4500,  availableQty: 3,   threshold: 10,  status: 'Active'   },
-  { id: 'PRD-1002', name: 'Conveyor Belt Type-B',    sku: 'CBT-002', category: 'Industrial',    unitPrice: 28000, availableQty: 0,   threshold: 5,   status: 'Active'   },
-  { id: 'PRD-1003', name: 'Safety Helmet Pro',       sku: 'SHP-003', category: 'Safety',        unitPrice: 850,   availableQty: 142, threshold: 20,  status: 'Active'   },
-  { id: 'PRD-1004', name: 'Hydraulic Seal Kit',      sku: 'HSK-004', category: 'Industrial',    unitPrice: 3200,  availableQty: 2,   threshold: 8,   status: 'Active'   },
-  { id: 'PRD-1005', name: 'Packing Foam Roll',       sku: 'PFR-005', category: 'Packaging',     unitPrice: 1200,  availableQty: 0,   threshold: 20,  status: 'Active'   },
-  { id: 'PRD-1006', name: 'Safety Gloves (L)',       sku: 'SGL-006', category: 'Safety',        unitPrice: 320,   availableQty: 7,   threshold: 15,  status: 'Active'   },
-  { id: 'PRD-1007', name: 'Electric Drill 18V',      sku: 'ED1-007', category: 'Tools',         unitPrice: 9500,  availableQty: 54,  threshold: 10,  status: 'Active'   },
-  { id: 'PRD-1008', name: 'Steel Pipe 2 inch',       sku: 'SP2-008', category: 'Raw Materials', unitPrice: 650,   availableQty: 320, threshold: 50,  status: 'Active'   },
-  { id: 'PRD-1009', name: 'Circuit Breaker 20A',     sku: 'CB2-009', category: 'Electronics',   unitPrice: 2200,  availableQty: 88,  threshold: 15,  status: 'Active'   },
-  { id: 'PRD-1010', name: 'Thermal Label Roll',      sku: 'TLR-010', category: 'Packaging',     unitPrice: 480,   availableQty: 215, threshold: 30,  status: 'Inactive' },
-  { id: 'PRD-1011', name: 'Air Compressor 50L',      sku: 'AC5-011', category: 'Tools',         unitPrice: 35000, availableQty: 12,  threshold: 5,   status: 'Active'   },
-  { id: 'PRD-1012', name: 'Copper Wire 1.5mm',       sku: 'CW1-012', category: 'Raw Materials', unitPrice: 980,   availableQty: 6,   threshold: 20,  status: 'Active'   },
+  { id: 1001, sku: 'IPF-001', name: 'Industrial Pump Filter', categoryId: 1, categoryName: 'Industrial', unitPrice: 4500, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1002, sku: 'CBT-002', name: 'Conveyor Belt Type-B', categoryId: 1, categoryName: 'Industrial', unitPrice: 28000, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1003, sku: 'SHP-003', name: 'Safety Helmet Pro', categoryId: 2, categoryName: 'Safety', unitPrice: 850, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1004, sku: 'HSK-004', name: 'Hydraulic Seal Kit', categoryId: 1, categoryName: 'Industrial', unitPrice: 3200, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1005, sku: 'PFR-005', name: 'Packing Foam Roll', categoryId: 3, categoryName: 'Packaging', unitPrice: 1200, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1006, sku: 'SGL-006', name: 'Safety Gloves (L)', categoryId: 2, categoryName: 'Safety', unitPrice: 320, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1007, sku: 'ED1-007', name: 'Electric Drill 18V', categoryId: 4, categoryName: 'Tools', unitPrice: 9500, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1008, sku: 'SP2-008', name: 'Steel Pipe 2 inch', categoryId: 5, categoryName: 'Raw Materials', unitPrice: 650, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1009, sku: 'CB2-009', name: 'Circuit Breaker 20A', categoryId: 6, categoryName: 'Electronics', unitPrice: 2200, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1010, sku: 'TLR-010', name: 'Thermal Label Roll', categoryId: 3, categoryName: 'Packaging', unitPrice: 480, status: 'INACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1011, sku: 'AC5-011', name: 'Air Compressor 50L', categoryId: 4, categoryName: 'Tools', unitPrice: 35000, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1012, sku: 'CW1-012', name: 'Copper Wire 1.5mm', categoryId: 5, categoryName: 'Raw Materials', unitPrice: 980, status: 'ACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
 ];
 
 // ─────────────────────────────────────────────────────────────
