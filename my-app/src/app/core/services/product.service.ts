@@ -4,8 +4,11 @@ import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import {
   Product,
+  ProductStatus,
   CreateProductRequest,
-  CreateProductApiResponse,
+  UpdateProductRequest,
+  ToggleProductStatusRequest,
+  SingleProductApiResponse,
   ProductListParams,
   ProductListApiResponse,
   ProductListResult,
@@ -58,11 +61,52 @@ export class ProductService {
    */
   create(data: CreateProductRequest): Observable<Product> {
     return this.http
-      .post<CreateProductApiResponse>(this.productsUrl, data)
+      .post<SingleProductApiResponse>(this.productsUrl, data)
       .pipe(
         map(res => {
           if (!res.success) {
             throw { message: res.message || 'Failed to create product.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * PUT /api/products/{id}
+   * Request body: { name, categoryId, unitPrice }
+   * Response: { success, message, timestamp, data: Product }
+   */
+  update(id: number, data: UpdateProductRequest): Observable<Product> {
+    return this.http
+      .put<SingleProductApiResponse>(`${this.productsUrl}/${id}`, data)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to update product.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * PATCH /api/products/{id}/status
+   * Request body: { status: 'ACTIVE' | 'INACTIVE' }
+   * Response: { success, message, timestamp, data: Product }
+   */
+  toggleStatus(id: number, currentStatus: ProductStatus): Observable<Product> {
+    const nextStatus: ProductStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const payload: ToggleProductStatusRequest = { status: nextStatus };
+
+    return this.http
+      .patch<SingleProductApiResponse>(`${this.productsUrl}/${id}/status`, payload)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to update product status.' };
           }
           return res.data;
         }),

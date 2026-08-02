@@ -33,6 +33,9 @@ export class ProductListComponent implements OnInit, OnDestroy {
   // Modal controls
   showFormModal = false;
   showCategoryModal = false;
+  isEditMode = false;
+  selectedProductId: number | null = null;
+
   newProduct: { name: string; categoryId: number | null; unitPrice: number | null } = {
     name: '',
     categoryId: null,
@@ -160,10 +163,41 @@ export class ProductListComponent implements OnInit, OnDestroy {
   }
 
   openAddModal(): void {
+    this.isEditMode = false;
+    this.selectedProductId = null;
     this.newProduct = { name: '', categoryId: null, unitPrice: null };
     this.formErrors = {};
     this.errorMsg = '';
     this.showFormModal = true;
+  }
+
+  openEditModal(p: Product): void {
+    this.isEditMode = true;
+    this.selectedProductId = p.id;
+    this.newProduct = {
+      name: p.name,
+      categoryId: p.categoryId,
+      unitPrice: p.unitPrice
+    };
+    this.formErrors = {};
+    this.errorMsg = '';
+    this.showFormModal = true;
+  }
+
+  toggleStatus(p: Product): void {
+    this.productService.toggleStatus(p.id, p.status).subscribe({
+      next: (updatedProduct) => {
+        const idx = this.products.findIndex(item => item.id === updatedProduct.id);
+        if (idx > -1) {
+          this.products[idx] = updatedProduct;
+        } else {
+          this.loadProducts();
+        }
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not update product status.';
+      }
+    });
   }
 
   openCategoryModal(): void {
@@ -210,14 +244,27 @@ export class ProductListComponent implements OnInit, OnDestroy {
       unitPrice: Number(this.newProduct.unitPrice),
     };
 
-    this.productService.create(payload).subscribe({
-      next: () => {
+    const action$ = this.isEditMode && this.selectedProductId
+      ? this.productService.update(this.selectedProductId, payload)
+      : this.productService.create(payload);
+
+    action$.subscribe({
+      next: (savedProduct) => {
         this.saving = false;
         this.showFormModal = false;
-        this.loadProducts();
+        if (this.isEditMode && savedProduct) {
+          const idx = this.products.findIndex(p => p.id === savedProduct.id);
+          if (idx > -1) {
+            this.products[idx] = savedProduct;
+          } else {
+            this.loadProducts();
+          }
+        } else {
+          this.loadProducts();
+        }
       },
       error: (err) => {
-        this.errorMsg = err?.message || 'Could not create product.';
+        this.errorMsg = err?.message || (this.isEditMode ? 'Could not update product.' : 'Could not create product.');
         this.saving = false;
       }
     });

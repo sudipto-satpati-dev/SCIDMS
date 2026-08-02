@@ -18,6 +18,12 @@ export interface CreateProductRequest {
   unitPrice: number;
 }
 
+export type UpdateProductRequest = CreateProductRequest;
+
+export interface ToggleProductStatusRequest {
+  status: ProductStatus;
+}
+
 export interface ProductListParams {
   search?: string;
   categoryId?: number;
@@ -46,6 +52,8 @@ export interface CreateProductApiResponse {
   timestamp: string;
   data: Product;
 }
+
+export type SingleProductApiResponse = CreateProductApiResponse;
 
 export interface ProductListResult {
   products: Product[];
