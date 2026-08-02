@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product, Category, CreateProductRequest } from '../../../core/models/index';
@@ -8,7 +10,7 @@ import { Product, Category, CreateProductRequest } from '../../../core/models/in
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss']
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
 
   products: Product[] = [];
   categories: Category[] = [];
@@ -38,14 +40,34 @@ export class ProductListComponent implements OnInit {
   };
   formErrors: Record<string, string> = {};
 
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
+    this.searchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.currentPage = 1;
+        this.loadProducts();
+      });
+
     this.loadProducts();
     this.loadCategories();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadProducts(): void {
@@ -83,9 +105,7 @@ export class ProductListComponent implements OnInit {
   }
 
   onSearchTermChange(term: string): void {
-    this.searchTerm = term;
-    this.currentPage = 1;
-    this.loadProducts();
+    this.searchSubject.next(term);
   }
 
   onFilterChange(): void {
@@ -104,6 +124,7 @@ export class ProductListComponent implements OnInit {
     this.filterCategory = '';
     this.filterStatus = '';
     this.currentPage = 1;
+    this.searchSubject.next('');
     this.loadProducts();
   }
 
