@@ -16,7 +16,7 @@
     <div class="header-right">
       <div class="search-wrap">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search warehouses…" [(ngModel)]="searchTerm" (input)="onSearchChange()" />
+        <input type="text" placeholder="Search warehouses…" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" />
       </div>
       <div class="select-wrap">
         <select [(ngModel)]="filterStatus" (change)="onStatusFilterChange()">
@@ -205,7 +205,7 @@
     </div>
     <h3>No warehouses found</h3>
     <p>No warehouses match your search criteria.</p>
-    <button class="btn-clear" (click)="searchTerm=''; filterStatus=''; onSearchChange()">Clear filters</button>
+    <button class="btn-clear" (click)="searchTerm=''; filterStatus=''; onSearchChange('')">Clear filters</button>
   </div>
 
 </div>

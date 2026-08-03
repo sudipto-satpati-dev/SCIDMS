@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { UserService } from '../../../core/services/user.service';
 import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequest, User } from '../../../core/models/index';
@@ -8,7 +10,7 @@ import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequ
   templateUrl: './warehouse-list.component.html',
   styleUrls: ['./warehouse-list.component.scss']
 })
-export class WarehouseListComponent implements OnInit {
+export class WarehouseListComponent implements OnInit, OnDestroy {
 
   warehouses: Warehouse[] = [];
   loading = true;
@@ -36,6 +38,9 @@ export class WarehouseListComponent implements OnInit {
   saving   = false;
   errorMsg = '';
 
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   photoStyles = [
     'linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%)',
     'linear-gradient(135deg, #134e4a 0%, #0f766e 100%)',
@@ -51,8 +56,25 @@ export class WarehouseListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.searchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.page = 0;
+        this.loadWarehouses();
+      });
+
     this.loadWarehouses();
     this.loadAvailableManagers();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadWarehouses(): void {
@@ -92,9 +114,8 @@ export class WarehouseListComponent implements OnInit {
     });
   }
 
-  onSearchChange(): void {
-    this.page = 0;
-    this.loadWarehouses();
+  onSearchChange(term: string): void {
+    this.searchSubject.next(term);
   }
 
   onStatusFilterChange(): void {
