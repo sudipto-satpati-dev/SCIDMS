@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,7 +11,7 @@ import { ApiInventoryItem, Warehouse, InventoryListParams } from '../../../core/
   templateUrl: './inventory-track.component.html',
   styleUrls: ['./inventory-track.component.scss']
 })
-export class InventoryTrackComponent implements OnInit {
+export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   items: ApiInventoryItem[] = [];
   warehouses: Warehouse[]   = [];
@@ -25,6 +27,9 @@ export class InventoryTrackComponent implements OnInit {
 
   isWarehouseManager         = false;
 
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   constructor(
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
@@ -34,6 +39,19 @@ export class InventoryTrackComponent implements OnInit {
   ngOnInit(): void {
     const role = this.authService.role;
     this.isWarehouseManager = role === 'WAREHOUSE_MANAGER' || role === 'Warehouse Manager';
+
+    // Configure 1-second debounce for inventory search
+    this.searchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(term => {
+        this.searchTerm = term;
+        this.currentPage = 1;
+        this.loadInventory();
+      });
 
     if (this.isWarehouseManager) {
       this.warehouseService.getMyWarehouses().subscribe({
@@ -58,28 +76,32 @@ export class InventoryTrackComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadInventory(): void {
     this.loading = true;
+
+    let targetWarehouseId = this.filterWarehouseId ? String(this.filterWarehouseId) : undefined;
+
+    // If Warehouse Manager has "All My Warehouses" selected, pass all assigned warehouse IDs
+    if (this.isWarehouseManager && !targetWarehouseId && this.warehouses.length > 0) {
+      targetWarehouseId = this.warehouses.map(w => w.id).join(',');
+    }
+
     const params: InventoryListParams = {
       search: this.searchTerm || undefined,
-      warehouseId: this.filterWarehouseId ? this.filterWarehouseId : undefined,
+      warehouseId: targetWarehouseId,
       page: this.currentPage - 1,
       size: this.pageSize,
     };
 
     this.inventoryService.getInventory(params).subscribe({
       next: (res) => {
-        let products = res.products || [];
-
-        // If warehouse manager has no filter selected, only show items from their assigned warehouses
-        if (this.isWarehouseManager && !this.filterWarehouseId && this.warehouses.length > 0) {
-          const assignedIds = new Set(this.warehouses.map(w => String(w.id)));
-          const assignedNames = new Set(this.warehouses.map(w => w.name));
-          products = products.filter(p => assignedIds.has(String(p.warehouseId)) || assignedNames.has(p.warehouseName));
-        }
-
-        this.items = products;
-        this.totalElements = res.totalElements || products.length;
+        this.items = res.products || [];
+        this.totalElements = res.totalElements || this.items.length;
         this.totalPages = res.totalPages || Math.ceil(this.totalElements / this.pageSize) || 1;
         this.loading = false;
       },
@@ -94,9 +116,8 @@ export class InventoryTrackComponent implements OnInit {
     this.loadInventory();
   }
 
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.loadInventory();
+  onSearchInput(term: string): void {
+    this.searchSubject.next(term);
   }
 
   stockStatus(item: ApiInventoryItem): 'out' | 'low' | 'in' {

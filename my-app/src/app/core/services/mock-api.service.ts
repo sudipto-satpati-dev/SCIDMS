@@ -206,7 +206,10 @@ export class MockApiService {
 
     if (params.warehouseId != null && params.warehouseId !== '') {
       const wid = String(params.warehouseId);
-      filtered = filtered.filter(r => r.warehouseId === wid || r.warehouseId.endsWith(wid));
+      const wids = wid.split(',').map(s => s.trim());
+      filtered = filtered.filter(r =>
+        wids.some(id => r.warehouseId === id || r.warehouseId.endsWith(id))
+      );
     }
 
     const mapped: ApiInventoryItem[] = filtered.map((r, idx) => {
