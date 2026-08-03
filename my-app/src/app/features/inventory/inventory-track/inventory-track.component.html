@@ -12,16 +12,16 @@
     </div>
     <div class="top-controls">
       <div class="wh-filter-wrap">
-        <span class="wh-label">Warehouse Filter</span>
+        <span class="wh-label">{{ isWarehouseManager ? 'My Warehouses' : 'Warehouse Filter' }}</span>
         <div class="select-wrap">
-          <select [(ngModel)]="filterWarehouse" (ngModelChange)="currentPage=1">
-            <option value="">All Warehouses</option>
-            <option *ngFor="let w of warehouseNames" [value]="w">{{ w }}</option>
+          <select [(ngModel)]="filterWarehouseId" (ngModelChange)="onFilterChange()">
+            <option value="">All {{ isWarehouseManager ? 'My Warehouses' : 'Warehouses' }}</option>
+            <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
           </select>
           <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
-      <button class="btn-new">
+      <button class="btn-new" (click)="openNewEntry = true">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         + New Entry
       </button>
@@ -73,21 +73,19 @@
     <div class="table-card-header">
       <h3>Product Inventory Details</h3>
       <div class="table-actions">
-        <button class="tbl-icon-btn" title="Filter">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-        </button>
-        <button class="tbl-icon-btn" title="Export">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
+        <div class="search-input-wrap">
+          <input type="text" class="search-input" placeholder="Search product or warehouse..." [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+        </div>
       </div>
     </div>
 
-    <table class="data-table" *ngIf="filtered.length > 0">
+    <table class="data-table" *ngIf="items.length > 0">
       <thead>
         <tr>
           <th>PRODUCT ID</th>
           <th>PRODUCT NAME</th>
           <th>WAREHOUSE</th>
+          <th>ON-HAND QTY</th>
           <th>AVAILABLE QTY</th>
           <th>ALLOCATED QTY</th>
           <th>THRESHOLD</th>
@@ -96,26 +94,27 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let row of paged">
-          <td class="pid">{{ row.productId }}</td>
-          <td class="product-name-cell">{{ row.productName }}</td>
-          <td class="warehouse-cell">{{ row.warehouseName }}</td>
+        <tr *ngFor="let item of items">
+          <td class="pid">{{ item.productId }}</td>
+          <td class="product-name-cell">{{ item.productName }}</td>
+          <td class="warehouse-cell">{{ item.warehouseName }}</td>
+          <td class="onhand-cell">{{ item.onHandQuantity | number }}</td>
           <td>
             <span class="qty-val"
-              [class.qty-ok]="stockStatus(row)==='in'"
-              [class.qty-low]="stockStatus(row)==='low'"
-              [class.qty-out]="stockStatus(row)==='out'">
-              {{ row.availableQty | number }}
+              [class.qty-ok]="stockStatus(item)==='in'"
+              [class.qty-low]="stockStatus(item)==='low'"
+              [class.qty-out]="stockStatus(item)==='out'">
+              {{ item.availableQuantity | number }}
             </span>
           </td>
-          <td class="alloc-cell">{{ row.allocatedQty | number }}</td>
-          <td class="threshold-cell">{{ row.threshold }}</td>
+          <td class="alloc-cell">{{ item.allocatedQuantity | number }}</td>
+          <td class="threshold-cell">{{ item.lowStockThreshold }}</td>
           <td>
             <span class="status-pill"
-              [class.pill-in]="stockStatus(row)==='in'"
-              [class.pill-low]="stockStatus(row)==='low'"
-              [class.pill-out]="stockStatus(row)==='out'">
-              {{ stockStatus(row) === 'in' ? 'IN STOCK' : stockStatus(row) === 'low' ? 'LOW STOCK' : 'OUT OF STOCK' }}
+              [class.pill-in]="stockStatus(item)==='in'"
+              [class.pill-low]="stockStatus(item)==='low'"
+              [class.pill-out]="stockStatus(item)==='out'">
+              {{ stockStatus(item) === 'in' ? 'IN STOCK' : stockStatus(item) === 'low' ? 'LOW STOCK' : 'OUT OF STOCK' }}
             </span>
           </td>
           <td>
@@ -128,15 +127,15 @@
     </table>
 
     <!-- Empty state -->
-    <div class="empty-state" *ngIf="filtered.length === 0">
+    <div class="empty-state" *ngIf="items.length === 0 && !loading">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
       <p>No inventory records found</p>
-      <button class="btn-clear" (click)="searchTerm=''; filterWarehouse=''">Clear filters</button>
+      <button class="btn-clear" (click)="searchTerm=''; filterWarehouseId=''; onFilterChange()">Clear filters</button>
     </div>
 
     <!-- Pagination footer -->
-    <div class="table-footer" *ngIf="filtered.length > 0">
-      <span class="showing-text">Showing {{ pageStart }}-{{ pageEnd }} of {{ filtered.length | number }} items</span>
+    <div class="table-footer" *ngIf="items.length > 0">
+      <span class="showing-text">Showing {{ pageStart }}-{{ pageEnd }} of {{ totalElements | number }} items</span>
       <div class="pagination">
         <button class="page-btn icon-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>

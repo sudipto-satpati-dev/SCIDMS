@@ -30,7 +30,7 @@ import {
   User, Product, Warehouse, InventoryRow, InventoryTransaction,
   Order, Shipment, AuditLog, DashboardStats,
   StockReceiveRequest, StockDispatchRequest, StockTransferRequest,
-  CreateOrderRequest, OrderStatus,
+  CreateOrderRequest, OrderStatus, ApiInventoryItem, InventoryListParams, InventoryListResult,
 } from '../models/index';
 
 /** Simulated network latency in ms */
@@ -149,6 +149,11 @@ export class MockApiService {
   // ─────────────────────────────────────────────────────────────
   getWarehouses(): Observable<Warehouse[]> { return this.respond(this.warehouses); }
 
+  getMyWarehouses(): Observable<Warehouse[]> {
+    // For mock purposes, return assigned active warehouses (e.g., WH-001, WH-002)
+    return this.respond(this.warehouses.filter(w => w.status === 'ACTIVE' || w.status === ('Active' as any)));
+  }
+
   createWarehouse(data: Omit<Warehouse, 'id' | 'occupiedCapacity'>): Observable<Warehouse> {
     const newWh: Warehouse = {
       ...data,
@@ -180,6 +185,71 @@ export class MockApiService {
   // Inventory
   // ─────────────────────────────────────────────────────────────
   getInventory(): Observable<InventoryRow[]> { return this.respond(this.inventory); }
+
+  getInventoryApi(params: InventoryListParams = {}): Observable<InventoryListResult> {
+    let filtered = [...this.inventory];
+
+    if (params.search) {
+      const q = params.search.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.productName.toLowerCase().includes(q) ||
+        r.warehouseName.toLowerCase().includes(q) ||
+        r.productId.toLowerCase().includes(q) ||
+        r.sku.toLowerCase().includes(q)
+      );
+    }
+
+    if (params.productId != null && params.productId !== '') {
+      const pid = String(params.productId);
+      filtered = filtered.filter(r => r.productId === pid || r.productId.endsWith(pid));
+    }
+
+    if (params.warehouseId != null && params.warehouseId !== '') {
+      const wid = String(params.warehouseId);
+      filtered = filtered.filter(r => r.warehouseId === wid || r.warehouseId.endsWith(wid));
+    }
+
+    const mapped: ApiInventoryItem[] = filtered.map((r, idx) => {
+      const avail = r.availableQty;
+      const alloc = r.allocatedQty;
+      const onHand = avail + alloc;
+      const low = avail > 0 && avail <= r.threshold;
+      const out = avail === 0;
+      const numProdId = parseInt(r.productId.replace(/\D/g, ''), 10) || (idx + 1);
+      const numWhId = parseInt(r.warehouseId.replace(/\D/g, ''), 10) || (idx + 1);
+
+      return {
+        inventoryId: idx + 1,
+        productId: numProdId,
+        productName: r.productName,
+        warehouseId: numWhId,
+        warehouseName: r.warehouseName,
+        onHandQuantity: onHand,
+        allocatedQuantity: alloc,
+        availableQuantity: avail,
+        lowStockThreshold: r.threshold,
+        lowStock: low,
+        outOfStock: out,
+        updatedAt: new Date().toISOString()
+      };
+    });
+
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
+    const totalElements = mapped.length;
+    const totalPages = Math.ceil(totalElements / size) || 1;
+
+    const startIndex = page * size;
+    const paginatedProducts = mapped.slice(startIndex, startIndex + size);
+
+    return this.respond({
+      products: paginatedProducts,
+      page,
+      size,
+      totalElements,
+      totalPages
+    });
+  }
 
   getInventoryByWarehouse(warehouseId: string): Observable<InventoryRow[]> {
     return this.respond(this.inventory.filter(r => r.warehouseId === warehouseId));

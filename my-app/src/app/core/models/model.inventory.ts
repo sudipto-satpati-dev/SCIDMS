@@ -9,6 +9,52 @@ export interface InventoryRow {
   threshold: number;
 }
 
+export interface ApiInventoryItem {
+  inventoryId: number;
+  productId: number;
+  productName: string;
+  warehouseId: number;
+  warehouseName: string;
+  onHandQuantity: number;
+  allocatedQuantity: number;
+  availableQuantity: number;
+  lowStockThreshold: number;
+  lowStock: boolean;
+  outOfStock: boolean;
+  updatedAt?: string;
+}
+
+export interface InventoryListParams {
+  productId?: number | string;
+  warehouseId?: number | string;
+  search?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface InventoryListApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    products: ApiInventoryItem[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface InventoryListResult {
+  products: ApiInventoryItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+
 export type TransactionType = 'Received' | 'Dispatched' | 'Transferred';
 
 export interface InventoryTransaction {

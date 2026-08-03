@@ -59,6 +59,13 @@ export interface SingleWarehouseApiResponse {
   data: Warehouse;
 }
 
+export interface MyWarehousesApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: Warehouse | Warehouse[] | { warehouses: Warehouse[] };
+}
+
 export interface WarehouseListResult {
   warehouses: Warehouse[];
   page: number;

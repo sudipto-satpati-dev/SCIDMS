@@ -12,6 +12,7 @@ import {
   WarehouseListParams,
   WarehouseListApiResponse,
   SingleWarehouseApiResponse,
+  MyWarehousesApiResponse,
   WarehouseListResult,
 } from '../models/index';
 import { environment } from '../../../environments/environment';
@@ -20,8 +21,32 @@ import { environment } from '../../../environments/environment';
 export class WarehouseService {
   private readonly warehousesUrl = `${environment.apiBaseUrl}/api/warehouses`;
   private readonly warehouseCreateUrl = `${environment.apiBaseUrl}/api/warehouse`;
+  private readonly myWarehousesUrl = `${environment.apiBaseUrl}/api/warehouses/my-warehouses`;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * GET /api/warehouses/my-warehouses
+   * Fetch warehouses allocated to the logged-in warehouse manager
+   */
+  getMyWarehouses(): Observable<Warehouse[]> {
+    return this.http
+      .get<MyWarehousesApiResponse>(this.myWarehousesUrl)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to fetch assigned warehouses.' };
+          }
+          const d = res.data;
+          if (Array.isArray(d)) return d;
+          if (d && typeof d === 'object' && 'warehouses' in d && Array.isArray((d as any).warehouses)) {
+            return (d as any).warehouses;
+          }
+          return d ? [d as Warehouse] : [];
+        }),
+        catchError(this._handleError)
+      );
+  }
 
   /**
    * GET /api/warehouses
