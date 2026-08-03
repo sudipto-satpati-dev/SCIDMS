@@ -39,6 +39,11 @@ export class OrderDetailComponent implements OnInit {
   readonly statuses: OrderStatus[] = ['CREATED', 'APPROVED', 'PACKED', 'DISPATCHED', 'DELIVERED', 'CANCELLED'];
   readonly Math = Math;
 
+  get canApprove(): boolean {
+    const role = (this.authService.role as string || '').toUpperCase();
+    return role.includes('WAREHOUSE') || role.includes('ADMIN') || role === 'MANAGER';
+  }
+
   constructor(
     private orderService: OrderService,
     private inventoryService: InventoryService,

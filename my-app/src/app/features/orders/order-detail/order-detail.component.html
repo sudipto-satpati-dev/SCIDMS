@@ -26,11 +26,7 @@
         <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
-    <button class="btn-approve-action" *ngIf="selected && (selected.status === 'CREATED' || selected.status === 'Created')" (click)="openApprovalModal()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      Approve / Reject Order
-    </button>
-    <button class="btn-apply" *ngIf="!selected || (selected.status !== 'CREATED' && selected.status !== 'Created')" (click)="applyFilters()">
+    <button class="btn-apply" (click)="applyFilters()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       Apply Filters
     </button>
@@ -67,7 +63,7 @@
           <h2>Order Lifecycle: <span class="order-id-highlight">{{ selected.orderNumber || selected.id }}</span></h2>
         </div>
         <div class="lp-actions">
-          <button class="btn-review-modal" *ngIf="selected.status === 'CREATED' || selected.status === 'Created'" (click)="openApprovalModal()">
+          <button class="btn-review-modal" *ngIf="canApprove && (selected.status === 'CREATED' || selected.status === 'Created')" (click)="openApprovalModal()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             Approve / Reject Order
           </button>
