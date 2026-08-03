@@ -58,18 +58,22 @@
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input
             type="text"
-            [(ngModel)]="productSearch"
-            (input)="onProductSearchInput()"
+            [ngModel]="productSearch"
+            (ngModelChange)="onProductSearchInput($event)"
             (focus)="onProductSearchFocus()"
             (blur)="closeDropdown()"
-            placeholder="Search product…"
+            placeholder="Type product name or SKU..."
           />
         </div>
-        <div class="product-dropdown" *ngIf="productDropdownOpen && filteredProducts.length > 0">
-          <div class="pd-item" *ngFor="let p of filteredProducts" (mousedown)="selectProduct(p)">
-            <span class="pd-name">{{ p.name }}</span>
-            <span class="pd-meta">{{ p.sku ? 'SKU: ' + p.sku + ' · ' : '' }}Price: {{ p.unitPrice | currency }}</span>
-          </div>
+        <div class="product-dropdown" *ngIf="productDropdownOpen">
+          <div class="pd-loading" *ngIf="loadingProducts">Searching products...</div>
+          <ng-container *ngIf="!loadingProducts">
+            <div class="pd-item" *ngFor="let p of products" (mousedown)="selectProduct(p)">
+              <span class="pd-name">{{ p.name }}</span>
+              <span class="pd-meta">{{ p.sku ? 'SKU: ' + p.sku + ' · ' : '' }}Price: {{ p.unitPrice | currency }}</span>
+            </div>
+            <div class="pd-empty" *ngIf="products.length === 0">No matching active products found</div>
+          </ng-container>
         </div>
         <span class="field-error" *ngIf="formErrors['productId']">{{ formErrors['productId'] }}</span>
       </div>
@@ -91,10 +95,10 @@
         <span class="field-error" *ngIf="formErrors['quantity']">{{ formErrors['quantity'] }}</span>
       </div>
 
-      <!-- Reason / Reference -->
+      <!-- Reference Number -->
       <div class="form-group">
-        <label>Reason / Reference <span class="req">*</span></label>
-        <textarea [(ngModel)]="form.reason" placeholder="e.g. Restock PO #4492" rows="3"></textarea>
+        <label>Reference Number <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="form.reason" placeholder="e.g. REF-100293" />
       </div>
 
       <!-- Capacity check -->

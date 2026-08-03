@@ -1,5 +1,7 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil } from 'rxjs/operators';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { ProductService } from '../../../core/services/product.service';
@@ -11,7 +13,7 @@ import { Warehouse, Product, ApiReceiveStockRequest } from '../../../core/models
   templateUrl: './stock-receive.component.html',
   styleUrls: ['./stock-receive.component.scss']
 })
-export class StockReceiveComponent implements OnInit {
+export class StockReceiveComponent implements OnInit, OnDestroy {
 
   @Input() isModal = false;
   @Output() closed = new EventEmitter<void>();
@@ -19,10 +21,12 @@ export class StockReceiveComponent implements OnInit {
 
   warehouses: Warehouse[] = [];
   products: Product[] = [];
+  selectedProductItem: Product | null = null;
 
   productSearch = '';
   productDropdownOpen = false;
   loading = false;
+  loadingProducts = false;
 
   form = {
     warehouseId: '',
@@ -36,6 +40,9 @@ export class StockReceiveComponent implements OnInit {
   submitted = false;
   success   = false;
   errorMsg  = '';
+
+  private productSearchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
@@ -62,10 +69,37 @@ export class StockReceiveComponent implements OnInit {
       });
     }
 
-    this.productService.getAll().subscribe(res => {
-      const list = Array.isArray(res) ? res : res.products || [];
-      this.products = list.filter(p => p.status === 'ACTIVE' || p.status === ('Active' as any));
-    });
+    // Configure 1-second debounce for product search query
+    this.productSearchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        switchMap(query => {
+          this.loadingProducts = true;
+          return this.productService.getAll({
+            search: query ? query.trim() : undefined,
+            status: 'ACTIVE',
+            page: 0,
+            size: 20
+          }).pipe(
+            catchError(() => of({ products: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }))
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(res => {
+        this.loadingProducts = false;
+        const list = Array.isArray(res) ? res : res.products || [];
+        this.products = list.filter(p => p.status === 'ACTIVE' || p.status === ('Active' as any));
+      });
+
+    // Trigger initial product fetch (top 20 active products)
+    this.productSearchSubject.next('');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ── Derived ──────────────────────────────────────────────
@@ -74,7 +108,7 @@ export class StockReceiveComponent implements OnInit {
   }
 
   get selectedProduct(): Product | null {
-    return this.products.find(p => String(p.id) === String(this.form.productId)) || null;
+    return this.selectedProductItem || this.products.find(p => String(p.id) === String(this.form.productId)) || null;
   }
 
   get availableCapacity(): number {
@@ -110,30 +144,34 @@ export class StockReceiveComponent implements OnInit {
 
   // ── Product search dropdown ───────────────────────────────
   get filteredProducts(): Product[] {
-    const s = this.productSearch.toLowerCase();
-    return !s ? this.products : this.products.filter(p =>
-      p.name.toLowerCase().includes(s) ||
-      String(p.id).toLowerCase().includes(s) ||
-      (p.sku && p.sku.toLowerCase().includes(s))
-    );
+    return this.products;
   }
 
   selectProduct(p: Product): void {
+    this.selectedProductItem = p;
     this.form.productId      = String(p.id);
     this.productSearch       = `${p.name}${p.sku ? ' (' + p.sku + ')' : ''}`;
     this.productDropdownOpen = false;
     this.validateField('productId');
   }
 
-  onProductSearchFocus(): void { this.productDropdownOpen = true; }
-
-  onProductSearchInput(): void {
-    this.form.productId      = '';
+  onProductSearchFocus(): void {
     this.productDropdownOpen = true;
+    if (this.products.length === 0) {
+      this.productSearchSubject.next(this.productSearch);
+    }
+  }
+
+  onProductSearchInput(value: string): void {
+    this.productSearch       = value;
+    this.form.productId      = '';
+    this.selectedProductItem = null;
+    this.productDropdownOpen = true;
+    this.productSearchSubject.next(value);
   }
 
   closeDropdown(): void {
-    setTimeout(() => { this.productDropdownOpen = false; }, 180);
+    setTimeout(() => { this.productDropdownOpen = false; }, 200);
   }
 
   // ── Validation ────────────────────────────────────────────
