@@ -73,10 +73,10 @@
             <span class="order-date">{{ order.orderDate }}</span>
           </div>
           <div class="or-customer">
-            <div class="cust-avatar">{{ order.customerName[0] }}</div>
+            <div class="cust-avatar">{{ order.customerName ? order.customerName.charAt(0).toUpperCase() : 'C' }}</div>
             <div>
               <div class="cust-name">{{ order.customerName }}</div>
-              <div class="cust-meta">{{ order.contactNumber }} · By {{ order.submittedBy }}</div>
+              <div class="cust-meta">{{ order.contactNumber || order.customerEmail || '' }} · By {{ order.createdBy }}</div>
             </div>
           </div>
         </div>

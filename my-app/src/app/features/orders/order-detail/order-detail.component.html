@@ -48,7 +48,7 @@
             <span class="si-status" [ngClass]="statusPillClass(o.status)">{{ o.status }}</span>
           </div>
           <div class="si-customer">{{ o.customerName }}</div>
-          <div class="si-date">{{ o.items[0].productName }} · {{ o.items.length }} line{{ o.items.length === 1 ? '' : 's' }}</div>
+          <div class="si-date">{{ (o.items && o.items.length > 0) ? o.items[0].productName : 'No items' }} · {{ o.items ? o.items.length : 0 }} line{{ (o.items ? o.items.length : 0) === 1 ? '' : 's' }}</div>
         </div>
         <div class="sidebar-empty" *ngIf="filteredOrders.length === 0">No orders match filters.</div>
       </div>
@@ -60,10 +60,10 @@
       <!-- Panel header -->
       <div class="lp-header">
         <div class="lp-title">
-          <h2>Order Lifecycle: <span class="order-id-highlight">{{ selected.id }}</span></h2>
+          <h2>Order Lifecycle: <span class="order-id-highlight">{{ selected.orderNumber || selected.id }}</span></h2>
         </div>
-        <span class="priority-badge" [ngClass]="priorityClass(selected.priority)">
-          Priority: {{ selected.priority }}
+        <span class="si-status" [ngClass]="statusPillClass(selected.status)">
+          {{ selected.status }}
         </span>
       </div>
 
@@ -84,8 +84,8 @@
               <div class="step-label">
                 <span class="step-name">{{ step }}</span>
                 <span class="step-time">{{ stepTimestamp(step) }}</span>
-                <span class="step-sub" *ngIf="stepState(step) === 'current' && step === 'Dispatched'">In Transit</span>
-                <span class="step-sub" *ngIf="stepState(step) === 'pending' && step === 'Delivered' && !isTerminated">Expected soon</span>
+                <span class="step-sub" *ngIf="stepState(step) === 'current' && step === 'DISPATCHED'">In Transit</span>
+                <span class="step-sub" *ngIf="stepState(step) === 'pending' && step === 'DELIVERED' && !isTerminated">Expected soon</span>
               </div>
             </div>
             <!-- Connector line -->
@@ -116,8 +116,9 @@
           <div class="dc-section">
             <span class="dc-lbl">CUSTOMER</span>
             <span class="dc-val strong">{{ selected.customerName }}</span>
-            <span class="dc-val muted">{{ selected.contactNumber }}</span>
-            <span class="dc-val muted">{{ selected.address }}</span>
+            <span class="dc-val muted" *ngIf="selected.customerEmail">{{ selected.customerEmail }}</span>
+            <span class="dc-val muted" *ngIf="selected.contactNumber">{{ selected.contactNumber }}</span>
+            <span class="dc-val muted">{{ selected.deliveryAddress || selected.address }}</span>
           </div>
 
           <div class="dc-section">
@@ -128,13 +129,13 @@
             </div>
           </div>
 
-          <div class="dc-section" *ngIf="selected.approvedBy !== '—'">
+          <div class="dc-section" *ngIf="selected.approvedBy">
             <span class="dc-lbl">VERIFICATION</span>
             <div class="verifier-row">
-              <div class="verifier-avatar">{{ selected.approvedBy[0].toUpperCase() }}</div>
+              <div class="verifier-avatar">{{ getApprovedByInitial(selected.approvedBy) }}</div>
               <div>
                 <div class="dc-val strong">{{ selected.approvedBy }}</div>
-                <div class="dc-val muted">Approved {{ selected.approvedDate }}</div>
+                <div class="dc-val muted" *ngIf="selected.updatedAt || selected.createdAt">Approved {{ (selected.updatedAt || selected.createdAt) | date:'mediumDate' }}</div>
               </div>
             </div>
           </div>

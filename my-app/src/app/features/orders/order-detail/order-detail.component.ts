@@ -25,6 +25,7 @@ export class OrderDetailComponent implements OnInit {
   selectedOrderId: string | number = '';
 
   readonly stepFlow: string[] = STEP_FLOW;
+  readonly statuses: OrderStatus[] = ['CREATED', 'APPROVED', 'PACKED', 'DISPATCHED', 'DELIVERED', 'CANCELLED'];
 
   constructor(
     private orderService: OrderService,
@@ -98,6 +99,14 @@ export class OrderDetailComponent implements OnInit {
       const matchStatus = !this.filterStatus || String(o.status).toUpperCase() === this.filterStatus.toUpperCase();
       return matchSearch && matchStatus;
     });
+  }
+
+  applyFilters(): void {
+    // Dynamic getter filteredOrders re-evaluates automatically
+  }
+
+  getApprovedByInitial(approvedBy?: string): string {
+    return approvedBy && approvedBy.length > 0 ? approvedBy.charAt(0).toUpperCase() : '?';
   }
 
   // ── Stepper helpers ───────────────────────────────────────

@@ -5,7 +5,7 @@ import { OrderService } from '../../../core/services/order.service';
 import { ProductService } from '../../../core/services/product.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Order, OrderStatus, Product, Warehouse, OrderListParams, CreateOrderRequest } from '../../../core/models/index';
+import { Order, OrderStatus, Product, ProductListParams, Warehouse, OrderListParams, CreateOrderRequest } from '../../../core/models/index';
 
 interface NewOrderItem {
   productId: string;

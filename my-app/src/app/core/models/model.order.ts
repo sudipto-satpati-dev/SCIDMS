@@ -5,26 +5,14 @@ export type OrderStatus =
   | 'DISPATCHED'
   | 'DELIVERED'
   | 'CANCELLED'
-  | 'Created'
-  | 'Approved'
-  | 'Dispatched'
-  | 'Delivered'
-  | 'Cancelled';
 
 export interface OrderItem {
-  itemId?: number | string;
+  itemId: number | string;
   productId: number | string;
   productName: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
-}
-
-export interface OrderStatusEvent {
-  status: OrderStatus;
-  changedBy: string;
-  timestamp: string;
-  notes: string;
 }
 
 export interface Order {
@@ -46,7 +34,7 @@ export interface Order {
   contactNumber?: string;
   address?: string;
   orderDate?: string;
-  history?: OrderStatusEvent[];
+  history?: OrderHistoryItem[];
 }
 
 export interface CreateOrderRequest {
