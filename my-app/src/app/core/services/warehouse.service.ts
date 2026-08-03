@@ -136,12 +136,12 @@ export class WarehouseService {
   }
 
   /**
-   * DELETE/POST /api/warehouse/{id}/manager/remove
+   * PATCH /api/warehouse/{id}/manager/remove
    * Response: { success, message, timestamp, data: Warehouse }
    */
   removeManager(warehouseId: number): Observable<Warehouse> {
     return this.http
-      .delete<SingleWarehouseApiResponse>(`${this.warehouseCreateUrl}/${warehouseId}/manager/remove`)
+      .patch<SingleWarehouseApiResponse>(`${this.warehouseCreateUrl}/${warehouseId}/manager/remove`, {})
       .pipe(
         map(res => {
           if (!res.success) {

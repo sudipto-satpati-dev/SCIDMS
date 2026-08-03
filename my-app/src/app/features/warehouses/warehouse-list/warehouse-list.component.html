@@ -120,23 +120,32 @@
         <!-- Manager Section -->
         <div class="wh-manager-box">
           <div class="mgr-header">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span class="mgr-title">Manager:</span>
+            <div class="mgr-header-left">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="mgr-title">Manager</span>
+            </div>
+            <div class="mgr-actions">
+              <button class="btn-mgr-action" title="Edit / Change Manager" (click)="openAssignManagerModal(w, $event)" *ngIf="w.managerUsername">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </button>
+              <button class="btn-mgr-action" (click)="openAssignManagerModal(w, $event)" *ngIf="!w.managerUsername">
+                + Assign
+              </button>
+              <button class="btn-mgr-danger" title="Remove Manager" (click)="removeManager(w, $event)" *ngIf="w.managerUsername">
+                &times;
+              </button>
+            </div>
           </div>
           <div class="mgr-body" *ngIf="w.managerUsername; else unassignedMgr">
             <div class="mgr-info">
               <span class="mgr-name">{{ w.managerUsername }}</span>
               <span class="mgr-email" *ngIf="w.managerEmail">{{ w.managerEmail }}</span>
             </div>
-            <div class="mgr-actions">
-              <button class="btn-mgr-action" title="Change Manager" (click)="openAssignManagerModal(w, $event)">Edit</button>
-              <button class="btn-mgr-danger" title="Remove Manager" (click)="removeManager(w, $event)">&times;</button>
-            </div>
           </div>
           <ng-template #unassignedMgr>
             <div class="mgr-body unassigned">
               <span class="mgr-none">Unassigned</span>
-              <button class="btn-mgr-action" (click)="openAssignManagerModal(w, $event)">+ Assign</button>
             </div>
           </ng-template>
         </div>
