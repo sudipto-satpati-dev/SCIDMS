@@ -239,25 +239,11 @@
         </span>
       </div>
 
-      <!-- Product Search Input Bar (1s debounced) -->
-      <div class="prod-search-wrap">
-        <div class="prod-search-input-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input
-            type="text"
-            [ngModel]="productSearchTerm"
-            (ngModelChange)="onProductSearchInput($event)"
-            placeholder="Search active products by name or SKU..."
-          />
-          <span class="prod-loading-text" *ngIf="loadingProducts">Searching...</span>
-        </div>
-      </div>
-
       <div class="items-table-wrap">
         <table class="items-table">
           <thead>
             <tr>
-              <th>Product</th>
+              <th style="min-width: 240px;">Product</th>
               <th>Unit Price</th>
               <th>Quantity</th>
               <th>Line Total</th>
@@ -267,12 +253,29 @@
           <tbody>
             <tr *ngFor="let item of newItems; let i = index">
               <td>
-                <div class="select-wrap-sm">
-                  <select [(ngModel)]="item.productId" (change)="onProductSelect(i)">
-                    <option value="" disabled>Select product…</option>
-                    <option *ngFor="let p of products" [value]="p.id">{{ p.name }} (SKU: {{ p.sku }})</option>
-                  </select>
-                  <svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="prod-search-cell">
+                  <div class="prod-search-input-wrap">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input
+                      type="text"
+                      [ngModel]="item.productSearch"
+                      (ngModelChange)="onProductSearchInputRow(i, $event)"
+                      (focus)="onProductSearchFocus(i)"
+                      (blur)="closeProductDropdown(i)"
+                      placeholder="Search or select product by name or SKU..."
+                      class="prod-row-input"
+                    />
+                  </div>
+                  <div class="product-dropdown" *ngIf="item.dropdownOpen">
+                    <div class="pd-loading" *ngIf="loadingProducts">Searching active products...</div>
+                    <ng-container *ngIf="!loadingProducts">
+                      <div class="pd-item" *ngFor="let p of products" (mousedown)="selectProductRow(i, p)">
+                        <span class="pd-name">{{ p.name }}</span>
+                        <span class="pd-meta">SKU: {{ p.sku }} · Unit Price: {{ fmt(p.unitPrice) }}</span>
+                      </div>
+                      <div class="pd-empty" *ngIf="products.length === 0">No matching active products found</div>
+                    </ng-container>
+                  </div>
                 </div>
               </td>
               <td class="price-td">{{ item.unitPrice > 0 ? fmt(item.unitPrice) : '—' }}</td>

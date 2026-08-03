@@ -12,6 +12,8 @@ interface NewOrderItem {
   productName: string;
   unitPrice: number;
   quantity: number | null;
+  productSearch?: string;
+  dropdownOpen?: boolean;
 }
 
 @Component({
@@ -174,7 +176,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   addItem(): void {
-    this.newItems.push({ productId: '', productName: '', unitPrice: 0, quantity: 1 });
+    this.newItems.push({ productId: '', productName: '', unitPrice: 0, quantity: 1, productSearch: '', dropdownOpen: false });
   }
 
   removeItem(idx: number): void {
@@ -183,18 +185,36 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }
   }
 
-  onProductSelect(idx: number): void {
-    const pid  = this.newItems[idx].productId;
-    const prod = this.products.find(p => String(p.id) === String(pid));
-    if (prod) {
-      this.newItems[idx].productName = prod.name;
-      this.newItems[idx].unitPrice   = prod.unitPrice || 0;
+  onProductSearchFocus(idx: number): void {
+    this.newItems[idx].dropdownOpen = true;
+    if (this.products.length === 0) {
+      this.productSearchSubject.next(this.newItems[idx].productSearch || '');
     }
   }
 
-  onProductSearchInput(val: string): void {
-    this.productSearchTerm = val;
+  onProductSearchInputRow(idx: number, val: string): void {
+    this.newItems[idx].productSearch = val;
+    this.newItems[idx].productId     = '';
+    this.newItems[idx].productName   = '';
+    this.newItems[idx].unitPrice     = 0;
+    this.newItems[idx].dropdownOpen  = true;
     this.productSearchSubject.next(val);
+  }
+
+  selectProductRow(idx: number, p: Product): void {
+    this.newItems[idx].productId     = String(p.id);
+    this.newItems[idx].productName   = p.name;
+    this.newItems[idx].unitPrice     = p.unitPrice || 0;
+    this.newItems[idx].productSearch = `${p.name}${p.sku ? ' (SKU: ' + p.sku + ')' : ''}`;
+    this.newItems[idx].dropdownOpen  = false;
+  }
+
+  closeProductDropdown(idx: number): void {
+    setTimeout(() => {
+      if (this.newItems[idx]) {
+        this.newItems[idx].dropdownOpen = false;
+      }
+    }, 200);
   }
 
   loadModalProducts(search: string = ''): void {
@@ -225,12 +245,12 @@ export class OrderListComponent implements OnInit, OnDestroy {
       deliveryAddress: '',
       warehouseId: this.warehouses.length > 0 ? String(this.warehouses[0].id) : ''
     };
-    this.newItems        = [{ productId: '', productName: '', unitPrice: 0, quantity: 1 }];
-    this.formErrors      = {};
-    this.createSuccess   = false;
-    this.errorMsg        = '';
+    this.newItems          = [{ productId: '', productName: '', unitPrice: 0, quantity: 1, productSearch: '', dropdownOpen: false }];
+    this.formErrors        = {};
+    this.createSuccess     = false;
+    this.errorMsg          = '';
     this.productSearchTerm = '';
-    this.showCreateModal = true;
+    this.showCreateModal   = true;
     this.loadModalProducts('');
   }
 
