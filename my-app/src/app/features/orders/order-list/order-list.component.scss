@@ -549,6 +549,54 @@
   &.mt { margin-top: 4px; }
 }
 
+.prod-search-wrap {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.prod-search-input-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+
+  &:focus-within {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+  }
+
+  svg {
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 12.5px;
+    color: #0f172a;
+    width: 100%;
+    font-family: inherit;
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+}
+
+.prod-loading-text {
+  font-size: 11px;
+  color: #2563eb;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .section-note {
   display: flex;
   align-items: center;

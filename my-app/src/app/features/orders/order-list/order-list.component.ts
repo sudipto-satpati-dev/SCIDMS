@@ -63,6 +63,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
+  productSearchSubject = new Subject<string>();
+  productSearchTerm = '';
+  loadingProducts = false;
+
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
@@ -71,8 +75,8 @@ export class OrderListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const role = this.authService.role;
-    this.isWarehouseManager = role === 'WAREHOUSE_MANAGER' || role === 'Warehouse Manager';
+    const roleStr = (this.authService.role as string) || '';
+    this.isWarehouseManager = roleStr.toUpperCase().includes('WAREHOUSE');
 
     if (this.isWarehouseManager) {
       this.warehouseService.getMyWarehouses().subscribe(list => {
@@ -84,12 +88,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
       });
     }
 
-    this.productService.getAll().subscribe(data => {
-      const list = Array.isArray(data) ? data : (data as any).products || [];
-      this.products = list.filter(p => p.status === 'ACTIVE' || p.status === ('Active' as any));
-    });
-
-    // 1-second debounce for search
+    // 1-second debounce for order search
     this.searchSubject
       .pipe(
         debounceTime(1000),
@@ -99,6 +98,17 @@ export class OrderListComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.currentPage = 1;
         this.loadOrders();
+      });
+
+    // 1-second debounce for modal product search
+    this.productSearchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((searchTerm) => {
+        this.loadModalProducts(searchTerm);
       });
 
     this.loadOrders();
@@ -182,6 +192,32 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }
   }
 
+  onProductSearchInput(val: string): void {
+    this.productSearchTerm = val;
+    this.productSearchSubject.next(val);
+  }
+
+  loadModalProducts(search: string = ''): void {
+    this.loadingProducts = true;
+    const params: ProductListParams = {
+      search: search ? search.trim() : undefined,
+      status: 'ACTIVE',
+      page: 0,
+      size: 20
+    };
+
+    this.productService.getAll(params).subscribe({
+      next: (res) => {
+        const fetched = res.products || [];
+        this.products = fetched;
+        this.loadingProducts = false;
+      },
+      error: () => {
+        this.loadingProducts = false;
+      }
+    });
+  }
+
   openCreateModal(): void {
     this.newOrder = {
       customerName: '',
@@ -193,7 +229,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.formErrors      = {};
     this.createSuccess   = false;
     this.errorMsg        = '';
+    this.productSearchTerm = '';
     this.showCreateModal = true;
+    this.loadModalProducts('');
   }
 
   validateCreate(): boolean {
