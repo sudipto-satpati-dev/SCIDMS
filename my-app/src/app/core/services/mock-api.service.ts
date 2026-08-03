@@ -327,6 +327,67 @@ export class MockApiService {
     return this.respond(resData);
   }
 
+  transferStockApi(req: ApiTransferStockRequest): Observable<TransferStockData> {
+    const srcWhId = String(req.sourceWarehouseId);
+    const dstWhId = String(req.destinationWarehouseId);
+    const prodId = String(req.productId);
+
+    const srcWh = this.warehouses.find(w => w.id === srcWhId || w.id.endsWith(srcWhId));
+    if (!srcWh) return this.fail('Source warehouse not found.');
+
+    const dstWh = this.warehouses.find(w => w.id === dstWhId || w.id.endsWith(dstWhId));
+    if (!dstWh) return this.fail('Destination warehouse not found.');
+
+    const product = this.products.find(p => String(p.id) === prodId || p.sku === prodId || String(p.id).endsWith(prodId));
+    if (!product) return this.fail('Selected product not found.');
+
+    let srcRow = this.inventory.find(r => (r.warehouseId === srcWh.id || r.warehouseId === srcWhId) && (r.productId === String(product.id) || r.productId === prodId));
+    if (!srcRow || srcRow.availableQty < req.quantity) {
+      return this.fail(`Insufficient stock in source warehouse (${srcRow ? srcRow.availableQty : 0} units).`);
+    }
+
+    const dstAvailCap = dstWh.totalCapacity - dstWh.occupiedCapacity;
+    if (req.quantity > dstAvailCap) {
+      return this.fail(`Exceeds destination warehouse capacity (${dstAvailCap} units free).`);
+    }
+
+    // Deduct from source
+    srcRow.availableQty -= req.quantity;
+    srcWh.occupiedCapacity = Math.max(0, srcWh.occupiedCapacity - req.quantity);
+
+    // Add to destination
+    let dstRow = this.inventory.find(r => (r.warehouseId === dstWh.id || r.warehouseId === dstWhId) && (r.productId === String(product.id) || r.productId === prodId));
+    if (!dstRow) {
+      dstRow = {
+        productId: String(product.id),
+        productName: product.name,
+        sku: product.sku,
+        warehouseId: dstWh.id,
+        warehouseName: dstWh.name,
+        availableQty: 0,
+        allocatedQty: 0,
+        threshold: 10
+      };
+      this.inventory.push(dstRow);
+    }
+    dstRow.availableQty += req.quantity;
+    dstWh.occupiedCapacity = Math.min(dstWh.totalCapacity, dstWh.occupiedCapacity + req.quantity);
+
+    const resData: TransferStockData = {
+      referenceNumber: req.referenceNumber || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+      transactionType: 'Transferred',
+      productId: product.id,
+      productName: product.name,
+      sourceWarehouseId: srcWh.id,
+      destinationWarehouseId: dstWh.id,
+      quantity: req.quantity,
+      sourceAvailableQuantity: srcRow.availableQty,
+      destinationAvailableQuantity: dstRow.availableQty
+    };
+
+    return this.respond(resData);
+  }
+
   getInventoryByWarehouse(warehouseId: string): Observable<InventoryRow[]> {
     return this.respond(this.inventory.filter(r => r.warehouseId === warehouseId));
   }

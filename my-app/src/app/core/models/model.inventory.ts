@@ -123,4 +123,16 @@ export interface ReceiveStockApiResponse {
 export type ApiDispatchStockRequest = ApiReceiveStockRequest;
 export type DispatchStockData = ReceiveStockData;
 export type DispatchStockApiResponse = ReceiveStockApiResponse;
+
+export interface ApiTransferStockRequest {
+  productId: number | string;
+  sourceWarehouseId: number | string;
+  destinationWarehouseId: number | string;
+  quantity: number;
+  referenceNumber: string;
+}
+
+export type TransferStockData = ReceiveStockData;
+export type TransferStockApiResponse = ReceiveStockApiResponse;
+
 

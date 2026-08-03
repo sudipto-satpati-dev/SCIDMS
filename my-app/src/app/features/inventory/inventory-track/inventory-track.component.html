@@ -29,6 +29,10 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
         - Dispatch Stock
       </button>
+      <button class="btn-new btn-transfer-action" (click)="openTransferStockModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        ⇄ Transfer Stock
+      </button>
     </div>
   </div>
 
@@ -221,6 +225,14 @@
     (closed)="closeDispatchModal()"
     (stockDispatched)="onStockDispatched()">
   </app-stock-dispatch>
+
+  <!-- Transfer Stock Modal Component -->
+  <app-stock-transfer
+    *ngIf="showTransferModal"
+    [isModal]="true"
+    (closed)="closeTransferModal()"
+    (stockTransferred)="onStockTransferred()">
+  </app-stock-transfer>
 
 </div>
 

@@ -19,6 +19,7 @@ export class InventoryService {
   private readonly inventoryUrl = `${environment.apiBaseUrl}/api/inventory`;
   private readonly receiveUrl = `${environment.apiBaseUrl}/api/inventory/receive`;
   private readonly dispatchUrl = `${environment.apiBaseUrl}/api/inventory/dispatch`;
+  private readonly transferUrl = `${environment.apiBaseUrl}/api/warehouse/transfer`;
 
   constructor(
     private http: HttpClient,
@@ -54,6 +55,24 @@ export class InventoryService {
         map(res => {
           if (!res.success) {
             throw { message: res.message || 'Failed to dispatch stock.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * POST /api/warehouse/transfer
+   * Body: { productId, sourceWarehouseId, destinationWarehouseId, quantity, referenceNumber }
+   */
+  transferStockApi(req: ApiTransferStockRequest): Observable<TransferStockData> {
+    return this.http
+      .post<TransferStockApiResponse>(this.transferUrl, req)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to transfer stock.' };
           }
           return res.data;
         }),
