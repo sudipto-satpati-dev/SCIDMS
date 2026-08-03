@@ -6,18 +6,38 @@ import { MockApiService } from './mock-api.service';
 import {
   InventoryRow, InventoryTransaction,
   StockReceiveRequest, StockDispatchRequest, StockTransferRequest,
-  InventoryListParams, InventoryListApiResponse, InventoryListResult, ApiInventoryItem
+  InventoryListParams, InventoryListApiResponse, InventoryListResult, ApiInventoryItem,
+  ApiReceiveStockRequest, ReceiveStockData, ReceiveStockApiResponse
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   private readonly inventoryUrl = `${environment.apiBaseUrl}/api/inventory`;
+  private readonly receiveUrl = `${environment.apiBaseUrl}/api/inventory/receive`;
 
   constructor(
     private http: HttpClient,
     private api: MockApiService
   ) {}
+
+  /**
+   * POST /api/inventory/receive
+   * Body: { productId, warehouseId, quantity, referenceNumber }
+   */
+  receiveStockApi(req: ApiReceiveStockRequest): Observable<ReceiveStockData> {
+    return this.http
+      .post<ReceiveStockApiResponse>(this.receiveUrl, req)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to receive stock.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
 
   /**
    * GET /api/inventory

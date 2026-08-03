@@ -16,7 +16,6 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   items: ApiInventoryItem[] = [];
   warehouses: Warehouse[]   = [];
   loading                   = true;
-  openNewEntry              = false;
 
   searchTerm                 = '';
   filterWarehouseId: string | number = '';
@@ -26,6 +25,9 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   totalPages                 = 1;
 
   isWarehouseManager         = false;
+
+  // Modal State
+  showReceiveModal           = false;
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -187,6 +189,19 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
       name: w.name,
       pct: Math.round((w.occupiedCapacity / w.totalCapacity) * 100) || 0,
     }));
+  }
+
+  // ── Stock Receive Modal Handlers ───────────────────────────
+  openReceiveStockModal(): void {
+    this.showReceiveModal = true;
+  }
+
+  closeReceiveModal(): void {
+    this.showReceiveModal = false;
+  }
+
+  onStockReceived(): void {
+    this.loadInventory();
   }
 }
 

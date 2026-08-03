@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { ProductService } from '../../../core/services/product.service';
-import { Warehouse, Product } from '../../../core/models/index';
+import { AuthService } from '../../../core/services/auth.service';
+import { Warehouse, Product, ApiReceiveStockRequest } from '../../../core/models/index';
 
 @Component({
   selector: 'app-stock-receive',
@@ -11,6 +12,10 @@ import { Warehouse, Product } from '../../../core/models/index';
   styleUrls: ['./stock-receive.component.scss']
 })
 export class StockReceiveComponent implements OnInit {
+
+  @Input() isModal = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() stockReceived = new EventEmitter<void>();
 
   warehouses: Warehouse[] = [];
   products: Product[] = [];
@@ -37,26 +42,39 @@ export class StockReceiveComponent implements OnInit {
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
     private productService: ProductService,
+    private authService: AuthService
   ) {
     this.form.date = this.todayStr();
   }
 
   ngOnInit(): void {
-    this.warehouseService.getAll().subscribe(list => {
-      this.warehouses = list.filter(w => w.status === 'Active');
-    });
-    this.productService.getAll().subscribe(list => {
-      this.products = list.filter(p => p.status === 'Active');
+    const role = this.authService.role;
+    const isManager = role === 'WAREHOUSE_MANAGER' || role === 'Warehouse Manager';
+
+    if (isManager) {
+      this.warehouseService.getMyWarehouses().subscribe(list => {
+        this.warehouses = (list || []).filter(w => w.status === 'ACTIVE' || w.status === ('Active' as any));
+      });
+    } else {
+      this.warehouseService.getAll().subscribe(res => {
+        const list = Array.isArray(res) ? res : res.warehouses || [];
+        this.warehouses = list.filter(w => w.status === 'ACTIVE' || w.status === ('Active' as any));
+      });
+    }
+
+    this.productService.getAll().subscribe(res => {
+      const list = Array.isArray(res) ? res : res.products || [];
+      this.products = list.filter(p => p.status === 'ACTIVE' || p.status === ('Active' as any));
     });
   }
 
   // ── Derived ──────────────────────────────────────────────
   get selectedWarehouse(): Warehouse | null {
-    return this.warehouses.find(w => w.id === this.form.warehouseId) || null;
+    return this.warehouses.find(w => String(w.id) === String(this.form.warehouseId)) || null;
   }
 
   get selectedProduct(): Product | null {
-    return this.products.find(p => p.id === this.form.productId) || null;
+    return this.products.find(p => String(p.id) === String(this.form.productId)) || null;
   }
 
   get availableCapacity(): number {
@@ -95,14 +113,14 @@ export class StockReceiveComponent implements OnInit {
     const s = this.productSearch.toLowerCase();
     return !s ? this.products : this.products.filter(p =>
       p.name.toLowerCase().includes(s) ||
-      p.id.toLowerCase().includes(s) ||
-      p.sku.toLowerCase().includes(s)
+      String(p.id).toLowerCase().includes(s) ||
+      (p.sku && p.sku.toLowerCase().includes(s))
     );
   }
 
   selectProduct(p: Product): void {
-    this.form.productId      = p.id;
-    this.productSearch       = `${p.name} (${p.sku})`;
+    this.form.productId      = String(p.id);
+    this.productSearch       = `${p.name}${p.sku ? ' (' + p.sku + ')' : ''}`;
     this.productDropdownOpen = false;
     this.validateField('productId');
   }
@@ -138,14 +156,25 @@ export class StockReceiveComponent implements OnInit {
     this.submitted = true;
     this.errorMsg  = '';
 
-    this.inventoryService.receiveStock({
+    const refNum = this.form.reason.trim() || `REF-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const req: ApiReceiveStockRequest = {
       warehouseId: this.form.warehouseId,
       productId:   this.form.productId,
       quantity:    this.form.quantity!,
-      reason:      this.form.reason,
-      date:        this.form.date,
-    }).subscribe({
-      next: () => { this.success = true; },
+      referenceNumber: refNum
+    };
+
+    this.inventoryService.receiveStockApi(req).subscribe({
+      next: () => {
+        this.success = true;
+        this.stockReceived.emit();
+        if (this.isModal) {
+          setTimeout(() => {
+            this.closed.emit();
+          }, 1200);
+        }
+      },
       error: (err) => {
         this.errorMsg = err?.message || 'An error occurred. Please try again.';
         this.submitted = false;
@@ -162,7 +191,13 @@ export class StockReceiveComponent implements OnInit {
     this.errorMsg     = '';
   }
 
-  cancel(): void { this.router.navigate(['/inventory']); }
+  cancel(): void {
+    if (this.isModal) {
+      this.closed.emit();
+    } else {
+      this.router.navigate(['/inventory']);
+    }
+  }
 
   private todayStr(): string {
     return new Date().toISOString().split('T')[0];
@@ -178,3 +213,4 @@ export class StockReceiveComponent implements OnInit {
     return Math.min(incomingPct, availPct);
   }
 }
+

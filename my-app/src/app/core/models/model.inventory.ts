@@ -93,3 +93,29 @@ export interface StockTransferRequest {
   quantity: number;
   reason: string;
 }
+
+export interface ApiReceiveStockRequest {
+  productId: number | string;
+  warehouseId: number | string;
+  quantity: number;
+  referenceNumber: string;
+}
+
+export interface ReceiveStockData {
+  referenceNumber: string;
+  transactionType: string;
+  productId: number | string;
+  productName: string;
+  sourceWarehouseId?: number | string;
+  destinationWarehouseId?: number | string;
+  quantity: number;
+  sourceAvailableQuantity?: number;
+  destinationAvailableQuantity?: number;
+}
+
+export interface ReceiveStockApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: ReceiveStockData;
+}

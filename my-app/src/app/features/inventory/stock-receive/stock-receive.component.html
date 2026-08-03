@@ -1,6 +1,22 @@
-<div class="receive-page">
+<ng-container *ngIf="isModal">
+  <div class="modal-backdrop" (click)="cancel()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <button class="modal-close-btn" (click)="cancel()">&times;</button>
+      <ng-container *ngTemplateOutlet="receiveFormContent"></ng-container>
+    </div>
+  </div>
+</ng-container>
 
-  <!-- Centered form card -->
+<ng-container *ngIf="!isModal">
+  <div class="receive-page">
+    <ng-container *ngTemplateOutlet="receiveFormContent"></ng-container>
+  </div>
+</ng-container>
+
+<!-- Reusable Form Content Template -->
+<ng-template #receiveFormContent>
+
+  <!-- Form card -->
   <div class="form-card" *ngIf="!success">
 
     <div class="card-title">
@@ -9,6 +25,11 @@
     </div>
 
     <div class="card-body">
+
+      <!-- Server error message if any -->
+      <div class="alert alert-error" *ngIf="errorMsg">
+        {{ errorMsg }}
+      </div>
 
       <!-- Row 1: Warehouse + Date -->
       <div class="form-row">
@@ -47,7 +68,7 @@
         <div class="product-dropdown" *ngIf="productDropdownOpen && filteredProducts.length > 0">
           <div class="pd-item" *ngFor="let p of filteredProducts" (mousedown)="selectProduct(p)">
             <span class="pd-name">{{ p.name }}</span>
-            <span class="pd-meta">{{ p.sku }} · {{ p.availableQty | number }} in stock</span>
+            <span class="pd-meta">{{ p.sku ? 'SKU: ' + p.sku + ' · ' : '' }}Price: {{ p.unitPrice | currency }}</span>
           </div>
         </div>
         <span class="field-error" *ngIf="formErrors['productId']">{{ formErrors['productId'] }}</span>
@@ -73,7 +94,7 @@
       <!-- Reason / Reference -->
       <div class="form-group">
         <label>Reason / Reference <span class="req">*</span></label>
-        <textarea [(ngModel)]="form.reason" placeholder="e.g. Restock PO #4492" rows="4"></textarea>
+        <textarea [(ngModel)]="form.reason" placeholder="e.g. Restock PO #4492" rows="3"></textarea>
       </div>
 
       <!-- Capacity check -->
@@ -130,7 +151,8 @@
     </div>
     <h3>Stock received successfully!</h3>
     <p>{{ selectedProduct?.name }} — {{ form.quantity | number }} units added to {{ selectedWarehouse?.name }}.</p>
-    <button class="btn-confirm" (click)="reset()">Receive More Stock</button>
+    <button class="btn-confirm" (click)="isModal ? cancel() : reset()">{{ isModal ? 'Done' : 'Receive More Stock' }}</button>
   </div>
 
-</div>
+</ng-template>
+

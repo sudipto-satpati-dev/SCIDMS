@@ -31,6 +31,7 @@ import {
   Order, Shipment, AuditLog, DashboardStats,
   StockReceiveRequest, StockDispatchRequest, StockTransferRequest,
   CreateOrderRequest, OrderStatus, ApiInventoryItem, InventoryListParams, InventoryListResult,
+  ApiReceiveStockRequest, ReceiveStockData
 } from '../models/index';
 
 /** Simulated network latency in ms */
@@ -252,6 +253,47 @@ export class MockApiService {
       totalElements,
       totalPages
     });
+  }
+
+  receiveStockApi(req: ApiReceiveStockRequest): Observable<ReceiveStockData> {
+    const whId = String(req.warehouseId);
+    const prodId = String(req.productId);
+
+    const wh = this.warehouses.find(w => w.id === whId || w.id.endsWith(whId));
+    if (!wh) return this.fail('Warehouse not found.');
+
+    const product = this.products.find(p => String(p.id) === prodId || p.sku === prodId || String(p.id).endsWith(prodId));
+    if (!product) return this.fail('Selected product not found.');
+
+    let row = this.inventory.find(r => (r.warehouseId === wh.id || r.warehouseId === whId) && (r.productId === String(product.id) || r.productId === prodId));
+    if (!row) {
+      row = {
+        productId: String(product.id),
+        productName: product.name,
+        sku: product.sku,
+        warehouseId: wh.id,
+        warehouseName: wh.name,
+        availableQty: 0,
+        allocatedQty: 0,
+        threshold: 10
+      };
+      this.inventory.push(row);
+    }
+
+    row.availableQty += req.quantity;
+    wh.occupiedCapacity = Math.min(wh.totalCapacity, wh.occupiedCapacity + req.quantity);
+
+    const resData: ReceiveStockData = {
+      referenceNumber: req.referenceNumber || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+      transactionType: 'Received',
+      productId: product.id,
+      productName: product.name,
+      destinationWarehouseId: wh.id,
+      quantity: req.quantity,
+      destinationAvailableQuantity: row.availableQty
+    };
+
+    return this.respond(resData);
   }
 
   getInventoryByWarehouse(warehouseId: string): Observable<InventoryRow[]> {
