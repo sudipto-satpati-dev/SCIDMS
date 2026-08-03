@@ -663,3 +663,86 @@
   cursor: pointer;
   &:hover { background: #f8fafc; }
 }
+
+// ── Manager Section Styles ───────────────────────────────
+.wh-manager-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.mgr-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.mgr-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mgr-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mgr-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.mgr-email {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.mgr-none {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.mgr-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-mgr-action {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover { background: #c7d2fe; }
+}
+
+.btn-mgr-danger {
+  padding: 2px 7px;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover { background: #fca5a5; }
+}
+

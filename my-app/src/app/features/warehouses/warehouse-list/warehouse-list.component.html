@@ -11,7 +11,7 @@
   <div class="page-header">
     <div>
       <h1>Warehouses</h1>
-      <p class="subtitle">Manage global inventory nodes and real-time storage capacities.</p>
+      <p class="subtitle">Manage global inventory nodes, assigned managers, and real-time capacities.</p>
     </div>
     <div class="header-right">
       <div class="search-wrap">
@@ -117,6 +117,30 @@
           {{ w.location }}
         </div>
 
+        <!-- Manager Section -->
+        <div class="wh-manager-box">
+          <div class="mgr-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span class="mgr-title">Manager:</span>
+          </div>
+          <div class="mgr-body" *ngIf="w.managerUsername; else unassignedMgr">
+            <div class="mgr-info">
+              <span class="mgr-name">{{ w.managerUsername }}</span>
+              <span class="mgr-email" *ngIf="w.managerEmail">{{ w.managerEmail }}</span>
+            </div>
+            <div class="mgr-actions">
+              <button class="btn-mgr-action" title="Change Manager" (click)="openAssignManagerModal(w, $event)">Edit</button>
+              <button class="btn-mgr-danger" title="Remove Manager" (click)="removeManager(w, $event)">&times;</button>
+            </div>
+          </div>
+          <ng-template #unassignedMgr>
+            <div class="mgr-body unassigned">
+              <span class="mgr-none">Unassigned</span>
+              <button class="btn-mgr-action" (click)="openAssignManagerModal(w, $event)">+ Assign</button>
+            </div>
+          </ng-template>
+        </div>
+
         <!-- Capacity bar -->
         <div class="capacity-section">
           <div class="cap-label-row">
@@ -138,7 +162,10 @@
             <button class="icon-btn" title="Toggle Status" (click)="toggleStatus(w, $event)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
             </button>
-            <button class="icon-btn" title="Edit" (click)="openEditModal(w, $event)">
+            <button class="icon-btn" title="Assign Manager" (click)="openAssignManagerModal(w, $event)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            </button>
+            <button class="icon-btn" title="Edit Warehouse" (click)="openEditModal(w, $event)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           </div>
@@ -217,6 +244,47 @@
       <button class="btn-primary" (click)="saveWarehouse()" [disabled]="saving">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         {{ saving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Add Warehouse') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Manager Modal -->
+<div class="modal-overlay" *ngIf="showManagerModal" (click)="showManagerModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-title-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <h3>Assign Warehouse Manager</h3>
+          <p class="modal-subtitle">Assign a manager to {{ targetWarehouseForManager?.name }}</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="showManagerModal = false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Select Warehouse Manager <span class="req">*</span></label>
+        <div class="select-wrap-modal">
+          <select [(ngModel)]="selectedManagerId">
+            <option [ngValue]="null">-- Select Manager --</option>
+            <option *ngFor="let u of availableManagers" [value]="u.id">
+              {{ u.username }} ({{ u.email }}) — {{ u.role }}
+            </option>
+          </select>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="showManagerModal = false" [disabled]="saving">Cancel</button>
+      <button class="btn-primary" (click)="submitAssignManager()" [disabled]="saving || !selectedManagerId">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ saving ? 'Assigning...' : 'Assign Manager' }}
       </button>
     </div>
   </div>

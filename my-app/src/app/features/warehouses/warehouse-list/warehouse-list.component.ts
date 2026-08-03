@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { WarehouseService } from '../../../core/services/warehouse.service';
-import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequest } from '../../../core/models/index';
+import { UserService } from '../../../core/services/user.service';
+import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequest, User } from '../../../core/models/index';
 
 @Component({
   selector: 'app-warehouse-list',
@@ -22,7 +23,14 @@ export class WarehouseListComponent implements OnInit {
 
   showFormModal     = false;
   showDeleteModal   = false;
+  showManagerModal  = false;
+
   selectedWarehouse: Warehouse | null = null;
+  targetWarehouseForManager: Warehouse | null = null;
+  selectedManagerId: number | null = null;
+  availableManagers: User[] = [];
+  loadingManagers = false;
+
   isEditMode   = false;
   formErrors: Record<string, string> = {};
   saving   = false;
@@ -37,10 +45,14 @@ export class WarehouseListComponent implements OnInit {
     'linear-gradient(135deg, #312e81 0%, #7c3aed 100%)',
   ];
 
-  constructor(private warehouseService: WarehouseService) {}
+  constructor(
+    private warehouseService: WarehouseService,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
     this.loadWarehouses();
+    this.loadAvailableManagers();
   }
 
   loadWarehouses(): void {
@@ -63,6 +75,19 @@ export class WarehouseListComponent implements OnInit {
       error: (err) => {
         this.errorMsg = err?.message || 'Failed to load warehouses.';
         this.loading  = false;
+      }
+    });
+  }
+
+  loadAvailableManagers(): void {
+    this.loadingManagers = true;
+    this.userService.getAll({ size: 100 }).subscribe({
+      next: (res) => {
+        this.availableManagers = res.users || [];
+        this.loadingManagers   = false;
+      },
+      error: () => {
+        this.loadingManagers = false;
       }
     });
   }
@@ -122,7 +147,10 @@ export class WarehouseListComponent implements OnInit {
       availableCapacity: 10000,
       status: 'ACTIVE',
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      managerId: null,
+      managerUsername: null,
+      managerEmail: null
     };
     this.formErrors = {};
     this.errorMsg   = '';
@@ -136,6 +164,52 @@ export class WarehouseListComponent implements OnInit {
     this.formErrors      = {};
     this.errorMsg        = '';
     this.showFormModal   = true;
+  }
+
+  openAssignManagerModal(w: Warehouse, e: Event): void {
+    e.stopPropagation();
+    this.targetWarehouseForManager = w;
+    this.selectedManagerId = w.managerId || null;
+    this.errorMsg = '';
+    this.showManagerModal = true;
+    if (!this.availableManagers.length) {
+      this.loadAvailableManagers();
+    }
+  }
+
+  submitAssignManager(): void {
+    if (!this.targetWarehouseForManager || !this.selectedManagerId) return;
+    this.saving = true;
+    this.errorMsg = '';
+
+    this.warehouseService.assignManager(
+      this.targetWarehouseForManager.id,
+      Number(this.selectedManagerId)
+    ).subscribe({
+      next: () => {
+        this.saving = false;
+        this.showManagerModal = false;
+        this.loadWarehouses();
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not assign manager.';
+        this.saving = false;
+      }
+    });
+  }
+
+  removeManager(w: Warehouse, e: Event): void {
+    e.stopPropagation();
+    if (!w.managerId) return;
+    this.errorMsg = '';
+    this.warehouseService.removeManager(w.id).subscribe({
+      next: () => {
+        this.loadWarehouses();
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not remove manager.';
+      }
+    });
   }
 
   validateField(field: string): void {

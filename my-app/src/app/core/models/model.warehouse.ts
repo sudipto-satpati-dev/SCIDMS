@@ -10,6 +10,9 @@ export interface Warehouse {
   status: WarehouseStatus;
   createdAt: string;
   updatedAt: string;
+  managerId?: number | null;
+  managerUsername?: string | null;
+  managerEmail?: string | null;
 }
 
 export interface CreateWarehouseRequest {
@@ -22,6 +25,10 @@ export type UpdateWarehouseRequest = Partial<CreateWarehouseRequest>;
 
 export interface ToggleWarehouseStatusRequest {
   status: WarehouseStatus;
+}
+
+export interface AssignWarehouseManagerRequest {
+  managerId: number;
 }
 
 export interface WarehouseListParams {

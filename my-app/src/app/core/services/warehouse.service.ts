@@ -8,6 +8,7 @@ import {
   CreateWarehouseRequest,
   UpdateWarehouseRequest,
   ToggleWarehouseStatusRequest,
+  AssignWarehouseManagerRequest,
   WarehouseListParams,
   WarehouseListApiResponse,
   SingleWarehouseApiResponse,
@@ -114,12 +115,50 @@ export class WarehouseService {
       );
   }
 
+  /**
+   * PUT/PATCH /api/warehouse/{id}/manager
+   * Request body: { managerId: number }
+   * Response: { success, message, timestamp, data: Warehouse }
+   */
+  assignManager(warehouseId: number, managerId: number): Observable<Warehouse> {
+    const payload: AssignWarehouseManagerRequest = { managerId };
+    return this.http
+      .put<SingleWarehouseApiResponse>(`${this.warehouseCreateUrl}/${warehouseId}/manager`, payload)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to assign warehouse manager.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * DELETE/POST /api/warehouse/{id}/manager/remove
+   * Response: { success, message, timestamp, data: Warehouse }
+   */
+  removeManager(warehouseId: number): Observable<Warehouse> {
+    return this.http
+      .delete<SingleWarehouseApiResponse>(`${this.warehouseCreateUrl}/${warehouseId}/manager/remove`)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to remove warehouse manager.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
   private _handleError(err: HttpErrorResponse | { message: string }) {
     if (err instanceof HttpErrorResponse) {
       const msg =
         err.error?.message ||
-        (err.status === 409 ? 'Warehouse name conflict.' :
-          err.status === 400 ? 'Invalid request. Please check the form.' :
+        (err.status === 409 ? 'Warehouse conflict.' :
+          err.status === 400 ? 'Invalid request parameters.' :
             err.status === 403 ? 'You do not have permission to perform this action.' :
               err.status === 0 ? 'Cannot connect to server. Please try again.' :
                 'An unexpected error occurred.');

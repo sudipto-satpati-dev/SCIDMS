@@ -56,11 +56,11 @@ const PHOTO = [
 ];
 
 export const MOCK_WAREHOUSES: Warehouse[] = [
-  { id: 1001, name: 'Central WH-A',      location: 'Dhaka, BD',      totalCapacity: 10000, occupiedCapacity: 8800, availableCapacity: 1200, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
-  { id: 1002, name: 'North Logistics-B', location: 'Chittagong, BD', totalCapacity: 10000, occupiedCapacity: 6200, availableCapacity: 3800, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
-  { id: 1003, name: 'South Hub-D',       location: 'Sylhet, BD',     totalCapacity: 5000,  occupiedCapacity: 4750, availableCapacity: 250,  status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
-  { id: 1004, name: 'West Transit-C',    location: 'Rajshahi, BD',   totalCapacity: 5000,  occupiedCapacity: 750,  availableCapacity: 4250, status: 'INACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
-  { id: 1005, name: 'East Port-E',       location: 'Khulna, BD',     totalCapacity: 8000,  occupiedCapacity: 5760, availableCapacity: 2240, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z' },
+  { id: 1001, name: 'Central WH-A',      location: 'Dhaka, BD',      totalCapacity: 10000, occupiedCapacity: 8800, availableCapacity: 1200, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z', managerId: 1002, managerUsername: 'sarah.j_mgmt', managerEmail: 's.jordan@scidms.io' },
+  { id: 1002, name: 'North Logistics-B', location: 'Chittagong, BD', totalCapacity: 10000, occupiedCapacity: 6200, availableCapacity: 3800, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z', managerId: 1008, managerUsername: 'nina.patel',    managerEmail: 'n.patel@scidms.io' },
+  { id: 1003, name: 'South Hub-D',       location: 'Sylhet, BD',     totalCapacity: 5000,  occupiedCapacity: 4750, availableCapacity: 250,  status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z', managerId: null, managerUsername: null, managerEmail: null },
+  { id: 1004, name: 'West Transit-C',    location: 'Rajshahi, BD',   totalCapacity: 5000,  occupiedCapacity: 750,  availableCapacity: 4250, status: 'INACTIVE', createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z', managerId: null, managerUsername: null, managerEmail: null },
+  { id: 1005, name: 'East Port-E',       location: 'Khulna, BD',     totalCapacity: 8000,  occupiedCapacity: 5760, availableCapacity: 2240, status: 'ACTIVE',   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z', managerId: 1006, managerUsername: 'priya.sharma',  managerEmail: 'p.sharma@scidms.io' },
 ];
 
 // ─────────────────────────────────────────────────────────────
