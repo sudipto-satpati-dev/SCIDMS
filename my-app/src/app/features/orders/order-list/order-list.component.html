@@ -11,7 +11,7 @@
   <div class="page-header">
     <div>
       <h1>Customer Orders</h1>
-      <p class="subtitle">Manage order lifecycle from creation to delivery.</p>
+      <p class="subtitle">Manage order lifecycle from creation to approval, packing, and delivery.</p>
     </div>
     <button class="btn-create" (click)="openCreateModal()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -19,97 +19,111 @@
     </button>
   </div>
 
-  <!-- Summary strip -->
-  <div class="summary-strip">
-    <div class="sum-item">
-      <span class="sum-dot created-dot"></span>
-      <span class="sum-val">{{ createdCount }}</span>
-      <span class="sum-lbl">Pending Approval</span>
-    </div>
-    <div class="sum-div"></div>
-    <div class="sum-item">
-      <span class="sum-dot approved-dot"></span>
-      <span class="sum-val">{{ approvedCount }}</span>
-      <span class="sum-lbl">Approved</span>
-    </div>
-    <div class="sum-div"></div>
-    <div class="sum-item">
-      <span class="sum-dot dispatched-dot"></span>
-      <span class="sum-val">{{ dispatchedCount }}</span>
-      <span class="sum-lbl">Dispatched / Delivered</span>
-    </div>
-    <div class="sum-div"></div>
-    <div class="sum-item">
-      <span class="sum-dot total-dot"></span>
-      <span class="sum-val">{{ orders.length }}</span>
-      <span class="sum-lbl">Total Orders</span>
-    </div>
-  </div>
-
   <!-- Table card -->
   <div class="table-card">
     <!-- Filter bar -->
-    <div class="filter-bar">
-      <div class="search-wrap">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search by Order ID or Customer…" [(ngModel)]="searchTerm" (ngModelChange)="currentPage=1" />
-        <button class="clear-x" *ngIf="searchTerm" (click)="searchTerm=''; currentPage=1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+    <div class="filter-card-bar">
+      <!-- Search input -->
+      <div class="filter-col flex-1">
+        <label class="filter-label">SEARCH</label>
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            type="text"
+            placeholder="Search order number or customer…"
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchInput($event)"
+          />
+          <button class="clear-x" *ngIf="searchTerm" (click)="onSearchInput('')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="status-filter">
-        <button [class.f-all]="!filterStatus" (click)="filterStatus=''; currentPage=1">All</button>
-        <button *ngFor="let s of statuses"
-          [class.f-active]="filterStatus === s"
-          [ngClass]="filterStatus === s ? 'f-' + s.toLowerCase() : ''"
-          (click)="filterStatus = filterStatus === s ? '' : s; currentPage=1">
-          {{ s }}
-        </button>
+
+      <!-- Warehouse filter -->
+      <div class="filter-col">
+        <label class="filter-label">WAREHOUSE</label>
+        <div class="select-wrap">
+          <select [(ngModel)]="filterWarehouseId" (ngModelChange)="onFilterChange()">
+            <option value="">All {{ isWarehouseManager ? 'My Warehouses' : 'Warehouses' }}</option>
+            <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
+          </select>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
+
+      <!-- Status filter -->
+      <div class="filter-col">
+        <label class="filter-label">STATUS</label>
+        <div class="select-wrap">
+          <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+          <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <!-- Reset -->
+      <button class="btn-reset" (click)="clearFilters()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.87"/></svg>
+        Reset
+      </button>
+    </div>
+
+    <!-- Header bar -->
+    <div class="table-header-info">
+      <span class="result-count">{{ totalElements }} orders found</span>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <span>Loading customer orders...</span>
+    </div>
+
+    <!-- Error State -->
+    <div class="alert alert-error" *ngIf="errorMsg && !loading && !showCreateModal">
+      {{ errorMsg }}
     </div>
 
     <!-- Table -->
-    <table class="data-table" *ngIf="filtered.length > 0">
+    <table class="data-table" *ngIf="!loading && orders.length > 0">
       <thead>
         <tr>
-          <th>Order ID</th>
-          <th>Customer Name</th>
-          <th>Order Date</th>
-          <th>Items</th>
-          <th>Total Qty</th>
-          <th>Order Value</th>
+          <th>Order No</th>
+          <th>Customer</th>
+          <th>Warehouse</th>
           <th>Status</th>
+          <th>Items / Units</th>
+          <th>Total Amount</th>
+          <th>Created By</th>
+          <th>Created At</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let o of paged">
-          <td class="oid">{{ o.id }}</td>
+        <tr *ngFor="let o of orders">
+          <td class="oid">{{ o.orderNumber || ('#ORD-' + o.id) }}</td>
           <td>
             <div class="customer-cell">
-              <div class="cust-avatar">{{ o.customerName[0] }}</div>
-              <div class="cust-info">
-                <span class="cust-name">{{ o.customerName }}</span>
-                <span class="cust-contact">{{ o.contactNumber }}</span>
-              </div>
+              <span class="cust-name">{{ o.customerName }}</span>
+              <span class="cust-contact">{{ o.customerEmail || o.contactNumber || '—' }}</span>
             </div>
           </td>
-          <td class="date-cell">{{ o.orderDate }}</td>
-          <td class="num-cell">{{ itemCount(o) }}</td>
-          <td class="num-cell">{{ totalItems(o) | number }}</td>
-          <td class="value-cell">{{ fmt(orderValue(o)) }}</td>
+          <td class="wh-cell">{{ o.warehouseName || '—' }}</td>
           <td>
             <span class="status-pill" [ngClass]="statusClass(o.status)">
               <span class="sp-dot"></span>{{ o.status }}
             </span>
           </td>
+          <td class="num-cell">{{ itemCount(o) }} items ({{ totalUnits(o) }} units)</td>
+          <td class="value-cell">{{ fmt(o.totalAmount) }}</td>
+          <td class="actor-cell">{{ o.createdBy || 'System User' }}</td>
+          <td class="date-cell">{{ o.createdAt | date:'mediumDate' }}</td>
           <td>
             <div class="action-btns">
-              <button class="btn-icon" title="View order" [routerLink]="['/orders', o.id]">
+              <button class="btn-icon" title="View order details" [routerLink]="['/orders', o.id]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-              <button class="btn-icon btn-icon-cancel" title="Cancel order" *ngIf="o.status === 'Created'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
               </button>
             </div>
           </td>
@@ -117,19 +131,19 @@
       </tbody>
     </table>
 
-    <!-- Empty -->
-    <div class="empty-state" *ngIf="filtered.length === 0">
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && orders.length === 0">
       <div class="empty-icon">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
       <h3>No orders found</h3>
-      <p>No orders match your current filters.</p>
-      <button class="btn-clear" (click)="searchTerm=''; filterStatus=''">Clear filters</button>
+      <p>No orders match your current filter criteria.</p>
+      <button class="btn-clear" (click)="clearFilters()">Clear all filters</button>
     </div>
 
     <!-- Pagination -->
-    <div class="table-footer" *ngIf="filtered.length > 0">
-      <span class="showing-text">Showing <strong>{{ pageStart }}–{{ pageEnd }}</strong> of <strong>{{ filtered.length }}</strong> orders</span>
+    <div class="table-footer" *ngIf="!loading && totalElements > 0">
+      <span class="showing-text">Showing <strong>{{ pageStart }}–{{ pageEnd }}</strong> of <strong>{{ totalElements }}</strong> orders</span>
       <div class="pagination">
         <button class="page-btn icon-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -155,7 +169,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <h3>Order Created!</h3>
-      <p>Order has been submitted for approval.</p>
+      <p>Order has been created successfully.</p>
     </div>
 
     <!-- Modal header -->
@@ -166,7 +180,7 @@
         </div>
         <div>
           <h3>Create Customer Order</h3>
-          <p class="mh-sub">Fill in customer details and add products below.</p>
+          <p class="mh-sub">Fill in customer details, select fulfillment warehouse, and add products below.</p>
         </div>
       </div>
       <button class="modal-close" (click)="showCreateModal = false">
@@ -177,24 +191,43 @@
     <!-- Modal body -->
     <div class="modal-body" *ngIf="!createSuccess">
 
+      <div class="alert alert-error" *ngIf="errorMsg">
+        {{ errorMsg }}
+      </div>
+
       <!-- Section: Customer details -->
       <div class="section-label">Customer Information</div>
       <div class="form-row">
         <div class="form-group" [class.has-error]="formErrors['customerName']">
           <label>Customer Name <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="newOrder.customerName" placeholder="e.g. Ahmed Trading Co." />
+          <input type="text" [(ngModel)]="newOrder.customerName" placeholder="e.g. Acme Logistics Corp" />
           <span class="field-error" *ngIf="formErrors['customerName']">{{ formErrors['customerName'] }}</span>
         </div>
-        <div class="form-group" [class.has-error]="formErrors['contactNumber']">
-          <label>Contact Number <span class="req">*</span></label>
-          <input type="text" [(ngModel)]="newOrder.contactNumber" placeholder="e.g. +880-1711-000000" />
-          <span class="field-error" *ngIf="formErrors['contactNumber']">{{ formErrors['contactNumber'] }}</span>
+        <div class="form-group" [class.has-error]="formErrors['customerEmail']">
+          <label>Customer Email <span class="req">*</span></label>
+          <input type="email" [(ngModel)]="newOrder.customerEmail" placeholder="e.g. orders@acme.com" />
+          <span class="field-error" *ngIf="formErrors['customerEmail']">{{ formErrors['customerEmail'] }}</span>
         </div>
       </div>
-      <div class="form-group" [class.has-error]="formErrors['address']">
-        <label>Delivery Address <span class="req">*</span></label>
-        <input type="text" [(ngModel)]="newOrder.address" placeholder="e.g. 12 Mirpur Road, Dhaka" />
-        <span class="field-error" *ngIf="formErrors['address']">{{ formErrors['address'] }}</span>
+
+      <div class="form-row mt-sm">
+        <div class="form-group flex-2" [class.has-error]="formErrors['deliveryAddress']">
+          <label>Delivery Address <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="newOrder.deliveryAddress" placeholder="e.g. 100 Logistics Way, Suite 400" />
+          <span class="field-error" *ngIf="formErrors['deliveryAddress']">{{ formErrors['deliveryAddress'] }}</span>
+        </div>
+
+        <div class="form-group flex-1" [class.has-error]="formErrors['warehouseId']">
+          <label>Fulfillment Warehouse <span class="req">*</span></label>
+          <div class="select-wrap-modal">
+            <select [(ngModel)]="newOrder.warehouseId">
+              <option value="" disabled>Select warehouse…</option>
+              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
+            </select>
+            <svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <span class="field-error" *ngIf="formErrors['warehouseId']">{{ formErrors['warehouseId'] }}</span>
+        </div>
       </div>
 
       <!-- Section: Order items -->
@@ -223,14 +256,14 @@
                 <div class="select-wrap-sm">
                   <select [(ngModel)]="item.productId" (change)="onProductSelect(i)">
                     <option value="" disabled>Select product…</option>
-                    <option *ngFor="let p of products" [value]="p.id">{{ p.name }}</option>
+                    <option *ngFor="let p of products" [value]="p.id">{{ p.name }} (SKU: {{ p.sku }})</option>
                   </select>
                   <svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </td>
               <td class="price-td">{{ item.unitPrice > 0 ? fmt(item.unitPrice) : '—' }}</td>
               <td>
-                <input type="number" [(ngModel)]="item.quantity" placeholder="0" min="1" class="qty-input-sm" />
+                <input type="number" [(ngModel)]="item.quantity" placeholder="1" min="1" class="qty-input-sm" />
               </td>
               <td class="linetotal-td">
                 {{ item.unitPrice > 0 && item.quantity ? fmt(item.unitPrice * item.quantity) : '—' }}
@@ -253,7 +286,7 @@
       <!-- Order total -->
       <div class="order-total-row">
         <div class="ot-info">
-          <span>{{ totalQtyCount | number }} total units across {{ newItems.length }} line{{ newItems.length === 1 ? '' : 's' }}</span>
+          <span>{{ totalQtyCount | number }} total units across {{ newItems.length }} line item{{ newItems.length === 1 ? '' : 's' }}</span>
         </div>
         <div class="ot-total">
           <span class="ot-lbl">Order Total</span>
@@ -265,12 +298,14 @@
 
     <!-- Modal footer -->
     <div class="modal-footer" *ngIf="!createSuccess">
-      <button class="btn-cancel" (click)="showCreateModal = false">Cancel</button>
-      <button class="btn-submit" (click)="submitOrder()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Submit Order
+      <button class="btn-cancel" (click)="showCreateModal = false" [disabled]="submitting">Cancel</button>
+      <button class="btn-submit" (click)="submitOrder()" [disabled]="submitting">
+        <span class="spinner-sm" *ngIf="submitting"></span>
+        <svg *ngIf="!submitting" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ submitting ? 'Submitting...' : 'Submit Order' }}
       </button>
     </div>
 
   </div>
 </div>
+

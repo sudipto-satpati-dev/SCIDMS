@@ -1,17 +1,23 @@
 export type OrderStatus =
+  | 'CREATED'
+  | 'APPROVED'
+  | 'PACKED'
+  | 'DISPATCHED'
+  | 'DELIVERED'
+  | 'CANCELLED'
   | 'Created'
   | 'Approved'
-  | 'Packed'
   | 'Dispatched'
   | 'Delivered'
-  | 'Rejected'
   | 'Cancelled';
 
 export interface OrderItem {
-  productId: string;
+  itemId?: number | string;
+  productId: number | string;
   productName: string;
-  unitPrice: number;
   quantity: number;
+  unitPrice: number;
+  lineTotal: number;
 }
 
 export interface OrderStatusEvent {
@@ -22,24 +28,89 @@ export interface OrderStatusEvent {
 }
 
 export interface Order {
-  id: string;
+  id: number | string;
+  orderNumber: string;
   customerName: string;
-  contactNumber: string;
-  address: string;
-  orderDate: string;
-  status: OrderStatus;
-  priority: 'High' | 'Medium' | 'Low';
-  approvedBy: string;
-  approvedDate: string;
-  submittedBy: string;
+  customerEmail: string;
+  deliveryAddress: string;
+  warehouseId: number | string;
+  warehouseName: string;
+  status: OrderStatus | string;
+  totalAmount: number;
+  createdBy: string;
+  approvedBy?: string;
   items: OrderItem[];
-  history: OrderStatusEvent[];
-  rejectionReason?: string;
+  createdAt: string;
+  updatedAt?: string;
+  // Fallbacks for UI compatibility
+  contactNumber?: string;
+  address?: string;
+  orderDate?: string;
+  history?: OrderStatusEvent[];
 }
 
 export interface CreateOrderRequest {
   customerName: string;
-  contactNumber: string;
-  address: string;
-  items: { productId: string; quantity: number }[];
+  customerEmail: string;
+  deliveryAddress: string;
+  warehouseId: number | string;
+  items: {
+    productId: number | string;
+    quantity: number;
+  }[];
 }
+
+export interface OrderListParams {
+  search?: string;
+  status?: string;
+  warehouseId?: number | string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface OrderListApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    orders: Order[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface OrderListResult {
+  orders: Order[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface SingleOrderApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: Order;
+}
+
+export interface OrderHistoryItem {
+  historyId: number | string;
+  previousStatus: string;
+  newStatus: string;
+  changedBy: string;
+  remarks: string;
+  changedAt: string;
+}
+
+export interface OrderHistoryApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: OrderHistoryItem[];
+}
+
+

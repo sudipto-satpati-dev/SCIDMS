@@ -578,6 +578,123 @@ export class MockApiService {
   // ─────────────────────────────────────────────────────────────
   // Orders
   // ─────────────────────────────────────────────────────────────
+  getOrdersApi(params: OrderListParams): Observable<OrderListResult> {
+    const list: Order[] = this.orders.map((o, idx) => {
+      const numId = typeof o.id === 'number' ? o.id : parseInt(String(o.id).replace(/\D/g, ''), 10) || (idx + 1);
+      const wh = this.warehouses[idx % this.warehouses.length] || { id: 'WH-001', name: 'Central Warehouse' };
+
+      const items: OrderItem[] = (o.items || []).map((it, itemIdx) => {
+        const p = this.products.find(prod => String(prod.id) === String(it.productId) || prod.name === it.productName);
+        const price = it.unitPrice || p?.unitPrice || 100;
+        const qty = it.quantity || 1;
+        return {
+          itemId: itemIdx + 1,
+          productId: p ? p.id : it.productId,
+          productName: p ? p.name : it.productName || 'Product Item',
+          quantity: qty,
+          unitPrice: price,
+          lineTotal: price * qty
+        };
+      });
+
+      const totalAmt = items.reduce((sum, item) => sum + item.lineTotal, 0);
+
+      return {
+        id: numId,
+        orderNumber: o.orderNumber || (typeof o.id === 'string' && o.id.startsWith('ORD-') ? o.id : `ORD-${10000 + numId}`),
+        customerName: o.customerName || 'Customer',
+        customerEmail: o.customerEmail || `${o.customerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        deliveryAddress: o.deliveryAddress || o.address || 'Standard Delivery Address',
+        warehouseId: o.warehouseId || wh.id,
+        warehouseName: o.warehouseName || wh.name,
+        status: (o.status || 'CREATED').toUpperCase(),
+        totalAmount: totalAmt || 500,
+        createdBy: o.submittedBy || 'System User',
+        approvedBy: o.approvedBy || undefined,
+        items,
+        createdAt: o.createdAt || new Date().toISOString(),
+        updatedAt: o.updatedAt || new Date().toISOString()
+      };
+    });
+
+    let filtered = list;
+    if (params.search) {
+      const s = params.search.toLowerCase();
+      filtered = filtered.filter(o =>
+        o.orderNumber.toLowerCase().includes(s) ||
+        o.customerName.toLowerCase().includes(s) ||
+        o.customerEmail.toLowerCase().includes(s)
+      );
+    }
+    if (params.status) {
+      filtered = filtered.filter(o => String(o.status).toUpperCase() === params.status!.toUpperCase());
+    }
+    if (params.warehouseId != null && params.warehouseId !== '') {
+      const wStr = String(params.warehouseId);
+      filtered = filtered.filter(o => String(o.warehouseId) === wStr);
+    }
+
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
+    const totalElements = filtered.length;
+    const totalPages = Math.ceil(totalElements / size) || 1;
+    const startIndex = page * size;
+    const paginated = filtered.slice(startIndex, startIndex + size);
+
+    return this.respond({
+      orders: paginated,
+      page,
+      size,
+      totalElements,
+      totalPages
+    });
+  }
+
+  createOrderApi(req: CreateOrderRequest): Observable<Order> {
+    if (!req.customerName || !req.items || !req.items.length) {
+      return this.fail('Customer name and at least one item are required.');
+    }
+
+    const wh = this.warehouses.find(w => String(w.id) === String(req.warehouseId)) || this.warehouses[0];
+    const newId = this.orders.length + 101;
+    const orderNum = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const items: OrderItem[] = req.items.map((it, idx) => {
+      const p = this.products.find(prod => String(prod.id) === String(it.productId) || prod.sku === String(it.productId));
+      const price = p?.unitPrice || 150;
+      const qty = it.quantity || 1;
+      return {
+        itemId: idx + 1,
+        productId: p ? p.id : it.productId,
+        productName: p ? p.name : `Product #${it.productId}`,
+        quantity: qty,
+        unitPrice: price,
+        lineTotal: price * qty
+      };
+    });
+
+    const totalAmt = items.reduce((sum, i) => sum + i.lineTotal, 0);
+
+    const newOrder: Order = {
+      id: newId,
+      orderNumber: orderNum,
+      customerName: req.customerName,
+      customerEmail: req.customerEmail || `${req.customerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      deliveryAddress: req.deliveryAddress,
+      warehouseId: wh ? wh.id : 1,
+      warehouseName: wh ? wh.name : 'Primary Warehouse',
+      status: 'CREATED',
+      totalAmount: totalAmt,
+      createdBy: 'Warehouse Manager',
+      items,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.orders.unshift(newOrder as any);
+    return this.respond(newOrder);
+  }
+
   getOrders(): Observable<Order[]> { return this.respond(this.orders); }
 
   getOrderById(id: string): Observable<Order> {

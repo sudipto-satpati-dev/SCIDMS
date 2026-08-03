@@ -155,44 +155,48 @@
           <div class="hc-header">
             <h3>Status History</h3>
             <div class="hc-actions">
-              <button class="hc-icon-btn" title="Download">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <button class="hc-icon-btn" title="Refresh">
+              <button class="hc-icon-btn" title="Refresh" (click)="loadHistory(selected.id)">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.87"/></svg>
               </button>
             </div>
           </div>
 
-          <table class="history-table">
+          <table class="history-table" *ngIf="orderHistory.length > 0">
             <thead>
               <tr>
-                <th>STATUS</th>
+                <th>STATUS CHANGE</th>
                 <th>CHANGED BY</th>
                 <th>TIMESTAMP</th>
-                <th>NOTES</th>
+                <th>REMARKS</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let ev of selected.history">
+              <tr *ngFor="let ev of orderHistory">
                 <td>
-                  <span class="status-pill" [ngClass]="statusPillClass(ev.status)">{{ ev.status }}</span>
+                  <div class="status-change-cell">
+                    <span class="status-pill" *ngIf="ev.previousStatus" [ngClass]="statusPillClass(ev.previousStatus)">{{ ev.previousStatus }}</span>
+                    <span class="arrow-sep" *ngIf="ev.previousStatus">→</span>
+                    <span class="status-pill" [ngClass]="statusPillClass(ev.newStatus)">{{ ev.newStatus }}</span>
+                  </div>
                 </td>
                 <td>
                   <div class="changed-by">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    {{ ev.changedBy }}
+                    {{ ev.changedBy || 'System User' }}
                   </div>
                 </td>
-                <td class="ts-cell">{{ ev.timestamp }}</td>
-                <td class="notes-cell">{{ ev.notes }}</td>
+                <td class="ts-cell">{{ ev.changedAt | date:'medium' }}</td>
+                <td class="notes-cell">{{ ev.remarks || '—' }}</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="hc-footer">
-            <span class="hc-count">Showing last {{ selected.history.length }} status changes</span>
-            <button class="btn-audit-log">View Full Audit Log</button>
+          <div class="empty-state-sm" *ngIf="orderHistory.length === 0">
+            <span>No status history logs recorded for this order yet.</span>
+          </div>
+
+          <div class="hc-footer" *ngIf="orderHistory.length > 0">
+            <span class="hc-count">Showing {{ orderHistory.length }} status change event(s)</span>
           </div>
         </div>
 

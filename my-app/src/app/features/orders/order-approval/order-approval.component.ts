@@ -38,16 +38,19 @@ export class OrderApprovalComponent implements OnInit {
   ngOnInit(): void {
     this.orderService.getAll().subscribe(orders => {
       this.productService.getAll().subscribe(products => {
-        this.productStockMap = Object.fromEntries(products.map(p => [p.id, p.availableQty]));
+        const prodList = Array.isArray(products) ? products : (products as any).products || [];
+        this.productStockMap = Object.fromEntries(prodList.map(p => [p.id, p.availableQty || 0]));
         const stockMap = this.productStockMap;
-        this.pendingOrders = orders
-          .filter(o => o.status === 'Created')
+        const list = Array.isArray(orders) ? orders : [];
+
+        this.pendingOrders = list
+          .filter(o => String(o.status).toUpperCase() === 'CREATED' || String(o.status).toUpperCase() === 'CREATED')
           .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
-        this.approvedOrders = orders
-          .filter(o => o.status === 'Approved')
+        this.approvedOrders = list
+          .filter(o => String(o.status).toUpperCase() === 'APPROVED')
           .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
-        this.rejectedOrders = orders
-          .filter(o => o.status === 'Rejected')
+        this.rejectedOrders = list
+          .filter(o => String(o.status).toUpperCase() === 'REJECTED' || String(o.status).toUpperCase() === 'CANCELLED')
           .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
         this.loading = false;
       });
