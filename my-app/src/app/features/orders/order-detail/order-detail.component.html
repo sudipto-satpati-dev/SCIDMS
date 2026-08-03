@@ -26,7 +26,11 @@
         <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
-    <button class="btn-apply" (click)="applyFilters()">
+    <button class="btn-approve-action" *ngIf="selected && (selected.status === 'CREATED' || selected.status === 'Created')" (click)="openApprovalModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Approve / Reject Order
+    </button>
+    <button class="btn-apply" *ngIf="!selected || (selected.status !== 'CREATED' && selected.status !== 'Created')" (click)="applyFilters()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       Apply Filters
     </button>
@@ -62,9 +66,15 @@
         <div class="lp-title">
           <h2>Order Lifecycle: <span class="order-id-highlight">{{ selected.orderNumber || selected.id }}</span></h2>
         </div>
-        <span class="si-status" [ngClass]="statusPillClass(selected.status)">
-          {{ selected.status }}
-        </span>
+        <div class="lp-actions">
+          <button class="btn-review-modal" *ngIf="selected.status === 'CREATED' || selected.status === 'Created'" (click)="openApprovalModal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Approve / Reject Order
+          </button>
+          <span class="si-status" [ngClass]="statusPillClass(selected.status)">
+            {{ selected.status }}
+          </span>
+        </div>
       </div>
 
       <!-- ── Status stepper ── -->
@@ -212,3 +222,114 @@
 
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     Warehouse Manager Approval & Inventory Stock Modal
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showApprovalModal && selected" (click)="closeApprovalModal()">
+  <div class="approval-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="am-header">
+      <div class="am-title-wrap">
+        <div class="am-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div>
+          <h3>Review & Approve Order {{ selected.orderNumber || ('#ORD-' + selected.id) }}</h3>
+          <p class="am-sub">Fulfillment Warehouse: <strong>{{ selected.warehouseName || ('Warehouse #' + selected.warehouseId) }}</strong></p>
+        </div>
+      </div>
+      <button class="modal-close-btn" (click)="closeApprovalModal()">&times;</button>
+    </div>
+
+    <!-- Body -->
+    <div class="am-body">
+      <!-- Loading State -->
+      <div class="am-loading" *ngIf="loadingStock">
+        <div class="spinner-sm"></div>
+        <span>Checking warehouse inventory stock levels...</span>
+      </div>
+
+      <ng-container *ngIf="!loadingStock">
+        <!-- Stock Warning Alert -->
+        <div class="stock-alert alert-warning" *ngIf="hasStockIssue()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <strong>Insufficient Inventory Warning:</strong> One or more items in this order exceed current available warehouse stock.
+          </div>
+        </div>
+
+        <!-- Inventory Allocation Table -->
+        <div class="am-table-wrap">
+          <table class="am-table">
+            <thead>
+              <tr>
+                <th>PRODUCT</th>
+                <th class="num-col">ORDERED (ALLOCATE)</th>
+                <th class="num-col">AVAILABLE STOCK</th>
+                <th class="num-col">REMAINING AFTER APPROVAL</th>
+                <th>STOCK STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selected.items">
+                <td>
+                  <div class="am-prod-info">
+                    <span class="prod-name">{{ item.productName }}</span>
+                    <span class="prod-id">Product ID: {{ item.productId }}</span>
+                  </div>
+                </td>
+                <td class="num-col bold-qty">{{ item.quantity | number }} units</td>
+                <td class="num-col">{{ getAvailableStock(item.productId) | number }} units</td>
+                <td class="num-col" [class.negative-stock]="getRemainingStock(item.productId, item.quantity) < 0" [class.positive-stock]="getRemainingStock(item.productId, item.quantity) >= 0">
+                  {{ getRemainingStock(item.productId, item.quantity) | number }} units
+                </td>
+                <td>
+                  <span class="stock-pill" [class.sp-ok]="getRemainingStock(item.productId, item.quantity) >= 0" [class.sp-error]="getRemainingStock(item.productId, item.quantity) < 0">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline *ngIf="getRemainingStock(item.productId, item.quantity) >= 0" points="20 6 9 17 4 12"/>
+                      <line *ngIf="getRemainingStock(item.productId, item.quantity) < 0" x1="18" y1="6" x2="6" y2="18"/>
+                      <line *ngIf="getRemainingStock(item.productId, item.quantity) < 0" x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    {{ getRemainingStock(item.productId, item.quantity) >= 0 ? 'Sufficient' : 'Short by ' + Math.abs(getRemainingStock(item.productId, item.quantity)) + ' units' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rejection Reason Input Section -->
+        <div class="rejection-box">
+          <label>Reason for Rejection <span class="opt-note">(Required if rejecting order)</span></label>
+          <textarea
+            [(ngModel)]="rejectionReason"
+            (input)="rejectionError = ''"
+            placeholder="Type reason for order rejection e.g. Insufficient warehouse stock, damaged stock..."
+            rows="2">
+          </textarea>
+          <span class="field-error" *ngIf="rejectionError">{{ rejectionError }}</span>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Footer Action Buttons -->
+    <div class="am-footer">
+      <button class="btn-modal-cancel" (click)="closeApprovalModal()" [disabled]="processingAction">Cancel</button>
+      <div class="am-actions-right">
+        <button class="btn-modal-reject" (click)="rejectOrderModal()" [disabled]="processingAction">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reject Order
+        </button>
+        <button class="btn-modal-approve" (click)="approveOrderModal()" [disabled]="processingAction">
+          <span class="spinner-sm" *ngIf="processingAction"></span>
+          <svg *ngIf="!processingAction" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ processingAction ? 'Approving...' : 'Approve & Allocate Stock' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
