@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { InventoryService } from '../../../core/services/inventory.service';
@@ -33,6 +34,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
+    private router: Router,
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
     private authService: AuthService
@@ -231,6 +233,10 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   onStockTransferred(): void {
     this.loadInventory();
+  }
+
+  goToHistory(): void {
+    this.router.navigate(['/inventory/history']);
   }
 }
 

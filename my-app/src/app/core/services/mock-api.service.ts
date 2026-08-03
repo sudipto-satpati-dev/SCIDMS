@@ -388,6 +388,59 @@ export class MockApiService {
     return this.respond(resData);
   }
 
+  getTransactionHistoryApi(params: TransactionHistoryParams): Observable<TransactionHistoryResult> {
+    const mockTxList: ApiInventoryTransaction[] = this.transactions.map((tx, idx) => {
+      let typeStr = tx.type.toUpperCase();
+      if (typeStr === 'RECEIVED') typeStr = 'RECEIVE';
+      if (typeStr === 'DISPATCHED') typeStr = 'DISPATCH';
+      if (typeStr === 'TRANSFERRED') typeStr = 'TRANSFER_OUT';
+
+      return {
+        transactionId: idx + 101,
+        referenceNumber: `REF-${1000 + idx}`,
+        transactionType: typeStr,
+        productId: parseInt(tx.productId.replace(/\D/g, ''), 10) || (idx + 1),
+        productName: tx.productName,
+        sourceWarehouseId: parseInt(tx.warehouseId.replace(/\D/g, ''), 10) || 1,
+        sourceWarehouseName: tx.warehouseName,
+        destinationWarehouseId: typeStr.includes('TRANSFER') ? 2 : undefined,
+        destinationWarehouseName: typeStr.includes('TRANSFER') ? 'Regional WH-002' : undefined,
+        quantity: tx.quantity,
+        performedBy: tx.actor || 'System Admin',
+        description: tx.reason,
+        transactionDate: tx.timestamp || new Date().toISOString()
+      };
+    });
+
+    let filtered = mockTxList;
+    if (params.transactionType) {
+      filtered = filtered.filter(t => t.transactionType.toUpperCase() === params.transactionType!.toUpperCase());
+    }
+    if (params.warehouseId) {
+      const wStr = String(params.warehouseId);
+      filtered = filtered.filter(t => String(t.sourceWarehouseId) === wStr || String(t.destinationWarehouseId) === wStr);
+    }
+    if (params.productId) {
+      const pStr = String(params.productId).toLowerCase();
+      filtered = filtered.filter(t => String(t.productId) === pStr || t.productName.toLowerCase().includes(pStr));
+    }
+
+    const page = params.page ?? 0;
+    const size = params.size ?? 10;
+    const totalElements = filtered.length;
+    const totalPages = Math.ceil(totalElements / size) || 1;
+    const startIndex = page * size;
+    const paginated = filtered.slice(startIndex, startIndex + size);
+
+    return this.respond({
+      transactions: paginated,
+      page,
+      size,
+      totalElements,
+      totalPages
+    });
+  }
+
   getInventoryByWarehouse(warehouseId: string): Observable<InventoryRow[]> {
     return this.respond(this.inventory.filter(r => r.warehouseId === warehouseId));
   }

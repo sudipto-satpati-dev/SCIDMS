@@ -135,4 +135,51 @@ export interface ApiTransferStockRequest {
 export type TransferStockData = ReceiveStockData;
 export type TransferStockApiResponse = ReceiveStockApiResponse;
 
+export interface ApiInventoryTransaction {
+  transactionId: number | string;
+  referenceNumber: string;
+  transactionType: string; // RECEIVE, ALLOCATE, RELEASE ALLOCATION, DISPATCH, TRANSFER_OUT, TRANSFER_IN
+  productId: number | string;
+  productName: string;
+  sourceWarehouseId?: number | string;
+  sourceWarehouseName?: string;
+  destinationWarehouseId?: number | string;
+  destinationWarehouseName?: string;
+  quantity: number;
+  performedBy: string;
+  description?: string;
+  transactionDate: string;
+}
+
+export interface TransactionHistoryParams {
+  productId?: number | string;
+  warehouseId?: number | string;
+  transactionType?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface TransactionHistoryApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    transactions: ApiInventoryTransaction[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface TransactionHistoryResult {
+  transactions: ApiInventoryTransaction[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+
 

@@ -10,16 +10,19 @@ import {
   ApiReceiveStockRequest, ReceiveStockData, ReceiveStockApiResponse,
   ApiDispatchStockRequest,
   DispatchStockData,
-  DispatchStockApiResponse
+  DispatchStockApiResponse,
+  ApiTransferStockRequest, TransferStockData, TransferStockApiResponse,
+  ApiInventoryTransaction, TransactionHistoryParams, TransactionHistoryApiResponse, TransactionHistoryResult
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   private readonly inventoryUrl = `${environment.apiBaseUrl}/api/inventory`;
-  private readonly receiveUrl = `${environment.apiBaseUrl}/api/inventory/receive`;
-  private readonly dispatchUrl = `${environment.apiBaseUrl}/api/inventory/dispatch`;
-  private readonly transferUrl = `${environment.apiBaseUrl}/api/warehouse/transfer`;
+  private readonly receiveUrl   = `${environment.apiBaseUrl}/api/inventory/receive`;
+  private readonly dispatchUrl  = `${environment.apiBaseUrl}/api/inventory/dispatch`;
+  private readonly transferUrl  = `${environment.apiBaseUrl}/api/warehouse/transfer`;
+  private readonly historyUrl   = `${environment.apiBaseUrl}/api/inventory/history`;
 
   constructor(
     private http: HttpClient,
@@ -75,6 +78,45 @@ export class InventoryService {
             throw { message: res.message || 'Failed to transfer stock.' };
           }
           return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * GET /api/inventory/history
+   * Query Params: productId, warehouseId, transactionType, page, size, sort
+   */
+  getTransactionHistory(params: TransactionHistoryParams = {}): Observable<TransactionHistoryResult> {
+    let httpParams = new HttpParams();
+    if (params.productId != null && params.productId !== '') {
+      httpParams = httpParams.set('productId', params.productId.toString());
+    }
+    if (params.warehouseId != null && params.warehouseId !== '') {
+      httpParams = httpParams.set('warehouseId', params.warehouseId.toString());
+    }
+    if (params.transactionType != null && params.transactionType !== '') {
+      httpParams = httpParams.set('transactionType', params.transactionType);
+    }
+    if (params.page != null) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size != null) httpParams = httpParams.set('size', params.size.toString());
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<TransactionHistoryApiResponse>(this.historyUrl, { params: httpParams })
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to fetch transaction history.' };
+          }
+          const d = res.data;
+          return {
+            transactions: d.transactions || [],
+            page: d.page ?? 0,
+            size: d.size ?? 0,
+            totalElements: d.totalElements ?? 0,
+            totalPages: d.totalPages ?? 0,
+          };
         }),
         catchError(this._handleError)
       );

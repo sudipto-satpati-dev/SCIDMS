@@ -327,9 +327,50 @@
   white-space: nowrap;
 
   &.tag-received    { background: #dcfce7; color: #15803d; }
-  &.tag-dispatched  { background: #dbeafe; color: #1d4ed8; }
+  &.tag-dispatched  { background: #fff7ed; color: #c2410c; }
   &.tag-transferred { background: #ede9fe; color: #6d28d9; }
+  &.tag-allocated   { background: #dbeafe; color: #1d4ed8; }
+  &.tag-default     { background: #f1f5f9; color: #475569; }
 }
+
+.ref-num {
+  font-family: monospace;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 12px;
+  color: #64748b;
+  font-size: 13.5px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #cbd5e1;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.alert-error {
+  margin: 16px 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .product-cell {
   display: flex;

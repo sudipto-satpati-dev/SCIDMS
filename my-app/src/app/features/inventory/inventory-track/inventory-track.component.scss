@@ -96,6 +96,11 @@
     background: #7c3aed;
     &:hover { background: #6d28d9; }
   }
+
+  &.btn-history-action {
+    background: #475569;
+    &:hover { background: #334155; }
+  }
 }
 
 // ── KPI cards ─────────────────────────────────────────────

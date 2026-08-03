@@ -1,78 +1,185 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { InventoryService } from '../../../core/services/inventory.service';
-import { InventoryTransaction, TransactionType } from '../../../core/models/index';
+import { WarehouseService } from '../../../core/services/warehouse.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ApiInventoryTransaction, Warehouse, TransactionHistoryParams } from '../../../core/models/index';
 
 @Component({
   selector: 'app-inventory-history',
   templateUrl: './inventory-history.component.html',
   styleUrls: ['./inventory-history.component.scss']
 })
-export class InventoryHistoryComponent implements OnInit {
+export class InventoryHistoryComponent implements OnInit, OnDestroy {
 
-  transactions: InventoryTransaction[] = [];
+  transactions: ApiInventoryTransaction[] = [];
+  warehouses: Warehouse[] = [];
   loading = true;
+  errorMsg = '';
 
-  searchProduct   = '';
-  filterWarehouse = '';
-  filterType      = '';
-  filterDateFrom  = '';
-  filterDateTo    = '';
-  currentPage     = 1;
-  pageSize        = 10;
+  searchProduct = '';
+  filterWarehouseId = '';
+  filterType = ''; // RECEIVE, ALLOCATE, RELEASE ALLOCATION, DISPATCH, TRANSFER_OUT, TRANSFER_IN
+  currentPage = 1;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 1;
 
-  constructor(private inventoryService: InventoryService) {}
+  isWarehouseManager = false;
+
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
+  readonly transactionTypes = [
+    { label: 'All Types', value: '' },
+    { label: 'Receive', value: 'RECEIVE' },
+    { label: 'Allocate', value: 'ALLOCATE' },
+    { label: 'Release Allocation', value: 'RELEASE ALLOCATION' },
+    { label: 'Dispatch', value: 'DISPATCH' },
+    { label: 'Transfer Out', value: 'TRANSFER_OUT' },
+    { label: 'Transfer In', value: 'TRANSFER_IN' }
+  ];
+
+  constructor(
+    private inventoryService: InventoryService,
+    private warehouseService: WarehouseService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
-    this.inventoryService.getTransactions().subscribe(data => {
-      this.transactions = data;
-      this.loading = false;
+    const role = this.authService.role;
+    this.isWarehouseManager = role === 'WAREHOUSE_MANAGER' || role === 'Warehouse Manager';
+
+    if (this.isWarehouseManager) {
+      this.warehouseService.getMyWarehouses().subscribe(list => {
+        this.warehouses = list || [];
+      });
+    } else {
+      this.warehouseService.getAll().subscribe(res => {
+        this.warehouses = Array.isArray(res) ? res : res.warehouses || [];
+      });
+    }
+
+    // 1-second debounce for product search
+    this.searchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.currentPage = 1;
+        this.loadHistory();
+      });
+
+    this.loadHistory();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadHistory(): void {
+    this.loading = true;
+    this.errorMsg = '';
+
+    const params: TransactionHistoryParams = {
+      productId: this.searchProduct ? this.searchProduct.trim() : undefined,
+      warehouseId: this.filterWarehouseId || undefined,
+      transactionType: this.filterType || undefined,
+      page: this.currentPage - 1,
+      size: this.pageSize,
+      sort: 'transactionDate,desc'
+    };
+
+    this.inventoryService.getTransactionHistory(params).subscribe({
+      next: (res) => {
+        this.transactions  = res.transactions || [];
+        this.totalElements = res.totalElements || 0;
+        this.totalPages    = res.totalPages || 1;
+        this.loading       = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not load transaction history.';
+        this.loading  = false;
+      }
     });
   }
 
-  get warehouseNames(): string[] {
-    return [...new Set(this.transactions.map(t => t.warehouseName))];
+  onSearchInput(val: string): void {
+    this.searchProduct = val;
+    this.searchSubject.next(val);
   }
 
-  get filtered(): InventoryTransaction[] {
-    return this.transactions.filter(t => {
-      const s = this.searchProduct.toLowerCase();
-      const matchProduct   = !s || t.productName.toLowerCase().includes(s) || t.productId.toLowerCase().includes(s);
-      const matchWarehouse = !this.filterWarehouse || t.warehouseName === this.filterWarehouse;
-      const matchType      = !this.filterType || t.type === this.filterType;
-      return matchProduct && matchWarehouse && matchType;
-    });
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadHistory();
   }
-
-  get totalPages(): number { return Math.ceil(this.filtered.length / this.pageSize) || 1; }
-  get pageStart():  number { return (this.currentPage - 1) * this.pageSize + 1; }
-  get pageEnd():    number { return Math.min(this.currentPage * this.pageSize, this.filtered.length); }
-  get paged():      InventoryTransaction[] { return this.filtered.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize); }
-  get pageNumbers(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
-
-  get receivedCount():    number { return this.transactions.filter(t => t.type === 'Received').length; }
-  get dispatchedCount():  number { return this.transactions.filter(t => t.type === 'Dispatched').length; }
-  get transferredCount(): number { return this.transactions.filter(t => t.type === 'Transferred').length; }
 
   clearFilters(): void {
-    this.searchProduct  = '';
-    this.filterWarehouse = '';
-    this.filterType     = '';
-    this.filterDateFrom = '';
-    this.filterDateTo   = '';
-    this.currentPage    = 1;
+    this.searchProduct     = '';
+    this.filterWarehouseId = '';
+    this.filterType        = '';
+    this.currentPage       = 1;
+    this.loadHistory();
   }
 
-  goToPage(p: number) { this.currentPage = p; }
-  prevPage()          { if (this.currentPage > 1) this.currentPage--; }
-  nextPage()          { if (this.currentPage < this.totalPages) this.currentPage++; }
+  goToPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) {
+      this.currentPage = p;
+      this.loadHistory();
+    }
+  }
 
-  typeClass(type: TransactionType): string {
-    return { Received: 'tag-received', Dispatched: 'tag-dispatched', Transferred: 'tag-transferred' }[type];
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadHistory();
+    }
   }
-  qtySign(type: TransactionType): string {
-    return { Received: '+', Dispatched: '-', Transferred: '↔' }[type];
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadHistory();
+    }
   }
-  qtyClass(type: TransactionType): string {
-    return { Received: 'qty-positive', Dispatched: 'qty-negative', Transferred: 'qty-transfer' }[type];
+
+  get pageStart(): number {
+    return this.totalElements === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalElements);
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  typeClass(type: string): string {
+    const t = (type || '').toUpperCase();
+    if (t.includes('RECEIVE')) return 'tag-received';
+    if (t.includes('DISPATCH')) return 'tag-dispatched';
+    if (t.includes('TRANSFER')) return 'tag-transferred';
+    if (t.includes('ALLOCAT')) return 'tag-allocated';
+    return 'tag-default';
+  }
+
+  qtySign(type: string): string {
+    const t = (type || '').toUpperCase();
+    if (t.includes('RECEIVE') || t.includes('TRANSFER_IN') || t.includes('RELEASE')) return '+';
+    if (t.includes('DISPATCH') || t.includes('TRANSFER_OUT') || t.includes('ALLOCATE')) return '-';
+    return '';
+  }
+
+  qtyClass(type: string): string {
+    const t = (type || '').toUpperCase();
+    if (t.includes('RECEIVE') || t.includes('TRANSFER_IN')) return 'qty-positive';
+    if (t.includes('DISPATCH') || t.includes('TRANSFER_OUT')) return 'qty-negative';
+    return 'qty-transfer';
   }
 }
+
