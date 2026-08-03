@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { OrderService } from '../../../core/services/order.service';
-import { ProductService } from '../../../core/services/product.service';
-import { Order, OrderItem, Product } from '../../../core/models/index';
+import { InventoryService } from '../../../core/services/inventory.service';
+import { Order, OrderItem } from '../../../core/models/index';
 
 /** Runtime state layered on top of each order for UI purposes */
 interface OrderUI extends Order {
@@ -10,7 +10,7 @@ interface OrderUI extends Order {
   rejectionReason: string;
   rejectionError:  string;
   processing:      boolean;
-  /** per-item available stock from the product catalogue */
+  /** per-item available stock from the inventory */
   stockMap: Record<string, number>;
 }
 
@@ -30,31 +30,59 @@ export class OrderApprovalComponent implements OnInit {
 
   constructor(
     private orderService: OrderService,
-    private productService: ProductService,
+    private inventoryService: InventoryService,
   ) {}
 
   private productStockMap: Record<string, number> = {};
 
   ngOnInit(): void {
     this.orderService.getAll().subscribe((orders: Order[]) => {
-      this.productService.getAll().subscribe(products => {
-        const prodList: Product[] = Array.isArray(products) ? products : (products as any).products || [];
-        this.productStockMap = Object.fromEntries(prodList.map((p: Product) => [String(p.id), p.availableQty || 0]));
-        const stockMap = this.productStockMap;
-        const list: Order[] = Array.isArray(orders) ? orders : [];
-
-        this.pendingOrders = list
-          .filter(o => String(o.status).toUpperCase() === 'CREATED')
-          .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
-        this.approvedOrders = list
-          .filter(o => String(o.status).toUpperCase() === 'APPROVED')
-          .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
-        this.rejectedOrders = list
-          .filter(o => String(o.status).toUpperCase() === 'REJECTED' || String(o.status).toUpperCase() === 'CANCELLED')
-          .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
-        this.loading = false;
+      this.inventoryService.getInventory({ size: 1000 }).subscribe({
+        next: (invRes) => {
+          const invList = (invRes as any).products || [];
+          const stockMap: Record<string, number> = {};
+          invList.forEach((item: any) => {
+            const pId = String(item.productId);
+            const qty = item.availableQuantity ?? 0;
+            stockMap[pId] = (stockMap[pId] || 0) + qty;
+          });
+          this.productStockMap = stockMap;
+          this.populateOrders(orders, stockMap);
+        },
+        error: () => {
+          // Fallback to getAll() for inventory rows if getInventory fails
+          this.inventoryService.getAll().subscribe({
+            next: (rows) => {
+              const stockMap: Record<string, number> = {};
+              ((rows as any) || []).forEach((r: any) => {
+                const pId = String(r.productId);
+                stockMap[pId] = (stockMap[pId] || 0) + (r.availableQty || 0);
+              });
+              this.productStockMap = stockMap;
+              this.populateOrders(orders, stockMap);
+            },
+            error: () => {
+              this.populateOrders(orders, {});
+            }
+          });
+        }
       });
     });
+  }
+
+  private populateOrders(orders: Order[], stockMap: Record<string, number>): void {
+    const list: Order[] = Array.isArray(orders) ? orders : [];
+
+    this.pendingOrders = list
+      .filter(o => String(o.status).toUpperCase() === 'CREATED')
+      .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
+    this.approvedOrders = list
+      .filter(o => String(o.status).toUpperCase() === 'APPROVED')
+      .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
+    this.rejectedOrders = list
+      .filter(o => String(o.status).toUpperCase() === 'REJECTED' || String(o.status).toUpperCase() === 'CANCELLED')
+      .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
+    this.loading = false;
   }
 
   // Getters used by the template
@@ -65,7 +93,7 @@ export class OrderApprovalComponent implements OnInit {
   get filtered(): OrderUI[] {
     return this.pendingOrders.filter(o => {
       if (!this.filterDateFrom && !this.filterDateTo) return true;
-      const d    = this.toISO(o.orderDate);
+      const d    = this.toISO(o.createdAt || o.orderDate || '');
       const from = this.filterDateFrom || '0000-01-01';
       const to   = this.filterDateTo   || '9999-12-31';
       return d >= from && d <= to;
@@ -74,7 +102,7 @@ export class OrderApprovalComponent implements OnInit {
 
   // ── Item helpers ──────────────────────────────────────────
   availableStock(item: OrderItem): number {
-    return this.productStockMap[item.productId] ?? 0;
+    return this.productStockMap[String(item.productId)] ?? 0;
   }
 
   isInsufficient(item: OrderItem): boolean {
