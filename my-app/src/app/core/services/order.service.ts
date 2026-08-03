@@ -102,6 +102,55 @@ export class OrderService {
       );
   }
 
+  /**
+   * POST /api/orders/{id}/approve
+   */
+  approveOrder(id: string | number): Observable<Order> {
+    return this.http
+      .post<SingleOrderApiResponse>(`${this.ordersUrl}/${id}/approve`, {})
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to approve order.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * PUT /api/orders/{id}/status
+   * Body: { status, remarks }
+   */
+  updateOrderStatus(id: string | number, status: string, remarks?: string): Observable<Order> {
+    const body = { status, remarks: remarks || '', remark: remarks || '' };
+    return this.http
+      .put<SingleOrderApiResponse>(`${this.ordersUrl}/${id}/status`, body)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || `Failed to update order status to ${status}.` };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /** Backward compatibility aliases */
+  approve(id: string | number): Observable<Order> {
+    return this.approveOrder(id);
+  }
+
+  reject(id: string | number, reason: string): Observable<Order> {
+    return this.updateOrderStatus(id, 'CANCELLED', reason);
+  }
+
+  cancel(id: string | number): Observable<Order> {
+    return this.updateOrderStatus(id, 'CANCELLED', 'Order cancelled by user');
+  }
+
   /** Helper method returning all orders array */
   getAll(params: OrderListParams = {}): Observable<Order[]> {
     return this.getOrders({ size: 100, ...params }).pipe(

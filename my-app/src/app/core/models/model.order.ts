@@ -113,4 +113,10 @@ export interface OrderHistoryApiResponse {
   data: OrderHistoryItem[];
 }
 
+export interface UpdateOrderStatusRequest {
+  status: string;
+  remarks?: string;
+}
+
+
 

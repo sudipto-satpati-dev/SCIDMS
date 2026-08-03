@@ -36,15 +36,15 @@ export class OrderApprovalComponent implements OnInit {
   private productStockMap: Record<string, number> = {};
 
   ngOnInit(): void {
-    this.orderService.getAll().subscribe(orders => {
+    this.orderService.getAll().subscribe((orders: Order[]) => {
       this.productService.getAll().subscribe(products => {
-        const prodList = Array.isArray(products) ? products : (products as any).products || [];
-        this.productStockMap = Object.fromEntries(prodList.map(p => [p.id, p.availableQty || 0]));
+        const prodList: Product[] = Array.isArray(products) ? products : (products as any).products || [];
+        this.productStockMap = Object.fromEntries(prodList.map((p: Product) => [String(p.id), p.availableQty || 0]));
         const stockMap = this.productStockMap;
-        const list = Array.isArray(orders) ? orders : [];
+        const list: Order[] = Array.isArray(orders) ? orders : [];
 
         this.pendingOrders = list
-          .filter(o => String(o.status).toUpperCase() === 'CREATED' || String(o.status).toUpperCase() === 'CREATED')
+          .filter(o => String(o.status).toUpperCase() === 'CREATED')
           .map(o => ({ ...o, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap }));
         this.approvedOrders = list
           .filter(o => String(o.status).toUpperCase() === 'APPROVED')
@@ -121,10 +121,11 @@ export class OrderApprovalComponent implements OnInit {
       return;
     }
     order.processing = true;
-    this.orderService.reject(order.id, order.rejectionReason).subscribe({
+    this.orderService.updateOrderStatus(order.id, 'CANCELLED', order.rejectionReason).subscribe({
       next: (updated) => {
         this.pendingOrders  = this.pendingOrders.filter(o => o.id !== order.id);
-        this.rejectedOrders = [{ ...updated, expanded: false, rejecting: false, rejectionReason: order.rejectionReason, rejectionError: '', processing: false, stockMap: this.productStockMap }, ...this.rejectedOrders];
+        const updObj = updated || { ...order, status: 'CANCELLED' };
+        this.rejectedOrders = [{ ...updObj, expanded: false, rejecting: false, rejectionReason: order.rejectionReason, rejectionError: '', processing: false, stockMap: this.productStockMap }, ...this.rejectedOrders];
       },
       error: (err) => {
         order.rejectionError = err?.message || 'Could not reject order.';
@@ -136,10 +137,11 @@ export class OrderApprovalComponent implements OnInit {
   approveOrder(order: OrderUI, e: Event): void {
     e.stopPropagation();
     order.processing = true;
-    this.orderService.approve(order.id).subscribe({
+    this.orderService.approveOrder(order.id).subscribe({
       next: (updated) => {
         this.pendingOrders  = this.pendingOrders.filter(o => o.id !== order.id);
-        this.approvedOrders = [{ ...updated, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap: this.productStockMap }, ...this.approvedOrders];
+        const updObj = updated || { ...order, status: 'APPROVED' };
+        this.approvedOrders = [{ ...updObj, expanded: false, rejecting: false, rejectionReason: '', rejectionError: '', processing: false, stockMap: this.productStockMap }, ...this.approvedOrders];
       },
       error: (err) => {
         order.rejectionError = err?.message || 'Could not approve order.';
