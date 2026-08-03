@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WarehouseService } from '../../../core/services/warehouse.service';
-import { Warehouse, WarehouseRegion } from '../../../core/models/index';
+import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequest } from '../../../core/models/index';
 
 @Component({
   selector: 'app-warehouse-list',
@@ -14,6 +14,12 @@ export class WarehouseListComponent implements OnInit {
 
   searchTerm   = '';
   filterStatus = '';
+  page = 0;
+  size = 10;
+  totalElements = 0;
+  totalPages = 0;
+  sort = 'id,asc';
+
   showFormModal     = false;
   showDeleteModal   = false;
   selectedWarehouse: Warehouse | null = null;
@@ -31,18 +37,54 @@ export class WarehouseListComponent implements OnInit {
     'linear-gradient(135deg, #312e81 0%, #7c3aed 100%)',
   ];
 
-  regions: WarehouseRegion[] = ['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi', 'Khulna'];
-
   constructor(private warehouseService: WarehouseService) {}
 
   ngOnInit(): void {
-    this.warehouseService.getAll().subscribe(data => {
-      this.warehouses = data;
-      this.loading    = false;
+    this.loadWarehouses();
+  }
+
+  loadWarehouses(): void {
+    this.loading = true;
+    this.warehouseService.getAll({
+      search: this.searchTerm || undefined,
+      status: this.filterStatus || undefined,
+      page: this.page,
+      size: this.size,
+      sort: this.sort
+    }).subscribe({
+      next: (res) => {
+        this.warehouses    = res.warehouses;
+        this.page          = res.page;
+        this.size          = res.size;
+        this.totalElements = res.totalElements;
+        this.totalPages    = res.totalPages;
+        this.loading       = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Failed to load warehouses.';
+        this.loading  = false;
+      }
     });
   }
 
-  utilPct(w: Warehouse): number { return Math.round((w.occupiedCapacity / w.totalCapacity) * 100); }
+  onSearchChange(): void {
+    this.page = 0;
+    this.loadWarehouses();
+  }
+
+  onStatusFilterChange(): void {
+    this.page = 0;
+    this.loadWarehouses();
+  }
+
+  getPhoto(idx: number): string {
+    return this.photoStyles[idx % this.photoStyles.length];
+  }
+
+  utilPct(w: Warehouse): number {
+    if (!w.totalCapacity || w.totalCapacity <= 0) return 0;
+    return Math.round((w.occupiedCapacity / w.totalCapacity) * 100);
+  }
 
   utilClass(w: Warehouse): string {
     const p = this.utilPct(w);
@@ -65,25 +107,22 @@ export class WarehouseListComponent implements OnInit {
     return 'lbl-ok';
   }
 
-  get filtered(): Warehouse[] {
-    return this.warehouses.filter(w => {
-      const s = this.searchTerm.toLowerCase();
-      const matchSearch = !s || w.name.toLowerCase().includes(s) || w.id.toLowerCase().includes(s) || w.location.toLowerCase().includes(s);
-      const matchStatus = !this.filterStatus || w.status === this.filterStatus;
-      return matchSearch && matchStatus;
-    });
-  }
-
-  get totalCount():        number { return this.warehouses.length; }
-  get operationalCount():  number { return this.warehouses.filter(w => w.status === 'Active').length; }
+  get totalCount():        number { return this.totalElements || this.warehouses.length; }
+  get operationalCount():  number { return this.warehouses.filter(w => w.status === 'ACTIVE').length; }
   get nearCapacityCount(): number { return this.warehouses.filter(w => this.utilPct(w) >= 70).length; }
-  get regionsCount():      number { return new Set(this.warehouses.map(w => w.region)).size; }
 
   openAddModal(): void {
     this.isEditMode = false;
     this.selectedWarehouse = {
-      id: '', name: '', location: '', region: 'Dhaka',
-      totalCapacity: 0, occupiedCapacity: 0, status: 'Active', photo: this.photoStyles[0],
+      id: 0,
+      name: '',
+      location: '',
+      totalCapacity: 10000,
+      occupiedCapacity: 0,
+      availableCapacity: 10000,
+      status: 'ACTIVE',
+      createdAt: '',
+      updatedAt: ''
     };
     this.formErrors = {};
     this.errorMsg   = '';
@@ -102,9 +141,9 @@ export class WarehouseListComponent implements OnInit {
   validateField(field: string): void {
     if (!this.selectedWarehouse) return;
     const e = { ...this.formErrors };
-    if (field === 'name')     e['name']     = !this.selectedWarehouse.name.trim()     ? 'Warehouse name is required.'      : '';
-    if (field === 'location') e['location'] = !this.selectedWarehouse.location.trim() ? 'Location is required.'            : '';
-    if (field === 'capacity') e['capacity'] = this.selectedWarehouse.totalCapacity <= 0 ? 'Capacity must be greater than 0.' : '';
+    if (field === 'name')     e['name']     = !this.selectedWarehouse.name?.trim()     ? 'Warehouse name is required.'      : '';
+    if (field === 'location') e['location'] = !this.selectedWarehouse.location?.trim() ? 'Location is required.'            : '';
+    if (field === 'capacity') e['capacity'] = (!this.selectedWarehouse.totalCapacity || this.selectedWarehouse.totalCapacity <= 0) ? 'Capacity must be greater than 0.' : '';
     Object.keys(e).forEach(k => { if (!e[k]) delete e[k]; });
     this.formErrors = e;
   }
@@ -112,40 +151,57 @@ export class WarehouseListComponent implements OnInit {
   saveWarehouse(): void {
     ['name', 'location', 'capacity'].forEach(f => this.validateField(f));
     if (Object.keys(this.formErrors).length || !this.selectedWarehouse) return;
-    this.saving = true;
+    this.saving   = true;
+    this.errorMsg = '';
 
-    const photoIdx = this.warehouses.length % this.photoStyles.length;
-    const payload  = { ...this.selectedWarehouse, photo: this.selectedWarehouse.photo || this.photoStyles[photoIdx] };
+    if (this.isEditMode) {
+      const payload: UpdateWarehouseRequest = {
+        name: this.selectedWarehouse.name.trim(),
+        location: this.selectedWarehouse.location.trim(),
+        totalCapacity: Number(this.selectedWarehouse.totalCapacity)
+      };
 
-    const action$ = this.isEditMode
-      ? this.warehouseService.update(this.selectedWarehouse.id, payload)
-      : this.warehouseService.create(payload);
-
-    action$.subscribe({
-      next: (saved) => {
-        if (this.isEditMode) {
-          const idx = this.warehouses.findIndex(w => w.id === saved.id);
-          if (idx > -1) this.warehouses[idx] = saved;
-        } else {
-          this.warehouses.push(saved);
+      this.warehouseService.update(this.selectedWarehouse.id, payload).subscribe({
+        next: () => {
+          this.saving        = false;
+          this.showFormModal = false;
+          this.loadWarehouses();
+        },
+        error: (err) => {
+          this.errorMsg = err?.message || 'Could not update warehouse.';
+          this.saving   = false;
         }
-        this.saving        = false;
-        this.showFormModal = false;
-      },
-      error: (err) => {
-        this.errorMsg = err?.message || 'Could not save warehouse.';
-        this.saving   = false;
-      },
-    });
+      });
+    } else {
+      const payload: CreateWarehouseRequest = {
+        name: this.selectedWarehouse.name.trim(),
+        location: this.selectedWarehouse.location.trim(),
+        totalCapacity: Number(this.selectedWarehouse.totalCapacity)
+      };
+
+      this.warehouseService.create(payload).subscribe({
+        next: () => {
+          this.saving        = false;
+          this.showFormModal = false;
+          this.loadWarehouses();
+        },
+        error: (err) => {
+          this.errorMsg = err?.message || 'Could not create warehouse.';
+          this.saving   = false;
+        }
+      });
+    }
   }
 
   toggleStatus(w: Warehouse, e: Event): void {
     e.stopPropagation();
-    this.warehouseService.toggleStatus(w.id).subscribe({
-      next: (updated) => {
-        const idx = this.warehouses.findIndex(x => x.id === updated.id);
-        if (idx > -1) this.warehouses[idx] = updated;
+    this.warehouseService.toggleStatus(w.id, w.status).subscribe({
+      next: () => {
+        this.loadWarehouses();
       },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not toggle status.';
+      }
     });
   }
 }

@@ -1,12 +1,61 @@
-export type WarehouseRegion = 'Dhaka' | 'Chittagong' | 'Sylhet' | 'Rajshahi' | 'Khulna';
+export type WarehouseStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface Warehouse {
-  id: string;
+  id: number;
   name: string;
   location: string;
-  region: WarehouseRegion;
   totalCapacity: number;
   occupiedCapacity: number;
-  status: 'Active' | 'Inactive';
-  photo: string; // CSS gradient string used as placeholder
+  availableCapacity: number;
+  status: WarehouseStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWarehouseRequest {
+  name: string;
+  location: string;
+  totalCapacity: number;
+}
+
+export type UpdateWarehouseRequest = Partial<CreateWarehouseRequest>;
+
+export interface ToggleWarehouseStatusRequest {
+  status: WarehouseStatus;
+}
+
+export interface WarehouseListParams {
+  search?: string;
+  status?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface WarehouseListApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    warehouses: Warehouse[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface SingleWarehouseApiResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: Warehouse;
+}
+
+export interface WarehouseListResult {
+  warehouses: Warehouse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
