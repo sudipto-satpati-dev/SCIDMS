@@ -86,6 +86,11 @@
   white-space: nowrap;
   transition: background 0.15s;
   &:hover { background: #1d4ed8; }
+
+  &.btn-dispatch-action {
+    background: #ea580c;
+    &:hover { background: #c2410c; }
+  }
 }
 
 // ── KPI cards ─────────────────────────────────────────────

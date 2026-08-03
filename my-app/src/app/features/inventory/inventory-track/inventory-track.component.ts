@@ -192,6 +192,10 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   }
 
   // ── Stock Receive Modal Handlers ───────────────────────────
+  // Modal State
+  //showReceiveModal  = false;
+  showDispatchModal = false;
+
   openReceiveStockModal(): void {
     this.showReceiveModal = true;
   }
@@ -201,6 +205,18 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   }
 
   onStockReceived(): void {
+    this.loadInventory();
+  }
+
+  openDispatchStockModal(): void {
+    this.showDispatchModal = true;
+  }
+
+  closeDispatchModal(): void {
+    this.showDispatchModal = false;
+  }
+
+  onStockDispatched(): void {
     this.loadInventory();
   }
 }

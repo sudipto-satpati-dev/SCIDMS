@@ -7,7 +7,10 @@ import {
   InventoryRow, InventoryTransaction,
   StockReceiveRequest, StockDispatchRequest, StockTransferRequest,
   InventoryListParams, InventoryListApiResponse, InventoryListResult, ApiInventoryItem,
-  ApiReceiveStockRequest, ReceiveStockData, ReceiveStockApiResponse
+  ApiReceiveStockRequest, ReceiveStockData, ReceiveStockApiResponse,
+  ApiDispatchStockRequest,
+  DispatchStockData,
+  DispatchStockApiResponse
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
@@ -15,6 +18,7 @@ import { environment } from '../../../environments/environment';
 export class InventoryService {
   private readonly inventoryUrl = `${environment.apiBaseUrl}/api/inventory`;
   private readonly receiveUrl = `${environment.apiBaseUrl}/api/inventory/receive`;
+  private readonly dispatchUrl = `${environment.apiBaseUrl}/api/inventory/dispatch`;
 
   constructor(
     private http: HttpClient,
@@ -32,6 +36,24 @@ export class InventoryService {
         map(res => {
           if (!res.success) {
             throw { message: res.message || 'Failed to receive stock.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
+   * POST /api/inventory/dispatch
+   * Body: { productId, warehouseId, quantity, referenceNumber }
+   */
+  dispatchStockApi(req: ApiDispatchStockRequest): Observable<DispatchStockData> {
+    return this.http
+      .post<DispatchStockApiResponse>(this.dispatchUrl, req)
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to dispatch stock.' };
           }
           return res.data;
         }),

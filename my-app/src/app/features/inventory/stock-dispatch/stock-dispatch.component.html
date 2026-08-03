@@ -1,4 +1,20 @@
-<div class="dispatch-page">
+<ng-container *ngIf="isModal">
+  <div class="modal-backdrop" (click)="cancel()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <button class="modal-close-btn" (click)="cancel()">&times;</button>
+      <ng-container *ngTemplateOutlet="dispatchFormContent"></ng-container>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!isModal">
+  <div class="dispatch-page">
+    <ng-container *ngTemplateOutlet="dispatchFormContent"></ng-container>
+  </div>
+</ng-container>
+
+<!-- Reusable Form Content Template -->
+<ng-template #dispatchFormContent>
 
   <!-- Form card -->
   <div class="form-card" *ngIf="!success">
@@ -12,37 +28,34 @@
       </div>
       <div>
         <h2>Dispatch Inventory Stock</h2>
-        <p>Record outgoing stock from a warehouse. Fields marked <span class="req">*</span> are required.</p>
+        <p>Record outgoing stock from a warehouse location.</p>
       </div>
     </div>
 
     <div class="card-body">
+
+      <!-- Server error message if any -->
+      <div class="alert alert-error" *ngIf="errorMsg">
+        {{ errorMsg }}
+      </div>
 
       <!-- Row 1: Warehouse + Date -->
       <div class="form-row">
         <div class="form-group" [class.has-error]="formErrors['warehouseId']">
           <label>Warehouse <span class="req">*</span></label>
           <div class="select-wrap">
-            <svg class="sel-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <select [(ngModel)]="form.warehouseId" (change)="validateField('warehouseId'); onWarehouseChange()">
               <option value="" disabled>Select warehouse…</option>
-              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }} — {{ w.location }}</option>
+              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
             </select>
             <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <span class="field-error" *ngIf="formErrors['warehouseId']">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            {{ formErrors['warehouseId'] }}
-          </span>
+          <span class="field-error" *ngIf="formErrors['warehouseId']">{{ formErrors['warehouseId'] }}</span>
         </div>
 
         <div class="form-group">
-          <label>Dispatch Date</label>
-          <div class="date-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <input type="date" [(ngModel)]="form.date" />
-          </div>
-          <p class="field-hint">Defaults to today: {{ todayReadable() }}</p>
+          <label>Date <span class="req">*</span></label>
+          <input type="date" [(ngModel)]="form.date" class="date-input" />
         </div>
       </div>
 
@@ -54,64 +67,27 @@
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input
             type="text"
-            [(ngModel)]="productSearch"
-            (input)="onProductSearchInput()"
+            [ngModel]="productSearch"
+            (ngModelChange)="onProductSearchInput($event)"
             (focus)="onProductSearchFocus()"
             (blur)="closeDropdown()"
-            placeholder="Search by product name, ID or SKU…"
+            placeholder="Type product name to search..."
           />
-          <button class="ps-clear" *ngIf="productSearch" (click)="productSearch=''; form.productId=''; productDropdownOpen=false">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
         </div>
         <!-- Dropdown -->
-        <div class="product-dropdown" *ngIf="productDropdownOpen && filteredProducts.length > 0">
-          <div class="pd-item" *ngFor="let p of filteredProducts" (mousedown)="selectProduct(p)">
-            <div class="pd-left">
-              <span class="pd-name">{{ p.productName }}</span>
-              <span class="pd-meta">{{ p.sku }} · {{ p.availableQty | number }} avail</span>
+        <div class="product-dropdown" *ngIf="productDropdownOpen && form.warehouseId">
+          <div class="pd-loading" *ngIf="loadingProducts">Searching inventory...</div>
+          <ng-container *ngIf="!loadingProducts">
+            <div class="pd-item" *ngFor="let p of inventoryItems" (mousedown)="selectProduct(p)">
+              <div class="pd-left">
+                <span class="pd-name">{{ p.productName }}</span>
+                <span class="pd-meta">{{ p.availableQuantity | number }} available in stock</span>
+              </div>
             </div>
-            <div class="pd-right">
-              <span class="pd-avail"
-                [class.avail-ok]="p.availableQty > p.threshold"
-                [class.avail-low]="p.availableQty > 0 && p.availableQty <= p.threshold"
-                [class.avail-out]="p.availableQty === 0">
-                {{ p.availableQty | number }} available
-              </span>
-            </div>
-          </div>
+            <div class="pd-empty" *ngIf="inventoryItems.length === 0">No available products found in this warehouse</div>
+          </ng-container>
         </div>
-        <div class="product-dropdown empty-dd" *ngIf="productDropdownOpen && filteredProducts.length === 0 && form.warehouseId">
-          No products available in this warehouse.
-        </div>
-        <span class="field-error" *ngIf="formErrors['productId']">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {{ formErrors['productId'] }}
-        </span>
-
-        <!-- Selected product info -->
-        <div class="product-info-strip" *ngIf="selectedProduct">
-          <div class="pi-item">
-            <span class="pi-lbl">Product ID</span>
-            <span class="pi-val mono">{{ selectedProduct.productId }}</span>
-          </div>
-          <div class="pi-item">
-            <span class="pi-lbl">Category</span>
-            <span class="pi-val">{{ selectedProduct.sku }}</span>
-          </div>
-          <div class="pi-item">
-            <span class="pi-lbl">Available</span>
-            <span class="pi-val"
-              [class.pi-low]="stockStatusClass === 'low'"
-              [class.pi-out]="stockStatusClass === 'out'">
-              {{ selectedProduct.availableQty | number }} units
-            </span>
-          </div>
-          <div class="pi-item">
-            <span class="pi-lbl">Allocated</span>
-            <span class="pi-val">{{ selectedProduct.allocatedQty | number }} units</span>
-          </div>
-        </div>
+        <span class="field-error" *ngIf="formErrors['productId']">{{ formErrors['productId'] }}</span>
       </div>
 
       <!-- Quantity -->
@@ -126,27 +102,15 @@
             min="1"
             class="qty-input"
           />
-          <span class="qty-unit-label">units</span>
+          <span class="qty-unit-label">Units</span>
         </div>
-        <span class="field-error" *ngIf="formErrors['quantity']">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {{ formErrors['quantity'] }}
-        </span>
+        <span class="field-error" *ngIf="formErrors['quantity']">{{ formErrors['quantity'] }}</span>
       </div>
 
-      <!-- Reason -->
-      <div class="form-group" [class.has-error]="formErrors['reason']">
-        <label>Reason / Reference <span class="req">*</span></label>
-        <textarea
-          [(ngModel)]="form.reason"
-          (blur)="validateField('reason')"
-          placeholder="e.g. Order ORD-1025 fulfilment, Customer shipment SHP-3041…"
-          rows="3">
-        </textarea>
-        <span class="field-error" *ngIf="formErrors['reason']">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {{ formErrors['reason'] }}
-        </span>
+      <!-- Reference Number -->
+      <div class="form-group">
+        <label>Reference Number <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="form.reason" placeholder="e.g. REF-100293" />
       </div>
 
       <!-- Stock availability indicator -->
@@ -163,17 +127,13 @@
               <span *ngIf="showStockCheck">
                 After dispatch: <span class="remaining-val">{{ remainingAfter | number }} units</span> remaining
               </span>
-              <span *ngIf="!showStockCheck">Enter a quantity to see the post-dispatch balance.</span>
+              <span *ngIf="!showStockCheck">Enter a quantity to see post-dispatch balance.</span>
             </div>
           </div>
           <!-- Stock bar -->
           <div class="sc-bar-track" *ngIf="showStockCheck">
             <div class="sc-bar-remaining" [style.width.%]="100 - stockBarPct"></div>
             <div class="sc-bar-dispatch" [style.width.%]="stockBarPct"></div>
-          </div>
-          <div class="sc-bar-legend" *ngIf="showStockCheck">
-            <span><span class="leg-dot dispatch-dot"></span>Dispatching ({{ form.quantity | number }})</span>
-            <span><span class="leg-dot remain-dot"></span>Remaining ({{ remainingAfter | number }})</span>
           </div>
         </div>
 
@@ -186,9 +146,6 @@
               <span>Quantity dispatched cannot exceed available stock ({{ availableStock | number }} units). Exceeds by <strong>{{ exceedBy | number }} units</strong>.</span>
             </div>
           </div>
-          <div class="sc-bar-track over-bar-track">
-            <div class="sc-bar-full-red" style="width:100%"></div>
-          </div>
         </div>
 
       </div>
@@ -199,10 +156,7 @@
     <div class="card-footer">
       <button class="btn-cancel" (click)="cancel()" [disabled]="submitted">Cancel</button>
       <button class="btn-dispatch" (click)="submit()" [disabled]="submitted || exceedsStock">
-        <span *ngIf="!submitted">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
-          Confirm Dispatch
-        </span>
+        <span *ngIf="!submitted">Confirm Dispatch</span>
         <span class="spinner" *ngIf="submitted"></span>
       </button>
     </div>
@@ -215,10 +169,8 @@
     </div>
     <h3>Stock dispatched successfully!</h3>
     <p>{{ selectedProduct?.productName }} — {{ form.quantity | number }} units dispatched from {{ getWarehouseName(form.warehouseId) }}.</p>
-    <div class="success-actions">
-      <button class="btn-cancel" (click)="cancel()">Back to Inventory</button>
-      <button class="btn-dispatch" (click)="reset()">Dispatch More</button>
-    </div>
+    <button class="btn-dispatch" (click)="isModal ? cancel() : reset()">{{ isModal ? 'Done' : 'Dispatch More' }}</button>
   </div>
 
-</div>
+</ng-template>
+

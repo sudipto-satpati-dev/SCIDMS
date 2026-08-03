@@ -296,6 +296,37 @@ export class MockApiService {
     return this.respond(resData);
   }
 
+  dispatchStockApi(req: ApiDispatchStockRequest): Observable<DispatchStockData> {
+    const whId = String(req.warehouseId);
+    const prodId = String(req.productId);
+
+    const wh = this.warehouses.find(w => w.id === whId || w.id.endsWith(whId));
+    if (!wh) return this.fail('Warehouse not found.');
+
+    const product = this.products.find(p => String(p.id) === prodId || p.sku === prodId || String(p.id).endsWith(prodId));
+    if (!product) return this.fail('Selected product not found.');
+
+    let row = this.inventory.find(r => (r.warehouseId === wh.id || r.warehouseId === whId) && (r.productId === String(product.id) || r.productId === prodId));
+    if (!row || row.availableQty < req.quantity) {
+      return this.fail(`Insufficient stock available (${row ? row.availableQty : 0} units).`);
+    }
+
+    row.availableQty -= req.quantity;
+    wh.occupiedCapacity = Math.max(0, wh.occupiedCapacity - req.quantity);
+
+    const resData: DispatchStockData = {
+      referenceNumber: req.referenceNumber || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+      transactionType: 'Dispatched',
+      productId: product.id,
+      productName: product.name,
+      sourceWarehouseId: wh.id,
+      quantity: req.quantity,
+      sourceAvailableQuantity: row.availableQty
+    };
+
+    return this.respond(resData);
+  }
+
   getInventoryByWarehouse(warehouseId: string): Observable<InventoryRow[]> {
     return this.respond(this.inventory.filter(r => r.warehouseId === warehouseId));
   }

@@ -118,4 +118,9 @@ export interface ReceiveStockApiResponse {
   message: string;
   timestamp: string;
   data: ReceiveStockData;
-}
+}
+
+export type ApiDispatchStockRequest = ApiReceiveStockRequest;
+export type DispatchStockData = ReceiveStockData;
+export type DispatchStockApiResponse = ReceiveStockApiResponse;
+
