@@ -7,6 +7,7 @@ export interface Product {
   categoryId: number;
   categoryName: string;
   unitPrice: number;
+  lowStockThreshold: number;
   status: ProductStatus;
   createdAt: string;
   updatedAt: string;
@@ -16,6 +17,7 @@ export interface CreateProductRequest {
   name: string;
   categoryId: number;
   unitPrice: number;
+  lowStockThreshold: number;
 }
 
 export type UpdateProductRequest = CreateProductRequest;

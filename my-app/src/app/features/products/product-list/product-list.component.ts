@@ -36,10 +36,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
   isEditMode = false;
   selectedProductId: number | null = null;
 
-  newProduct: { name: string; categoryId: number | null; unitPrice: number | null } = {
+  newProduct: { name: string; categoryId: number | null; unitPrice: number | null; lowStockThreshold: number | null } = {
     name: '',
     categoryId: null,
-    unitPrice: null
+    unitPrice: null,
+    lowStockThreshold: 10
   };
   formErrors: Record<string, string> = {};
 
@@ -165,7 +166,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   openAddModal(): void {
     this.isEditMode = false;
     this.selectedProductId = null;
-    this.newProduct = { name: '', categoryId: null, unitPrice: null };
+    this.newProduct = { name: '', categoryId: null, unitPrice: null, lowStockThreshold: 10 };
     this.formErrors = {};
     this.errorMsg = '';
     this.showFormModal = true;
@@ -177,7 +178,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.newProduct = {
       name: p.name,
       categoryId: p.categoryId,
-      unitPrice: p.unitPrice
+      unitPrice: p.unitPrice,
+      lowStockThreshold: p.lowStockThreshold != null ? p.lowStockThreshold : 10
     };
     this.formErrors = {};
     this.errorMsg = '';
@@ -226,13 +228,23 @@ export class ProductListComponent implements OnInit, OnDestroy {
       errors['unitPrice'] = (this.newProduct.unitPrice == null || this.newProduct.unitPrice <= 0)
         ? 'Price must be greater than 0.' : '';
     }
+    if (field === 'lowStockThreshold') {
+      errors['lowStockThreshold'] = (this.newProduct.lowStockThreshold == null || this.newProduct.lowStockThreshold < 0)
+        ? 'Threshold must be a non-negative number.' : '';
+    }
     Object.keys(errors).forEach(k => { if (!errors[k]) delete errors[k]; });
     this.formErrors = errors;
   }
 
   saveProduct(): void {
-    ['name', 'categoryId', 'unitPrice'].forEach(f => this.validateField(f));
-    if (Object.keys(this.formErrors).length || !this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.unitPrice) {
+    ['name', 'categoryId', 'unitPrice', 'lowStockThreshold'].forEach(f => this.validateField(f));
+    if (
+      Object.keys(this.formErrors).length ||
+      !this.newProduct.name ||
+      !this.newProduct.categoryId ||
+      !this.newProduct.unitPrice ||
+      this.newProduct.lowStockThreshold == null
+    ) {
       return;
     }
     this.saving = true;
@@ -242,6 +254,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
       name: this.newProduct.name.trim(),
       categoryId: Number(this.newProduct.categoryId),
       unitPrice: Number(this.newProduct.unitPrice),
+      lowStockThreshold: Number(this.newProduct.lowStockThreshold)
     };
 
     const action$ = this.isEditMode && this.selectedProductId

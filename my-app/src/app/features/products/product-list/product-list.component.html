@@ -100,6 +100,7 @@
           <th>Product Name</th>
           <th>Category</th>
           <th>Unit Price</th>
+          <th>Threshold</th>
           <th>Status</th>
           <th>
             <div class="th-with-search" style="display: flex; align-items: center; gap: 6px;">
@@ -121,6 +122,7 @@
           <td class="product-name-cell">{{ p.name }}</td>
           <td class="category-cell">{{ p.categoryName || 'Uncategorized' }}</td>
           <td class="price-cell">{{ formatPrice(p.unitPrice) }}</td>
+          <td style="font-weight: 600; color: #0f172a;">{{ p.lowStockThreshold != null ? p.lowStockThreshold : 10 }}</td>
           <td>
             <span class="status-badge"
               [class.status-active]="p.status === 'ACTIVE'"
@@ -230,6 +232,13 @@
           <input type="number" [(ngModel)]="newProduct.unitPrice" (blur)="validateField('unitPrice')" placeholder="0.00" min="0.01" step="0.01" />
           <span class="field-error" *ngIf="formErrors['unitPrice']">{{ formErrors['unitPrice'] }}</span>
         </div>
+      </div>
+
+      <!-- Low-Stock Threshold -->
+      <div class="form-group" [class.has-error]="formErrors['lowStockThreshold']">
+        <label>Low-Stock Threshold <span class="req">*</span></label>
+        <input type="number" [(ngModel)]="newProduct.lowStockThreshold" (blur)="validateField('lowStockThreshold')" placeholder="e.g. 10" min="0" step="1" />
+        <span class="field-error" *ngIf="formErrors['lowStockThreshold']">{{ formErrors['lowStockThreshold'] }}</span>
       </div>
     </div>
     <div class="modal-footer">
