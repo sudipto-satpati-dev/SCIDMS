@@ -52,6 +52,8 @@ export interface OrderListParams {
   search?: string;
   status?: string;
   warehouseId?: number | string;
+  warehouseIds?: (number | string)[];
+  createdBy?: string;
   page?: number;
   size?: number;
   sort?: string;

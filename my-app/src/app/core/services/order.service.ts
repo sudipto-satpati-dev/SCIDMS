@@ -26,6 +26,15 @@ export class OrderService {
     if (params.warehouseId != null && params.warehouseId !== '') {
       httpParams = httpParams.set('warehouseId', params.warehouseId.toString());
     }
+    if (params.warehouseIds && params.warehouseIds.length > 0) {
+      const idsStr = params.warehouseIds.filter(id => id != null && id !== '').join(',');
+      if (idsStr) {
+        httpParams = httpParams.set('warehouseIds', idsStr);
+      }
+    }
+    if (params.createdBy != null && params.createdBy !== '') {
+      httpParams = httpParams.set('createdBy', params.createdBy);
+    }
     if (params.page != null) httpParams = httpParams.set('page', params.page.toString());
     if (params.size != null) httpParams = httpParams.set('size', params.size.toString());
     if (params.sort) httpParams = httpParams.set('sort', params.sort);

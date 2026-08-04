@@ -77,17 +77,26 @@ export class OrderListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const roleStr = (this.authService.role as string) || '';
-    this.isWarehouseManager = roleStr.toUpperCase().includes('WAREHOUSE');
+    const roleStr = String(this.authService.role || '').toUpperCase();
+    this.isWarehouseManager = roleStr.includes('WAREHOUSE');
 
     if (this.isWarehouseManager) {
-      this.warehouseService.getMyWarehouses().subscribe(list => {
-        this.warehouses = list || [];
+      this.warehouseService.getMyWarehouses().subscribe({
+        next: (list) => {
+          this.warehouses = list || [];
+          this.loadOrders();
+        },
+        error: () => {
+          this.loadOrders();
+        }
       });
     } else {
-      this.warehouseService.getAll().subscribe(res => {
-        this.warehouses = Array.isArray(res) ? res : res.warehouses || [];
+      this.warehouseService.getAll().subscribe({
+        next: (res) => {
+          this.warehouses = Array.isArray(res) ? res : res.warehouses || [];
+        }
       });
+      this.loadOrders();
     }
 
     // 1-second debounce for order search
@@ -112,8 +121,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
       .subscribe((searchTerm) => {
         this.loadModalProducts(searchTerm);
       });
-
-    this.loadOrders();
   }
 
   ngOnDestroy(): void {
@@ -125,10 +132,34 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.errorMsg = '';
 
+    const user = this.authService.currentUser;
+    const currentUsername = user?.username || user?.email || (localStorage.getItem('scidms_user') ? JSON.parse(localStorage.getItem('scidms_user')!).username : '');
+    const roleStr = String(this.authService.role || user?.role || '').toUpperCase();
+    const isSalesExecutive = roleStr.includes('SALES') || roleStr.includes('EXECUTIVE');
+
+    let warehouseIdsParam: (string | number)[] | undefined = undefined;
+    let createdByParam: string | undefined = undefined;
+
+    if (this.isWarehouseManager) {
+      if (this.filterWarehouseId) {
+        warehouseIdsParam = [this.filterWarehouseId];
+      } else if (this.warehouses.length > 0) {
+        warehouseIdsParam = this.warehouses.map(w => w.id);
+      }
+    } else if (this.filterWarehouseId) {
+      warehouseIdsParam = [this.filterWarehouseId];
+    }
+
+    if (isSalesExecutive) {
+      createdByParam = currentUsername;
+    }
+
     const params: OrderListParams = {
       search: this.searchTerm ? this.searchTerm.trim() : undefined,
       status: this.filterStatus || undefined,
       warehouseId: this.filterWarehouseId || undefined,
+      warehouseIds: warehouseIdsParam && warehouseIdsParam.length > 0 ? warehouseIdsParam : undefined,
+      createdBy: createdByParam || undefined,
       page: this.currentPage - 1,
       size: this.pageSize,
       sort: 'createdAt,desc'
