@@ -93,13 +93,23 @@ export class ShipmentDetailComponent implements OnInit {
     }
   }
 
+  loadHistory(): void {
+    if (!this.shipment) return;
+    this.shipmentService.getShipmentHistory(this.shipment.id).subscribe({
+      next: (logs) => {
+        this.historyLogs = logs || [];
+      },
+      error: () => {}
+    });
+  }
+
   changeStatus(newStatus: string, remark = 'Status updated'): void {
     if (!this.shipment || this.processingStatus) return;
     this.processingStatus = true;
 
     this.shipmentService.updateShipmentStatus(this.shipment.id, newStatus, remark).subscribe({
       next: (updated) => {
-        this.shipment = updated || { ...this.selected!, status: newStatus };
+        this.shipment = updated || { ...this.shipment!, status: newStatus };
         this.ensureOtpAndLink();
         this.processingStatus = false;
         this.showToast(`Shipment status updated to ${newStatus}`);
