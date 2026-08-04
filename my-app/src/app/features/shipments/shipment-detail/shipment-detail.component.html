@@ -40,19 +40,6 @@
       </button>
 
       <button 
-        *ngIf="shipment.status === 'IN_TRANSIT' || shipment.status === 'In Transit'"
-        type="button" 
-        class="btn btn-success" 
-        (click)="changeStatus('DELIVERED', 'Delivered successfully to customer')"
-        [disabled]="processingStatus"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span>Mark Delivered</span>
-      </button>
-
-      <button 
         *ngIf="shipment.status !== 'DELIVERED' && shipment.status !== 'CANCELLED' && shipment.status !== 'Delivered' && shipment.status !== 'Returned'" 
         type="button" 
         class="btn btn-danger" 

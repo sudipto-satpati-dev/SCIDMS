@@ -69,17 +69,32 @@ export class DeliveryVerifyComponent implements OnInit {
   }
 
   onOtpInput(index: number, event: any): void {
-    const val = event.target.value;
-    if (val && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      if (nextInput) nextInput.focus();
+    const rawVal = String(event.target?.value || '').replace(/[^0-9]/g, '');
+    const char = rawVal ? rawVal.charAt(rawVal.length - 1) : '';
+    
+    this.otpDigits[index] = char;
+    if (event.target) event.target.value = char;
+
+    if (char && index < 5) {
+      setTimeout(() => {
+        const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
+        if (nextInput) {
+          nextInput.focus();
+          nextInput.select();
+        }
+      }, 10);
     }
   }
 
   onOtpKeyDown(index: number, event: KeyboardEvent): void {
     if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`);
-      if (prevInput) prevInput.focus();
+      setTimeout(() => {
+        const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
+        if (prevInput) {
+          prevInput.focus();
+          prevInput.select();
+        }
+      }, 10);
     }
   }
 
