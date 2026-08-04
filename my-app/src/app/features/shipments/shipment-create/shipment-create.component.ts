@@ -97,8 +97,6 @@ export class ShipmentCreateComponent implements OnInit, OnDestroy {
               error: () => {}
             });
           }
-        } else if (!this.selectedOrder && this.approvedOrders.length > 0) {
-          this.selectOrder(this.approvedOrders[0]);
         }
         this.loading = false;
         this.loadingOrders = false;
@@ -129,7 +127,6 @@ export class ShipmentCreateComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.selectedOrder = null;
     this.searchTerm    = '';
-    this.fetchApprovedOrders('');
   }
 
   onSubmit(): void {
