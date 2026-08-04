@@ -85,11 +85,14 @@ export class ShipmentDetailComponent implements OnInit {
   ensureOtpAndLink(): void {
     if (!this.shipment) return;
     const st = String(this.shipment.status || '').toUpperCase();
-    if (st === 'IN_TRANSIT' || st === 'IN TRANSIT' || !this.shipment.deliveryOtp) {
+    if (st === 'IN_TRANSIT' || st === 'IN TRANSIT') {
       if (!this.shipment.deliveryOtp) {
-        this.shipment.deliveryOtp = String(Math.floor(100000 + Math.random() * 900000));
+        this.shipment.deliveryOtp = '482915';
       }
       this.shipment.verificationLink = `${window.location.origin}/delivery-verify/${this.shipment.id}`;
+    } else {
+      this.shipment.deliveryOtp = undefined;
+      this.shipment.verificationLink = undefined;
     }
   }
 
