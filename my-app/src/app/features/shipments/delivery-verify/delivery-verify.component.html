@@ -112,7 +112,7 @@
         <!-- OTP Input Section -->
         <div class="otp-section">
           <label class="otp-label">ENTER CUSTOMER 6-DIGIT OTP</label>
-          <div class="otp-inputs-grid">
+          <div class="otp-inputs-grid" (paste)="onOtpPaste($event)">
             <input 
               *ngFor="let digit of otpDigits; let i = index"
               [id]="'otp-input-' + i"

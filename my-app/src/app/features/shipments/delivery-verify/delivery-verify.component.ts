@@ -69,32 +69,60 @@ export class DeliveryVerifyComponent implements OnInit {
   }
 
   onOtpInput(index: number, event: any): void {
-    const rawVal = String(event.target?.value || '').replace(/[^0-9]/g, '');
-    const char = rawVal ? rawVal.charAt(rawVal.length - 1) : '';
-    
-    this.otpDigits[index] = char;
-    if (event.target) event.target.value = char;
+    const inputVal = String(event.target?.value || '');
+    const digitsOnly = inputVal.replace(/[^0-9]/g, '');
 
-    if (char && index < 5) {
-      setTimeout(() => {
-        const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
-        if (nextInput) {
-          nextInput.focus();
-          nextInput.select();
-        }
-      }, 10);
+    if (digitsOnly.length > 0) {
+      const char = digitsOnly.charAt(digitsOnly.length - 1);
+      this.otpDigits[index] = char;
+      if (event.target) event.target.value = char;
+
+      if (index < 5) {
+        setTimeout(() => {
+          const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
+          if (nextInput) {
+            nextInput.focus();
+            nextInput.select();
+          }
+        }, 10);
+      }
+    } else {
+      this.otpDigits[index] = '';
     }
   }
 
   onOtpKeyDown(index: number, event: KeyboardEvent): void {
-    if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
-      setTimeout(() => {
-        const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
-        if (prevInput) {
-          prevInput.focus();
-          prevInput.select();
-        }
-      }, 10);
+    if (event.key === 'Backspace') {
+      if (this.otpDigits[index]) {
+        this.otpDigits[index] = '';
+      } else if (index > 0) {
+        this.otpDigits[index - 1] = '';
+        setTimeout(() => {
+          const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
+          if (prevInput) {
+            prevInput.focus();
+            prevInput.select();
+          }
+        }, 10);
+      }
+    }
+  }
+
+  onOtpPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const clipboardData = event.clipboardData?.getData('text') || '';
+    const digits = clipboardData.replace(/[^0-9]/g, '').slice(0, 6);
+
+    if (digits) {
+      for (let i = 0; i < 6; i++) {
+        this.otpDigits[i] = digits.charAt(i) || '';
+      }
+      const focusIndex = Math.min(digits.length, 5);
+      const targetEl = document.getElementById(`otp-input-${focusIndex}`) as HTMLInputElement;
+      if (targetEl) {
+        targetEl.focus();
+        targetEl.select();
+      }
     }
   }
 
