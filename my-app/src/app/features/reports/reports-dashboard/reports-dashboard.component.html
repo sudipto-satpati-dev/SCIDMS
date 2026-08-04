@@ -85,8 +85,8 @@
             type="text" 
             class="filter-input" 
             placeholder="Search by product name or SKU..." 
-            [(ngModel)]="searchQuery"
-            (keyup.enter)="onFilterChange()"
+            [ngModel]="searchQuery"
+            (ngModelChange)="onSearchInput($event)"
           />
         </div>
       </div>

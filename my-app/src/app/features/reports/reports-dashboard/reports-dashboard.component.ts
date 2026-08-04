@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { ProductService } from '../../../core/services/product.service';
@@ -40,7 +42,7 @@ export interface ShipmentReportRow {
   templateUrl: './reports-dashboard.component.html',
   styleUrls: ['./reports-dashboard.component.scss']
 })
-export class ReportsDashboardComponent implements OnInit {
+export class ReportsDashboardComponent implements OnInit, OnDestroy {
 
   activeTab: ReportTab = 'inventory';
   loading = false;
@@ -67,6 +69,9 @@ export class ReportsDashboardComponent implements OnInit {
 
   toastMessage: string | null = null;
 
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   constructor(
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
@@ -76,10 +81,30 @@ export class ReportsDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Setup 1-second debounce for search query
+    this.searchSubject.pipe(
+      debounceTime(1000),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(term => {
+      this.searchQuery = term;
+      this.page = 0;
+      this.loadInventoryReport();
+    });
+
     this.loadWarehouses();
     this.loadProducts();
     this.loadInventoryReport();
     this.loadOrdersAndShipments();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onSearchInput(term: string): void {
+    this.searchSubject.next(term);
   }
 
   setTab(tab: ReportTab): void {
@@ -278,10 +303,107 @@ export class ReportsDashboardComponent implements OnInit {
     }
   }
 
-  // Export to PDF
+  // Export to PDF (Table-only print window)
   exportPDF(): void {
-    window.print();
-    this.showToast('📄 Printing / Exporting Report as PDF...');
+    if (this.activeTab === 'inventory') {
+      const items = this.filteredInventory;
+      if (!items.length) {
+        this.showToast('No inventory records available to export.');
+        return;
+      }
+
+      const printWin = window.open('', '_blank', 'width=950,height=750');
+      if (!printWin) {
+        this.showToast('Could not open print window. Please allow popups in your browser.');
+        return;
+      }
+
+      const dateStr = new Date().toLocaleString();
+      const whName = this.selectedWarehouseId 
+        ? (this.warehouses.find(w => String(w.id) === String(this.selectedWarehouseId))?.name || 'Selected Warehouse') 
+        : 'All Warehouses';
+
+      const rowsHtml = items.map(item => `
+        <tr>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; font-family:monospace; font-weight:bold;">INV-${item.inventoryId || item.productId}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; font-weight:600;">${item.productName || ''}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1;">${item.warehouseName || ''}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; text-align:right;">${item.onHandQuantity ?? 0}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; text-align:right; color:#64748b;">${item.allocatedQuantity ?? 0}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; text-align:right; font-weight:bold;">${item.availableQuantity ?? 0}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; text-align:right;">${item.lowStockThreshold ?? 0}</td>
+          <td style="padding:8px 10px; border:1px solid #cbd5e1; font-size:12px; font-weight:bold;">${this.getStockLabel(item)}</td>
+        </tr>
+      `).join('');
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>SCIDMS Inventory Report</title>
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; color: #0f172a; }
+              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+              .title { font-size: 22px; font-weight: bold; margin: 0; }
+              .meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+              .info-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; font-size: 13px; }
+              th { background: #0f172a; color: #ffffff; padding: 10px 8px; text-align: left; border: 1px solid #0f172a; }
+              th.text-right { text-align: right; }
+              .footer { margin-top: 24px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <h1 class="title">SCIDMS Inventory Report</h1>
+                <div class="meta">Generated on: ${dateStr}</div>
+              </div>
+              <div style="text-align:right;">
+                <strong>SCIDMS Supply Chain Management</strong>
+              </div>
+            </div>
+
+            <div class="info-bar">
+              <strong>Applied Filters:</strong> Warehouse: ${whName} | Stock Status: ${this.selectedStockStatus} | Total Items: ${items.length}
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Inventory ID</th>
+                  <th>Product Name</th>
+                  <th>Warehouse Location</th>
+                  <th class="text-right">On-Hand Qty</th>
+                  <th class="text-right">Allocated Qty</th>
+                  <th class="text-right">Available Qty</th>
+                  <th class="text-right">Threshold</th>
+                  <th>Stock Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+
+            <div class="footer">
+              Confidential Supply Chain Management Report · SCIDMS Platform
+            </div>
+          </body>
+        </html>
+      `);
+
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => {
+        printWin.print();
+        printWin.close();
+      }, 300);
+
+      this.showToast('📄 Inventory Report exported as PDF!');
+    } else {
+      window.print();
+    }
   }
 
   showToast(msg: string): void {
