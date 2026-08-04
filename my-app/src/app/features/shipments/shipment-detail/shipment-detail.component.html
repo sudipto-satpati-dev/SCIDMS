@@ -137,6 +137,58 @@
     </div>
   </section>
 
+  <!-- Delivery Verification & OTP Card (Shown when In-Transit) -->
+  <section class="card-section otp-verification-card" *ngIf="shipment.status === 'IN_TRANSIT' || shipment.status === 'In Transit' || shipment.deliveryOtp">
+    <div class="card-header-flex">
+      <div class="header-left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <polyline points="9 12 11 14 15 10"></polyline>
+        </svg>
+        <h3 class="card-title">Delivery Verification & Security Credentials</h3>
+      </div>
+      <span class="badge-active-otp">ACTIVE DELIVERY OTP</span>
+    </div>
+
+    <div class="otp-card-grid">
+      <!-- Customer OTP Box -->
+      <div class="credential-box otp-box">
+        <div class="box-icon">🔑</div>
+        <div class="box-content">
+          <span class="box-label">CUSTOMER DELIVERY OTP</span>
+          <div class="otp-code-display">
+            <span class="otp-code">{{ shipment.deliveryOtp || '482915' }}</span>
+            <button type="button" class="btn-copy" (click)="copyOtp()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy OTP
+            </button>
+          </div>
+          <p class="box-help">Share this 6-digit code with the recipient. Delivery agent will enter it to verify delivery.</p>
+        </div>
+      </div>
+
+      <!-- Delivery Partner Verification Link Box -->
+      <div class="credential-box link-box">
+        <div class="box-icon">🚚</div>
+        <div class="box-content">
+          <span class="box-label">DELIVERY PARTNER VERIFICATION LINK</span>
+          <div class="link-input-display">
+            <input type="text" class="link-input" readonly [value]="shipment.verificationLink || ('http://localhost:4200/delivery-verify/' + shipment.id)" />
+            <button type="button" class="btn-copy" (click)="copyLink()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy Link
+            </button>
+            <button type="button" class="btn-open" (click)="openVerifyPage()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              Open Page
+            </button>
+          </div>
+          <p class="box-help">Send this link to the driver/delivery partner. When clicked, it opens the non-confidential OTP entry portal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Middle Grid Section (Left Details vs Right Status History) -->
   <div class="middle-grid">
     <!-- Left Column: Route & Carrier Cards -->

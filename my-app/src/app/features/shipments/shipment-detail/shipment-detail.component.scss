@@ -511,6 +511,135 @@
   }
 }
 
+/* OTP Verification Card Styles */
+.otp-verification-card {
+  border: 2px solid #0284c7;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 16px;
+
+  .badge-active-otp {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .otp-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .credential-box {
+    background: #ffffff;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+
+    .box-icon {
+      font-size: 24px;
+    }
+
+    .box-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .box-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #0369a1;
+      letter-spacing: 0.5px;
+    }
+
+    .otp-code-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+
+      .otp-code {
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 4px;
+        color: #0c4a6e;
+        background: #f0f9ff;
+        padding: 4px 12px;
+        border-radius: 8px;
+        border: 1px solid #7dd3fc;
+      }
+    }
+
+    .link-input-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+
+      .link-input {
+        flex: 1;
+        font-size: 12px;
+        color: #0369a1;
+        background: #f0f9ff;
+        border: 1px solid #7dd3fc;
+        padding: 8px 10px;
+        border-radius: 8px;
+        outline: none;
+      }
+    }
+
+    .btn-copy, .btn-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-copy {
+      background: #0284c7;
+      color: #ffffff;
+      &:hover {
+        background: #0369a1;
+      }
+    }
+
+    .btn-open {
+      background: #0f172a;
+      color: #ffffff;
+      &:hover {
+        background: #1e293b;
+      }
+    }
+
+    .box-help {
+      font-size: 11px;
+      color: #64748b;
+      margin: 4px 0 0 0;
+      line-height: 1.4;
+    }
+  }
+}
+
 /* Live Map Card */
 .map-card {
   .live-location-badge {

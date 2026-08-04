@@ -57,6 +57,7 @@ export class ShipmentDetailComponent implements OnInit {
       next: (data) => {
         this.shipment = data;
         this.loading = false;
+        this.ensureOtpAndLink();
         this.loadHistory();
       },
       error: () => {
@@ -66,7 +67,10 @@ export class ShipmentDetailComponent implements OnInit {
             this.shipment = res.shipments[0] || null;
             this.notFound = !this.shipment;
             this.loading = false;
-            if (this.shipment) this.loadHistory();
+            if (this.shipment) {
+              this.ensureOtpAndLink();
+              this.loadHistory();
+            }
           },
           error: (err) => {
             this.errorMsg = err?.message || 'Shipment not found.';
@@ -78,14 +82,15 @@ export class ShipmentDetailComponent implements OnInit {
     });
   }
 
-  loadHistory(): void {
+  ensureOtpAndLink(): void {
     if (!this.shipment) return;
-    this.shipmentService.getShipmentHistory(this.shipment.id).subscribe({
-      next: (logs) => {
-        this.historyLogs = logs || [];
-      },
-      error: () => {}
-    });
+    const st = String(this.shipment.status || '').toUpperCase();
+    if (st === 'IN_TRANSIT' || st === 'IN TRANSIT' || !this.shipment.deliveryOtp) {
+      if (!this.shipment.deliveryOtp) {
+        this.shipment.deliveryOtp = String(Math.floor(100000 + Math.random() * 900000));
+      }
+      this.shipment.verificationLink = `${window.location.origin}/delivery-verify/${this.shipment.id}`;
+    }
   }
 
   changeStatus(newStatus: string, remark = 'Status updated'): void {
@@ -94,7 +99,8 @@ export class ShipmentDetailComponent implements OnInit {
 
     this.shipmentService.updateShipmentStatus(this.shipment.id, newStatus, remark).subscribe({
       next: (updated) => {
-        this.shipment = updated;
+        this.shipment = updated || { ...this.selected!, status: newStatus };
+        this.ensureOtpAndLink();
         this.processingStatus = false;
         this.showToast(`Shipment status updated to ${newStatus}`);
         this.loadHistory();
@@ -104,6 +110,23 @@ export class ShipmentDetailComponent implements OnInit {
         this.processingStatus = false;
       }
     });
+  }
+
+  copyOtp(): void {
+    if (!this.shipment?.deliveryOtp) return;
+    navigator.clipboard.writeText(this.shipment.deliveryOtp);
+    this.showToast('Customer OTP copied to clipboard!');
+  }
+
+  copyLink(): void {
+    if (!this.shipment?.verificationLink) return;
+    navigator.clipboard.writeText(this.shipment.verificationLink);
+    this.showToast('Delivery verification link copied to clipboard!');
+  }
+
+  openVerifyPage(): void {
+    if (!this.shipment) return;
+    window.open(`/delivery-verify/${this.shipment.id}`, '_blank');
   }
 
   openFailureModal(): void {

@@ -1,0 +1,157 @@
+<div class="verify-page-wrapper">
+
+  <!-- Header Branding -->
+  <header class="public-header">
+    <div class="header-content">
+      <div class="logo-box">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5">
+          <rect x="1" y="3" width="15" height="13"></rect>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">SCIDMS Logistics</h1>
+        <p class="brand-subtitle">Delivery Partner Portal</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="verify-container">
+
+    <!-- Loading State -->
+    <div class="card-box loading-box" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading delivery information...</p>
+    </div>
+
+    <!-- Main Verification Card (When Loaded) -->
+    <div class="card-box" *ngIf="!loading && shipment">
+
+      <!-- Success State -->
+      <div class="success-screen" *ngIf="verifiedSuccess">
+        <div class="icon-circle-success">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2 class="success-title">Delivery Successfully Verified!</h2>
+        <p class="success-subtitle">
+          Shipment <strong>{{ shipment.shipmentNumber || shipment.id }}</strong> has been marked as <strong>DELIVERED</strong>.
+        </p>
+
+        <div class="details-summary">
+          <div class="summary-row">
+            <span>Order Reference:</span>
+            <strong>{{ shipment.orderNumber || shipment.orderId }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Recipient Name:</span>
+            <strong>{{ shipment.customerName }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Delivery Address:</span>
+            <strong>{{ shipment.deliveryAddress || shipment.customerAddress }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Verified At:</span>
+            <strong>{{ shipment.actualDeliveryDate || 'Just now' }}</strong>
+          </div>
+        </div>
+
+        <div class="status-badge-delivered">
+          <span class="dot-green"></span> Delivered & Completed
+        </div>
+      </div>
+
+      <!-- OTP Verification Form (When In-Transit / Pending Verification) -->
+      <div class="verify-form-screen" *ngIf="!verifiedSuccess">
+
+        <div class="card-title-bar">
+          <span class="badge-transit">IN TRANSIT</span>
+          <h2>Delivery OTP Verification</h2>
+          <p class="instruction-text">
+            Ask the customer for the <strong>6-digit OTP</strong> sent to their phone/email to complete this delivery.
+          </p>
+        </div>
+
+        <!-- Non-Confidential Delivery Details -->
+        <div class="delivery-info-card">
+          <div class="info-group">
+            <span class="info-label">SHIPMENT REFERENCE</span>
+            <span class="info-value shipment-ref">{{ shipment.shipmentNumber || shipment.id }}</span>
+          </div>
+
+          <div class="info-group">
+            <span class="info-label">ORDER ID</span>
+            <span class="info-value">{{ shipment.orderNumber || shipment.orderId }}</span>
+          </div>
+
+          <div class="info-group full-width">
+            <span class="info-label">RECIPIENT NAME</span>
+            <span class="info-value customer-name">{{ shipment.customerName }}</span>
+          </div>
+
+          <div class="info-group full-width">
+            <span class="info-label">DELIVERY ADDRESS</span>
+            <span class="info-value address-text">{{ shipment.deliveryAddress || shipment.customerAddress }}</span>
+          </div>
+
+          <div class="info-group">
+            <span class="info-label">CARRIER</span>
+            <span class="info-value">{{ shipment.carrierName }}</span>
+          </div>
+
+          <div class="info-group">
+            <span class="info-label">TRACKING NUMBER</span>
+            <span class="info-value">{{ shipment.trackingNumber || shipment.carrierTracking }}</span>
+          </div>
+        </div>
+
+        <!-- OTP Input Section -->
+        <div class="otp-section">
+          <label class="otp-label">ENTER CUSTOMER 6-DIGIT OTP</label>
+          <div class="otp-inputs-grid">
+            <input 
+              *ngFor="let digit of otpDigits; let i = index"
+              [id]="'otp-input-' + i"
+              type="text"
+              maxlength="1"
+              class="otp-digit-box"
+              [(ngModel)]="otpDigits[i]"
+              (input)="onOtpInput(i, $event)"
+              (keydown)="onOtpKeyDown(i, $event)"
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- Error Alert -->
+          <div class="error-banner" *ngIf="verifyError">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ verifyError }}</span>
+          </div>
+
+          <button 
+            type="button" 
+            class="btn-verify-submit" 
+            (click)="submitVerification()" 
+            [disabled]="verifying || enteredOtp.length !== 6"
+          >
+            <span class="spinner-sm" *ngIf="verifying"></span>
+            <svg *ngIf="!verifying" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>{{ verifying ? 'Verifying OTP...' : 'Verify OTP & Complete Delivery' }}</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>

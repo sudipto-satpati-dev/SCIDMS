@@ -25,6 +25,9 @@ export interface Shipment {
   createdAt: string;
   updatedAt?: string;
   createdBy: string;
+  // OTP & Verification fields
+  deliveryOtp?: string;
+  verificationLink?: string;
   // UI Compatibility Fallbacks
   customerAddress?: string;
   carrierTracking?: string;

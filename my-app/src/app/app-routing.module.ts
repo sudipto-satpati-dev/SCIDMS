@@ -4,11 +4,17 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout.component'
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
+import { DeliveryVerifyComponent } from './features/shipments/delivery-verify/delivery-verify.component';
+
 const routes: Routes = [
   // ── Public routes (no layout, no guard) ──────────────────────────────────
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule),
+  },
+  {
+    path: 'delivery-verify/:id',
+    component: DeliveryVerifyComponent,
   },
 
   // ── Protected routes (inside main layout) ────────────────────────────────

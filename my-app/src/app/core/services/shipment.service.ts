@@ -119,6 +119,24 @@ export class ShipmentService {
   }
 
   /**
+   * POST /api/shipments/{id}/verify-otp
+   * Body: { otp: string }
+   */
+  verifyOtp(id: string | number, otp: string): Observable<Shipment> {
+    return this.http
+      .post<SingleShipmentApiResponse>(`${this.shipmentsUrl}/${id}/verify-otp`, { otp })
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Invalid OTP code.' };
+          }
+          return res.data;
+        }),
+        catchError(this._handleError)
+      );
+  }
+
+  /**
    * GET /api/shipments/{id}/history
    */
   getShipmentHistory(id: string | number): Observable<ShipmentHistoryItem[]> {
