@@ -135,22 +135,6 @@
         </div>
       </div>
 
-      <!-- Sort (query param: sort) -->
-      <div class="filter-group">
-        <label class="filter-label">SORT BY</label>
-        <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
-            <option value="updatedAt,desc">Recently Updated</option>
-            <option value="availableQuantity,asc">Stock: Low to High</option>
-            <option value="availableQuantity,desc">Stock: High to Low</option>
-            <option value="productName,asc">Product Name (A-Z)</option>
-          </select>
-          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-      </div>
-
       <!-- Reset Button -->
       <div class="filter-group filter-btn-group">
         <label class="filter-label">&nbsp;</label>
@@ -229,22 +213,6 @@
         />
       </div>
 
-      <!-- Sort (query param: sort) -->
-      <div class="filter-group">
-        <label class="filter-label">SORT BY</label>
-        <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
-            <option value="createdAt,desc">Newest Orders First</option>
-            <option value="createdAt,asc">Oldest Orders First</option>
-            <option value="customerName,asc">Customer (A-Z)</option>
-            <option value="status,asc">Status</option>
-          </select>
-          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-      </div>
-
       <!-- Reset Button -->
       <div class="filter-group filter-btn-group">
         <label class="filter-label">&nbsp;</label>
@@ -304,22 +272,6 @@
           (keyup.enter)="onFilterChange()"
           style="width: 150px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;"
         />
-      </div>
-
-      <!-- Sort (query param: sort) -->
-      <div class="filter-group">
-        <label class="filter-label">SORT BY</label>
-        <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
-            <option value="createdAt,desc">Newest Shipments First</option>
-            <option value="createdAt,asc">Oldest Shipments First</option>
-            <option value="carrierName,asc">Carrier (A-Z)</option>
-            <option value="status,asc">Status</option>
-          </select>
-          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
       </div>
 
       <!-- Reset Button -->
