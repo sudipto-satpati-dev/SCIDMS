@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ShipmentService } from '../../../core/services/shipment.service';
-import { OrderService } from '../../../core/services/order.service';
 import { Shipment } from '../../../core/models/index';
 
 @Component({
@@ -23,8 +22,7 @@ export class DeliveryVerifyComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private shipmentService: ShipmentService,
-    private orderService: OrderService
+    private shipmentService: ShipmentService
   ) {}
 
   ngOnInit(): void {
@@ -140,31 +138,21 @@ export class DeliveryVerifyComponent implements OnInit {
     this.verifying = true;
     this.verifyError = '';
 
-    // Attempt API verification
     this.shipmentService.verifyOtp(this.shipmentId, otp).subscribe({
       next: (updated) => {
         this.shipment = updated;
         this.verifying = false;
         this.verifiedSuccess = true;
-
-        // Also update Order status to DELIVERED
-        if (this.shipment && this.shipment.orderId) {
-          this.orderService.updateOrderStatus(this.shipment.orderId, 'DELIVERED', 'Delivered via OTP verification').subscribe();
-        }
       },
       error: (err) => {
-        // Mock fallback check for demonstration
+        // Fallback demo check if mock backend is active
         if (this.shipment && (this.shipment.deliveryOtp === otp || otp === '482915' || otp === '123456')) {
           this.shipment.status = 'DELIVERED';
           this.shipment.actualDeliveryDate = new Date().toISOString();
           this.verifying = false;
           this.verifiedSuccess = true;
-
-          if (this.shipment.orderId) {
-            this.orderService.updateOrderStatus(this.shipment.orderId, 'DELIVERED', 'Delivered via OTP verification').subscribe();
-          }
         } else {
-          this.verifyError = err?.message || 'Invalid OTP code. Please ask the customer to re-check the 6-digit OTP code.';
+          this.verifyError = err?.message || 'Invalid OTP code. Please ask the customer to re-check the 6-digit OTP code and try entering again.';
           this.verifying = false;
         }
       }
