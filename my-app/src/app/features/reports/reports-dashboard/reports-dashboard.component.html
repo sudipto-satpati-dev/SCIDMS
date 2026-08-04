@@ -49,9 +49,11 @@
     <div class="export-buttons-group">
       <button type="button" class="btn btn-outline-export" (click)="exportPDF()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="9" y1="3" x2="9" y2="21"></line>
-          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
         <span>Export to PDF</span>
       </button>
@@ -67,49 +69,35 @@
     </div>
   </header>
 
-  <!-- Filter Card Row -->
-  <section class="filter-card">
+  <!-- Filter Card Row matching GET /api/inventory query params -->
+  <section class="filter-card" *ngIf="activeTab === 'inventory'">
     <div class="filter-controls-flex">
       
-      <!-- Date Range Inputs -->
-      <div class="filter-group date-range-group">
-        <label class="filter-label">DATE RANGE <span class="required-star">*</span></label>
-        <div class="date-inputs-wrapper">
-          <div class="input-icon-box" [class.input-error-border]="isInvalidDateRange">
-            <input type="date" class="date-input" [(ngModel)]="startDate" />
-            <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-
-          <span class="to-separator">to</span>
-
-          <div class="input-icon-box" [class.input-error-border]="isInvalidDateRange">
-            <input type="date" class="date-input" [(ngModel)]="endDate" />
-            <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Inline Red Validation Text -->
-        <div class="validation-error-text" *ngIf="isInvalidDateRange">
-          Start date must not be after end date
+      <!-- Search Input (query param: search) -->
+      <div class="filter-group flex-grow-1">
+        <label class="filter-label">SEARCH PRODUCT / SKU</label>
+        <div class="search-input-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            class="filter-input" 
+            placeholder="Search by product name or SKU..." 
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onFilterChange()"
+          />
         </div>
       </div>
 
-      <!-- Warehouse Filter -->
+      <!-- Warehouse Filter (query param: warehouseId) -->
       <div class="filter-group">
         <label class="filter-label">WAREHOUSE</label>
         <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="selectedWarehouse">
-            <option *ngFor="let wh of warehouses" [value]="wh">{{ wh }}</option>
+          <select class="filter-select" [(ngModel)]="selectedWarehouseId" (change)="onFilterChange()">
+            <option value="">All Warehouses</option>
+            <option *ngFor="let wh of warehouses" [value]="wh.id">{{ wh.name }}</option>
           </select>
           <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 12 15 18 9"></polyline>
@@ -117,17 +105,40 @@
         </div>
       </div>
 
-      <!-- Status Filter -->
+      <!-- Product Filter (query param: productId) -->
       <div class="filter-group">
-        <label class="filter-label">STATUS</label>
+        <label class="filter-label">PRODUCT</label>
         <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="selectedStatus">
-            <option *ngFor="let st of statusOptions" [value]="st">{{ st }}</option>
+          <select class="filter-select" [(ngModel)]="selectedProductId" (change)="onFilterChange()">
+            <option value="">All Products</option>
+            <option *ngFor="let prod of productsList" [value]="prod.id">{{ prod.name }}</option>
           </select>
           <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
+      </div>
+
+      <!-- Stock Status Filter -->
+      <div class="filter-group">
+        <label class="filter-label">STOCK STATUS</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="selectedStockStatus">
+            <option value="ALL">All Statuses</option>
+            <option value="IN_STOCK">In Stock</option>
+            <option value="LOW_STOCK">Low Stock</option>
+            <option value="OUT_OF_STOCK">Out of Stock</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reset Filters Button -->
+      <div class="filter-group filter-btn-group">
+        <label class="filter-label">&nbsp;</label>
+        <button type="button" class="btn-reset" (click)="resetFilters()">Reset</button>
       </div>
 
     </div>
@@ -136,66 +147,56 @@
   <!-- Main Data Table Card -->
   <section class="table-card">
     <div class="table-toolbar-header">
-      <span class="found-count-text">128 Products Found</span>
-      
-      <div class="toolbar-icons">
-        <button type="button" class="icon-btn" title="Filter columns">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="4" y1="6" x2="20" y2="6"></line>
-            <line x1="8" y1="12" x2="16" y2="12"></line>
-            <line x1="10" y1="18" x2="14" y2="18"></line>
-          </svg>
-        </button>
-
-        <button type="button" class="icon-btn" title="More options">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="5" r="1"></circle>
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="12" cy="19" r="1"></circle>
-          </svg>
-        </button>
-      </div>
+      <span class="found-count-text" *ngIf="activeTab === 'inventory'">
+        Showing {{ filteredInventory.length }} of {{ totalElements }} Inventory Items
+      </span>
+      <span class="found-count-text" *ngIf="activeTab === 'orders'">{{ filteredOrders.length }} Orders Found</span>
+      <span class="found-count-text" *ngIf="activeTab === 'shipments'">{{ filteredShipments.length }} Shipments Found</span>
     </div>
 
     <!-- Table Contents based on Active Tab -->
-    <!-- Tab 1: Inventory Report -->
+    <!-- Tab 1: Inventory Report (Pure View Page) -->
     <div class="table-wrapper" *ngIf="activeTab === 'inventory'">
-      <table class="data-table">
+      <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading Inventory Report...</p>
+      </div>
+
+      <table class="data-table" *ngIf="!loading">
         <thead>
           <tr>
+            <th>Inventory ID</th>
             <th>Product Name</th>
-            <th>SKU</th>
             <th>Warehouse Location</th>
-            <th class="text-right">Stock Level</th>
-            <th class="text-right">Unit Price</th>
-            <th>Status</th>
-            <th class="text-center">Action</th>
+            <th class="text-right">On Hand Qty</th>
+            <th class="text-right">Allocated Qty</th>
+            <th class="text-right">Available Qty</th>
+            <th class="text-right">Threshold</th>
+            <th>Stock Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let prod of filteredProducts">
+          <tr *ngFor="let item of filteredInventory">
+            <td class="sku-cell">INV-{{ item.inventoryId || item.productId }}</td>
             <td class="product-name-cell">
-              <a href="javascript:void(0)">{{ prod.name }}</a>
+              <strong>{{ item.productName }}</strong>
             </td>
-            <td class="sku-cell">{{ prod.sku }}</td>
-            <td class="location-cell">{{ prod.location }}</td>
-            <td class="text-right stock-cell" [class.stock-low]="prod.stockLevel < 50 && prod.stockLevel > 0" [class.stock-zero]="prod.stockLevel === 0">
-              {{ prod.stockLevel | number }}
+            <td class="location-cell">{{ item.warehouseName }}</td>
+            <td class="text-right stock-cell">{{ item.onHandQuantity | number }}</td>
+            <td class="text-right stock-cell" style="color: #64748b;">{{ item.allocatedQuantity | number }}</td>
+            <td class="text-right stock-cell" [class.stock-low]="item.lowStock" [class.stock-zero]="item.outOfStock || item.availableQuantity === 0">
+              <strong>{{ item.availableQuantity | number }}</strong>
             </td>
-            <td class="text-right price-cell">${{ prod.unitPrice | number:'1.2-2' }}</td>
+            <td class="text-right price-cell">{{ item.lowStockThreshold | number }}</td>
             <td class="status-cell">
-              <span class="pill-badge" [ngClass]="getStatusClass(prod.status)">
-                {{ prod.status }}
+              <span class="pill-badge" [ngClass]="getStockBadgeClass(item)">
+                {{ getStockLabel(item) }}
               </span>
             </td>
-            <td class="text-center action-cell">
-              <button type="button" class="btn-action-icon" title="View Details">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </button>
+          </tr>
+          <tr *ngIf="filteredInventory.length === 0">
+            <td colspan="8" class="text-center empty-state-cell">
+              No inventory items matching current filters.
             </td>
           </tr>
         </tbody>
@@ -213,13 +214,12 @@
             <th class="text-right">Total Items</th>
             <th class="text-right">Total Price</th>
             <th>Status</th>
-            <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let order of filteredOrders">
             <td class="product-name-cell">
-              <a href="javascript:void(0)">{{ order.orderId }}</a>
+              <strong>{{ order.orderId }}</strong>
             </td>
             <td class="sku-cell">{{ order.sku }}</td>
             <td class="location-cell">{{ order.customer }}</td>
@@ -229,15 +229,6 @@
               <span class="pill-badge" [ngClass]="getStatusClass(order.status)">
                 {{ order.status }}
               </span>
-            </td>
-            <td class="text-center action-cell">
-              <button type="button" class="btn-action-icon" title="View Order">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </button>
             </td>
           </tr>
         </tbody>
@@ -255,13 +246,12 @@
             <th>Carrier</th>
             <th>Dispatch Date</th>
             <th>Status</th>
-            <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let ship of filteredShipments">
             <td class="product-name-cell">
-              <a href="javascript:void(0)">{{ ship.shipmentId }}</a>
+              <strong>{{ ship.shipmentId }}</strong>
             </td>
             <td class="sku-cell">{{ ship.orderId }}</td>
             <td class="location-cell">{{ ship.customer }}</td>
@@ -272,36 +262,35 @@
                 {{ ship.status }}
               </span>
             </td>
-            <td class="text-center action-cell">
-              <button type="button" class="btn-action-icon" title="View Shipment">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </button>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Table Pagination Footer -->
-    <div class="table-pagination-footer">
-      <span class="entries-info">Showing 1 to 6 of 128 entries</span>
+    <div class="table-pagination-footer" *ngIf="activeTab === 'inventory'">
+      <span class="entries-info">
+        Page {{ page + 1 }} of {{ totalPages || 1 }} (Total {{ totalElements }} items)
+      </span>
 
       <div class="pagination-controls">
-        <button type="button" class="page-btn" [disabled]="currentPage === 1">&lt;</button>
-        <button type="button" class="page-btn" [class.active]="currentPage === 1" (click)="currentPage = 1">1</button>
-        <button type="button" class="page-btn" [class.active]="currentPage === 2" (click)="currentPage = 2">2</button>
-        <button type="button" class="page-btn" [class.active]="currentPage === 3" (click)="currentPage = 3">3</button>
-        <button type="button" class="page-btn">&gt;</button>
+        <button type="button" class="page-btn" [disabled]="page === 0" (click)="goToPage(page - 1)">&lt;</button>
+        <button 
+          *ngFor="let p of [].constructor(totalPages || 1); let i = index" 
+          type="button" 
+          class="page-btn" 
+          [class.active]="page === i" 
+          (click)="goToPage(i)"
+        >
+          {{ i + 1 }}
+        </button>
+        <button type="button" class="page-btn" [disabled]="page >= totalPages - 1" (click)="goToPage(page + 1)">&gt;</button>
       </div>
     </div>
   </section>
 
-  <!-- Bottom 3 Analytics Summary Cards Grid -->
-  <div class="summary-cards-grid">
+  <!-- Low Stock Alerts Summary Card -->
+  <div class="summary-cards-grid" *ngIf="activeTab === 'inventory'">
     
     <!-- Card 1: Low Stock Alerts -->
     <div class="summary-card low-stock-alert-card">
@@ -314,114 +303,23 @@
       </div>
 
       <div class="summary-card-body">
-        <!-- Item 1 -->
-        <div class="alert-item">
+        <div class="alert-item" *ngFor="let item of lowStockAlertItems">
           <div class="alert-item-header">
-            <span class="item-name">Solar Inverter</span>
-            <strong class="item-count danger-count">42 Left</strong>
+            <span class="item-name">{{ item.productName }} ({{ item.warehouseName }})</span>
+            <strong class="item-count" [class.danger-count]="item.outOfStock || item.availableQuantity === 0" [class.warning-count]="!item.outOfStock && item.availableQuantity > 0">
+              {{ item.availableQuantity }} Left
+            </strong>
           </div>
           <div class="progress-bar-track">
-            <div class="progress-bar-fill fill-danger" style="width: 15%;"></div>
+            <div class="progress-bar-fill" [class.fill-danger]="item.outOfStock || item.availableQuantity === 0" [class.fill-warning]="!item.outOfStock && item.availableQuantity > 0" [style.width.%]="calcPercentage(item)"></div>
           </div>
         </div>
 
-        <!-- Item 2 -->
-        <div class="alert-item">
-          <div class="alert-item-header">
-            <span class="item-name">Industrial Lubricant</span>
-            <strong class="item-count warning-count">156 Left</strong>
-          </div>
-          <div class="progress-bar-track">
-            <div class="progress-bar-fill fill-warning" style="width: 45%;"></div>
-          </div>
+        <div *ngIf="lowStockAlertItems.length === 0" class="no-alerts-text" style="font-size: 13px; color: #64748b; padding: 12px 0;">
+          All products currently have healthy stock levels.
         </div>
-      </div>
-
-      <div class="summary-card-footer">
-        <a href="javascript:void(0)" class="view-alerts-link">View All Alerts</a>
       </div>
     </div>
-
-    <!-- Card 2: Warehouse Distribution -->
-    <div class="summary-card warehouse-dist-card">
-      <div class="summary-card-header">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>
-        <h3 class="summary-card-title">Warehouse Distribution</h3>
-      </div>
-
-      <div class="donut-chart-flex">
-        <!-- SVG Donut Chart -->
-        <div class="donut-svg-wrapper">
-          <svg viewBox="0 0 100 100" class="donut-svg">
-            <!-- Central 45% (blue) -->
-            <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="12" stroke-dasharray="107 131" stroke-dashoffset="0" />
-            <!-- Global 30% (slate) -->
-            <circle cx="50" cy="50" r="38" fill="none" stroke="#64748b" stroke-width="12" stroke-dasharray="71 167" stroke-dashoffset="-107" />
-            <!-- Regional 25% (light blue) -->
-            <circle cx="50" cy="50" r="38" fill="none" stroke="#cbd5e1" stroke-width="12" stroke-dasharray="60 178" stroke-dashoffset="-178" />
-          </svg>
-          <div class="donut-center-text">
-            <span class="donut-label">Total</span>
-            <strong class="donut-value">1.2M</strong>
-          </div>
-        </div>
-
-        <ul class="donut-legend-list">
-          <li class="legend-item">
-            <span class="legend-dot dot-central"></span>
-            <span>Central: 45%</span>
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-global"></span>
-            <span>Global: 30%</span>
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-regional"></span>
-            <span>Regional: 25%</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Card 3: Inventory Valuation -->
-    <div class="summary-card valuation-card">
-      <div class="summary-card-header">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-          <polyline points="17 6 23 6 23 12"></polyline>
-        </svg>
-        <h3 class="summary-card-title">Inventory Valuation</h3>
-      </div>
-
-      <div class="valuation-content">
-        <h2 class="valuation-amount">$14,204,500.00</h2>
-        <div class="valuation-trend green-trend">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="19" x2="12" y2="5"></line>
-            <polyline points="5 12 12 5 19 12"></polyline>
-          </svg>
-          <span>+2.4% from last month</span>
-        </div>
-      </div>
-
-      <!-- Area Chart Graphic -->
-      <div class="sparkline-chart-container">
-        <svg class="sparkline-svg" viewBox="0 0 300 60" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="val-area-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35" />
-              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
-            </linearGradient>
-          </defs>
-          <path d="M 0 50 Q 75 30 150 40 T 300 10 L 300 60 L 0 60 Z" fill="url(#val-area-gradient)" />
-          <path d="M 0 50 Q 75 30 150 40 T 300 10" fill="none" stroke="#2563eb" stroke-width="2.5" />
-        </svg>
-      </div>
-    </div>
-
   </div>
+
 </div>
