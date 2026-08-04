@@ -369,13 +369,13 @@
           <span>Customer:</span>
           <strong>{{ selectedOrder.customerName }}</strong>
         </div>
-        <div class="modal-row">
-          <span>Shipment Date:</span>
-          <strong>{{ shipmentDate }}</strong>
+        <div class="modal-row" *ngIf="expectedDeliveryDate">
+          <span>Expected Delivery:</span>
+          <strong>{{ expectedDeliveryDate }}</strong>
         </div>
-        <div class="modal-row" *ngIf="carrierMethod">
-          <span>Carrier:</span>
-          <strong>{{ carrierMethod }}</strong>
+        <div class="modal-row" *ngIf="carrierName">
+          <span>Carrier Name:</span>
+          <strong>{{ carrierName }}</strong>
         </div>
       </div>
 
