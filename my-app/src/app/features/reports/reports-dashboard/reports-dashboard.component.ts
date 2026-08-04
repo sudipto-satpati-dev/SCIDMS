@@ -256,6 +256,18 @@ export class ReportsDashboardComponent implements OnInit, OnDestroy {
     return 'In Stock';
   }
 
+  get lowStockAlertItems(): ApiInventoryItem[] {
+    return this.inventoryItems
+      .filter(i => i.lowStock || i.outOfStock || i.availableQuantity <= i.lowStockThreshold)
+      .slice(0, 5);
+  }
+
+  calcPercentage(item: ApiInventoryItem): number {
+    if (!item.lowStockThreshold || item.lowStockThreshold === 0) return item.availableQuantity > 0 ? 50 : 0;
+    const pct = Math.round((item.availableQuantity / (item.lowStockThreshold * 2)) * 100);
+    return Math.min(Math.max(pct, 5), 100);
+  }
+
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       'In Stock':           'status-in-stock',
