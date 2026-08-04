@@ -146,7 +146,17 @@ export class ShipmentCreateComponent implements OnInit, OnDestroy {
 
     this.shipmentService.createShipmentApi(req).subscribe({
       next: (shipment) => {
-        this.createdShipmentId = shipment.shipmentNumber || String(shipment.id);
+        const shpRef = shipment.shipmentNumber || String(shipment.id);
+        this.createdShipmentId = shpRef;
+
+        // Automatically update order status to DISPATCHED
+        if (this.selectedOrder) {
+          this.orderService.updateOrderStatus(this.selectedOrder.id, '  ', `Order dispatched via shipment ${shpRef}`).subscribe({
+            next: () => {},
+            error: () => {}
+          });
+        }
+
         this.showSuccessModal  = true;
         this.submitting        = false;
       },
