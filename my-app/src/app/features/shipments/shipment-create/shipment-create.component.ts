@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { OrderService } from '../../../core/services/order.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
 import { Order, CreateShipmentRequest } from '../../../core/models/index';
@@ -9,10 +11,11 @@ import { Order, CreateShipmentRequest } from '../../../core/models/index';
   templateUrl: './shipment-create.component.html',
   styleUrls: ['./shipment-create.component.scss']
 })
-export class ShipmentCreateComponent implements OnInit {
+export class ShipmentCreateComponent implements OnInit, OnDestroy {
 
   approvedOrders: Order[] = [];
   loading = true;
+  loadingOrders = false;
 
   searchTerm     = '';
   isDropdownOpen = false;
@@ -29,6 +32,9 @@ export class ShipmentCreateComponent implements OnInit {
   submitting        = false;
   errorMsg          = '';
 
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -43,20 +49,44 @@ export class ShipmentCreateComponent implements OnInit {
 
     const targetOrderId = this.route.snapshot.queryParamMap.get('orderId');
 
-    this.orderService.getAll().subscribe({
-      next: (orders) => {
-        // Filter for orders with status PACKED or APPROVED
-        this.approvedOrders = orders.filter(o => {
-          const st = String(o.status || '').toUpperCase();
-          return st === 'PACKED' || st === 'APPROVED';
-        });
+    // Setup 1-second debounce for order search dropdown
+    this.searchSubject
+      .pipe(
+        debounceTime(1000),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((term) => {
+        this.fetchApprovedOrders(term);
+      });
 
-        if (targetOrderId) {
+    // Initial fetch of 10 approved orders
+    this.fetchApprovedOrders('', targetOrderId);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  fetchApprovedOrders(searchTerm = '', targetOrderId?: string | null): void {
+    this.loadingOrders = true;
+
+    this.orderService.getOrders({
+      status: 'APPROVED',
+      search: searchTerm ? searchTerm.trim() : undefined,
+      page: 0,
+      size: 10,
+      sort: 'createdAt,desc'
+    }).subscribe({
+      next: (res) => {
+        this.approvedOrders = res.orders || [];
+
+        if (targetOrderId && !this.selectedOrder) {
           const match = this.approvedOrders.find(o => String(o.id) === String(targetOrderId));
           if (match) {
             this.selectOrder(match);
           } else {
-            // If order id passed but not in packed/approved list, fetch directly
             this.orderService.getById(targetOrderId).subscribe({
               next: (ord) => {
                 if (ord) {
@@ -67,25 +97,23 @@ export class ShipmentCreateComponent implements OnInit {
               error: () => {}
             });
           }
-        } else if (this.approvedOrders.length > 0) {
+        } else if (!this.selectedOrder && this.approvedOrders.length > 0) {
           this.selectOrder(this.approvedOrders[0]);
         }
         this.loading = false;
+        this.loadingOrders = false;
       },
       error: () => {
         this.loading = false;
+        this.loadingOrders = false;
       }
     });
   }
 
-  get filteredOrders(): Order[] {
-    if (!this.searchTerm.trim()) return this.approvedOrders;
-    const term = this.searchTerm.toLowerCase();
-    return this.approvedOrders.filter(o =>
-      String(o.id).toLowerCase().includes(term) ||
-      (o.orderNumber && o.orderNumber.toLowerCase().includes(term)) ||
-      o.customerName.toLowerCase().includes(term)
-    );
+  onSearchInput(val: string): void {
+    this.searchTerm = val;
+    this.isDropdownOpen = true;
+    this.searchSubject.next(val);
   }
 
   toggleDropdown(): void { this.isDropdownOpen = !this.isDropdownOpen; }
@@ -101,6 +129,7 @@ export class ShipmentCreateComponent implements OnInit {
     event.stopPropagation();
     this.selectedOrder = null;
     this.searchTerm    = '';
+    this.fetchApprovedOrders('');
   }
 
   onSubmit(): void {

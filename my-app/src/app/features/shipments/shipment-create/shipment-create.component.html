@@ -43,7 +43,7 @@
                 placeholder="Search by Order ID or Customer..."
                 [(ngModel)]="searchTerm"
                 (focus)="isDropdownOpen = true"
-                (input)="isDropdownOpen = true"
+                (ngModelChange)="onSearchInput($event)"
               />
               <button *ngIf="selectedOrder" type="button" class="clear-btn" (click)="clearSelection($event)" title="Clear selection">
                 &times;
@@ -55,22 +55,27 @@
 
             <!-- Dropdown Options List -->
             <div class="dropdown-menu" *ngIf="isDropdownOpen">
-              <div 
-                *ngFor="let order of filteredOrders" 
-                class="dropdown-option"
-                [class.selected]="selectedOrder?.id === order.id"
-                (click)="selectOrder(order)"
-              >
-                <div class="option-header">
-                  <span class="option-id">{{ order.id }}</span>
-                  <span class="option-badge">Approved</span>
+              <div *ngIf="loadingOrders" class="dropdown-no-results">
+                Searching approved orders...
+              </div>
+              <ng-container *ngIf="!loadingOrders">
+                <div 
+                  *ngFor="let order of approvedOrders" 
+                  class="dropdown-option"
+                  [class.selected]="selectedOrder?.id === order.id"
+                  (click)="selectOrder(order)"
+                >
+                  <div class="option-header">
+                    <span class="option-id">{{ order.orderNumber || ('#ORD-' + order.id) }}</span>
+                    <span class="option-badge">Approved</span>
+                  </div>
+                  <div class="option-customer">{{ order.customerName }}</div>
+                  <div class="option-address">{{ order.deliveryAddress || order.address }}</div>
                 </div>
-                <div class="option-customer">{{ order.customerName }}</div>
-                <div class="option-address">{{ order.address }}</div>
-              </div>
-              <div *ngIf="filteredOrders.length === 0" class="dropdown-no-results">
-                No approved orders found matching search criteria.
-              </div>
+                <div *ngIf="approvedOrders.length === 0" class="dropdown-no-results">
+                  No approved orders found matching search criteria.
+                </div>
+              </ng-container>
             </div>
           </div>
           <div *ngIf="formSubmitted && !selectedOrder" class="validation-error">

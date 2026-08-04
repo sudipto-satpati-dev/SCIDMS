@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Shipment, ShipmentListParams } from '../../../core/models/index';
 
 @Component({
@@ -26,6 +27,7 @@ export class ShipmentListComponent implements OnInit {
 
   constructor(
     private shipmentService: ShipmentService,
+    private authService: AuthService,
     private router: Router,
   ) {}
 
@@ -37,9 +39,15 @@ export class ShipmentListComponent implements OnInit {
     this.loading = true;
     this.errorMsg = '';
 
+    const user = this.authService.currentUser;
+    const currentUsername = user?.username || user?.email || (localStorage.getItem('scidms_user') ? JSON.parse(localStorage.getItem('scidms_user')!).username : '');
+    const roleStr = String(this.authService.role || user?.role || '').toUpperCase();
+    const isDispatchManager = roleStr.includes('DISTRIBUTION') || roleStr.includes('DISPATCH');
+
     const params: ShipmentListParams = {
       search: this.searchTerm ? this.searchTerm.trim() : undefined,
       status: this.selectedStatus !== 'All' ? this.selectedStatus : undefined,
+      createdBy: isDispatchManager ? (currentUsername || undefined) : undefined,
       page: this.currentPage - 1,
       size: this.pageSize,
       sort: 'createdAt,desc'

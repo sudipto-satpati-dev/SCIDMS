@@ -49,6 +49,7 @@ export interface UpdateShipmentStatusRequest {
 export interface ShipmentListParams {
   search?: string;
   status?: string;
+  createdBy?: string;
   page?: number;
   size?: number;
   sort?: string;

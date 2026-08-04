@@ -24,6 +24,9 @@ export class ShipmentService {
     let httpParams = new HttpParams();
     if (params.search) httpParams = httpParams.set('search', params.search);
     if (params.status) httpParams = httpParams.set('status', params.status);
+    if (params.createdBy != null && params.createdBy !== '') {
+      httpParams = httpParams.set('createdBy', params.createdBy);
+    }
     if (params.page != null) httpParams = httpParams.set('page', params.page.toString());
     if (params.size != null) httpParams = httpParams.set('size', params.size.toString());
     if (params.sort) httpParams = httpParams.set('sort', params.sort);
