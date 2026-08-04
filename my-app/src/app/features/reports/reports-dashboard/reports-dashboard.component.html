@@ -69,7 +69,7 @@
     </div>
   </header>
 
-  <!-- Filter Card Row matching GET /api/inventory query params -->
+  <!-- Filter Card Row for INVENTORY TAB -->
   <section class="filter-card" *ngIf="activeTab === 'inventory'">
     <div class="filter-controls-flex">
       
@@ -123,8 +123,8 @@
       <div class="filter-group">
         <label class="filter-label">STOCK STATUS</label>
         <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="selectedStockStatus">
-            <option value="ALL">All Statuses</option>
+          <select class="filter-select" [(ngModel)]="selectedStatus">
+            <option value="">All Statuses</option>
             <option value="IN_STOCK">In Stock</option>
             <option value="LOW_STOCK">Low Stock</option>
             <option value="OUT_OF_STOCK">Out of Stock</option>
@@ -135,7 +135,194 @@
         </div>
       </div>
 
-      <!-- Reset Filters Button -->
+      <!-- Sort (query param: sort) -->
+      <div class="filter-group">
+        <label class="filter-label">SORT BY</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
+            <option value="updatedAt,desc">Recently Updated</option>
+            <option value="availableQuantity,asc">Stock: Low to High</option>
+            <option value="availableQuantity,desc">Stock: High to Low</option>
+            <option value="productName,asc">Product Name (A-Z)</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reset Button -->
+      <div class="filter-group filter-btn-group">
+        <label class="filter-label">&nbsp;</label>
+        <button type="button" class="btn-reset" (click)="resetFilters()">Reset</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Filter Card Row for ORDERS TAB -->
+  <section class="filter-card" *ngIf="activeTab === 'orders'">
+    <div class="filter-controls-flex">
+      
+      <!-- Search Input (query param: search) -->
+      <div class="filter-group flex-grow-1">
+        <label class="filter-label">SEARCH ORDER / CUSTOMER</label>
+        <div class="search-input-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            class="filter-input" 
+            placeholder="Search by order ID or customer name..." 
+            [ngModel]="searchQuery"
+            (ngModelChange)="onSearchInput($event)"
+          />
+        </div>
+      </div>
+
+      <!-- Order Status Filter (query param: status) -->
+      <div class="filter-group">
+        <label class="filter-label">ORDER STATUS</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+            <option value="">All Statuses</option>
+            <option value="CREATED">Created</option>
+            <option value="APPROVED">Approved</option>
+            <option value="PACKED">Packed</option>
+            <option value="DISPATCHED">Dispatched</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Warehouse Filter (query param: warehouseId) -->
+      <div class="filter-group">
+        <label class="filter-label">WAREHOUSE</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="selectedWarehouseId" (change)="onFilterChange()">
+            <option value="">All Warehouses</option>
+            <option *ngFor="let wh of warehouses" [value]="wh.id">{{ wh.name }}</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Created By Filter (query param: createdBy) -->
+      <div class="filter-group">
+        <label class="filter-label">CREATED BY</label>
+        <input 
+          type="text" 
+          class="filter-input" 
+          placeholder="Created by user..." 
+          [(ngModel)]="selectedCreatedBy"
+          (keyup.enter)="onFilterChange()"
+          style="width: 140px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;"
+        />
+      </div>
+
+      <!-- Sort (query param: sort) -->
+      <div class="filter-group">
+        <label class="filter-label">SORT BY</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
+            <option value="createdAt,desc">Newest Orders First</option>
+            <option value="createdAt,asc">Oldest Orders First</option>
+            <option value="customerName,asc">Customer (A-Z)</option>
+            <option value="status,asc">Status</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reset Button -->
+      <div class="filter-group filter-btn-group">
+        <label class="filter-label">&nbsp;</label>
+        <button type="button" class="btn-reset" (click)="resetFilters()">Reset</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Filter Card Row for SHIPMENTS TAB -->
+  <section class="filter-card" *ngIf="activeTab === 'shipments'">
+    <div class="filter-controls-flex">
+      
+      <!-- Search Input (query param: search) -->
+      <div class="filter-group flex-grow-1">
+        <label class="filter-label">SEARCH SHIPMENT / CARRIER</label>
+        <div class="search-input-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            class="filter-input" 
+            placeholder="Search by shipment ref, tracking #, or carrier..." 
+            [ngModel]="searchQuery"
+            (ngModelChange)="onSearchInput($event)"
+          />
+        </div>
+      </div>
+
+      <!-- Shipment Status Filter (query param: status) -->
+      <div class="filter-group">
+        <label class="filter-label">SHIPMENT STATUS</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+            <option value="">All Statuses</option>
+            <option value="CREATED">Created</option>
+            <option value="IN_TRANSIT">In Transit</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Created By Filter (query param: createdBy) -->
+      <div class="filter-group">
+        <label class="filter-label">DISPATCH MANAGER</label>
+        <input 
+          type="text" 
+          class="filter-input" 
+          placeholder="Created by user..." 
+          [(ngModel)]="selectedCreatedBy"
+          (keyup.enter)="onFilterChange()"
+          style="width: 150px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;"
+        />
+      </div>
+
+      <!-- Sort (query param: sort) -->
+      <div class="filter-group">
+        <label class="filter-label">SORT BY</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="sort" (change)="onFilterChange()">
+            <option value="createdAt,desc">Newest Shipments First</option>
+            <option value="createdAt,asc">Oldest Shipments First</option>
+            <option value="carrierName,asc">Carrier (A-Z)</option>
+            <option value="status,asc">Status</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reset Button -->
       <div class="filter-group filter-btn-group">
         <label class="filter-label">&nbsp;</label>
         <button type="button" class="btn-reset" (click)="resetFilters()">Reset</button>
@@ -150,19 +337,23 @@
       <span class="found-count-text" *ngIf="activeTab === 'inventory'">
         Showing {{ filteredInventory.length }} of {{ totalElements }} Inventory Items
       </span>
-      <span class="found-count-text" *ngIf="activeTab === 'orders'">{{ filteredOrders.length }} Orders Found</span>
-      <span class="found-count-text" *ngIf="activeTab === 'shipments'">{{ filteredShipments.length }} Shipments Found</span>
+      <span class="found-count-text" *ngIf="activeTab === 'orders'">
+        Showing {{ ordersList.length }} of {{ totalElements }} Order Records
+      </span>
+      <span class="found-count-text" *ngIf="activeTab === 'shipments'">
+        Showing {{ shipmentsList.length }} of {{ totalElements }} Shipment Records
+      </span>
     </div>
 
-    <!-- Table Contents based on Active Tab -->
-    <!-- Tab 1: Inventory Report (Pure View Page) -->
-    <div class="table-wrapper" *ngIf="activeTab === 'inventory'">
-      <div class="loading-state" *ngIf="loading">
-        <div class="spinner"></div>
-        <p>Loading Inventory Report...</p>
-      </div>
+    <!-- Table Loading Indicator -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading {{ activeTab | titlecase }} Report...</p>
+    </div>
 
-      <table class="data-table" *ngIf="!loading">
+    <!-- Tab 1: Inventory Report (Pure View Page) -->
+    <div class="table-wrapper" *ngIf="activeTab === 'inventory' && !loading">
+      <table class="data-table">
         <thead>
           <tr>
             <th>Inventory ID</th>
@@ -203,64 +394,78 @@
       </table>
     </div>
 
-    <!-- Tab 2: Order Report -->
-    <div class="table-wrapper" *ngIf="activeTab === 'orders'">
+    <!-- Tab 2: Order Report (Pure View Page) -->
+    <div class="table-wrapper" *ngIf="activeTab === 'orders' && !loading">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Order ID</th>
-            <th>SKU</th>
-            <th>Customer</th>
+            <th>Order Ref</th>
+            <th>Customer Name</th>
+            <th>Warehouse</th>
             <th class="text-right">Total Items</th>
             <th class="text-right">Total Price</th>
             <th>Status</th>
+            <th>Created Date</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let order of filteredOrders">
-            <td class="product-name-cell">
-              <strong>{{ order.orderId }}</strong>
+          <tr *ngFor="let order of ordersList">
+            <td class="sku-cell">
+              <strong>{{ order.orderNumber || order.id }}</strong>
             </td>
-            <td class="sku-cell">{{ order.sku }}</td>
-            <td class="location-cell">{{ order.customer }}</td>
-            <td class="text-right stock-cell">{{ order.totalItems | number }}</td>
-            <td class="text-right price-cell">${{ order.totalPrice | number:'1.2-2' }}</td>
+            <td class="product-name-cell">{{ order.customerName }}</td>
+            <td class="location-cell">{{ order.warehouseName || 'All Warehouses' }}</td>
+            <td class="text-right stock-cell">{{ getOrderTotalItems(order) | number }}</td>
+            <td class="text-right price-cell">${{ getOrderTotalPrice(order) | number:'1.2-2' }}</td>
             <td class="status-cell">
               <span class="pill-badge" [ngClass]="getStatusClass(order.status)">
                 {{ order.status }}
               </span>
+            </td>
+            <td style="color: #64748b; font-size: 13px;">{{ order.createdAt }}</td>
+          </tr>
+          <tr *ngIf="ordersList.length === 0">
+            <td colspan="7" class="text-center empty-state-cell">
+              No order records matching current filters.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Tab 3: Shipment Report -->
-    <div class="table-wrapper" *ngIf="activeTab === 'shipments'">
+    <!-- Tab 3: Shipment Report (Pure View Page) -->
+    <div class="table-wrapper" *ngIf="activeTab === 'shipments' && !loading">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Shipment ID</th>
-            <th>Order ID</th>
-            <th>Customer</th>
+            <th>Shipment Ref</th>
+            <th>Order Ref</th>
+            <th>Customer Name</th>
             <th>Carrier</th>
-            <th>Dispatch Date</th>
+            <th>Tracking Number</th>
             <th>Status</th>
+            <th>Expected Delivery</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let ship of filteredShipments">
-            <td class="product-name-cell">
-              <strong>{{ ship.shipmentId }}</strong>
+          <tr *ngFor="let ship of shipmentsList">
+            <td class="sku-cell">
+              <strong>{{ ship.shipmentNumber || ship.id }}</strong>
             </td>
-            <td class="sku-cell">{{ ship.orderId }}</td>
-            <td class="location-cell">{{ ship.customer }}</td>
-            <td>{{ ship.carrier }}</td>
-            <td>{{ ship.dispatchDate }}</td>
+            <td class="location-cell">{{ ship.orderNumber || ship.orderId }}</td>
+            <td class="product-name-cell">{{ ship.customerName }}</td>
+            <td>{{ ship.carrierName }}</td>
+            <td style="font-family: monospace;">{{ ship.trackingNumber || 'N/A' }}</td>
             <td class="status-cell">
               <span class="pill-badge" [ngClass]="getStatusClass(ship.status)">
                 {{ ship.status }}
               </span>
+            </td>
+            <td style="color: #64748b; font-size: 13px;">{{ ship.expectedDeliveryDate || ship.createdAt }}</td>
+          </tr>
+          <tr *ngIf="shipmentsList.length === 0">
+            <td colspan="7" class="text-center empty-state-cell">
+              No shipment records matching current filters.
             </td>
           </tr>
         </tbody>
@@ -268,15 +473,15 @@
     </div>
 
     <!-- Table Pagination Footer -->
-    <div class="table-pagination-footer" *ngIf="activeTab === 'inventory'">
+    <div class="table-pagination-footer" *ngIf="!loading && totalPages > 0">
       <span class="entries-info">
-        Page {{ page + 1 }} of {{ totalPages || 1 }} (Total {{ totalElements }} items)
+        Page {{ page + 1 }} of {{ totalPages }} (Total {{ totalElements }} entries)
       </span>
 
       <div class="pagination-controls">
         <button type="button" class="page-btn" [disabled]="page === 0" (click)="goToPage(page - 1)">&lt;</button>
         <button 
-          *ngFor="let p of [].constructor(totalPages || 1); let i = index" 
+          *ngFor="let p of [].constructor(totalPages); let i = index" 
           type="button" 
           class="page-btn" 
           [class.active]="page === i" 
@@ -289,7 +494,7 @@
     </div>
   </section>
 
-  <!-- Low Stock Alerts Summary Card -->
+  <!-- Low Stock Alerts Summary Card (Shown on Inventory Tab) -->
   <div class="summary-cards-grid" *ngIf="activeTab === 'inventory'">
     
     <!-- Card 1: Low Stock Alerts -->
