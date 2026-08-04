@@ -39,9 +39,16 @@ export class OrderDetailComponent implements OnInit {
   readonly statuses: OrderStatus[] = ['CREATED', 'APPROVED', 'PACKED', 'DISPATCHED', 'DELIVERED', 'CANCELLED'];
   readonly Math = Math;
 
+  packingOrder = false;
+
   get canApprove(): boolean {
     const role = (this.authService.role as string || '').toUpperCase();
     return role.includes('WAREHOUSE') || role.includes('ADMIN') || role === 'MANAGER';
+  }
+
+  get canPack(): boolean {
+    const role = (this.authService.role as string || '').toUpperCase();
+    return role.includes('DISTRIBUTION') || role.includes('DISPATCH') || role.includes('ADMIN') || role === 'MANAGER';
   }
 
   constructor(
@@ -286,6 +293,27 @@ export class OrderDetailComponent implements OnInit {
       error: (err) => {
         this.rejectionError   = err?.message || 'Could not reject order.';
         this.processingAction = false;
+      }
+    });
+  }
+
+  packOrder(): void {
+    if (!this.selected) return;
+    this.packingOrder = true;
+    this.errorMsg     = '';
+
+    this.orderService.updateOrderStatus(this.selected.id, 'PACKED', 'Order packed and prepared for shipment').subscribe({
+      next: (updated) => {
+        this.packingOrder = false;
+        const updObj = updated || { ...this.selected!, status: 'PACKED' };
+        this.selectedOrder = updObj;
+        const idx = this.orders.findIndex(o => o.id === updObj.id);
+        if (idx !== -1) this.orders[idx] = updObj;
+        this.loadHistory(updObj.id);
+      },
+      error: (err) => {
+        this.errorMsg     = err?.message || 'Could not update order status to PACKED.';
+        this.packingOrder = false;
       }
     });
   }
