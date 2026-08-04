@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
-import { Order } from '../../../core/models/index';
+import { Order, CreateShipmentRequest } from '../../../core/models/index';
 
 @Component({
   selector: 'app-shipment-create',
@@ -14,13 +14,14 @@ export class ShipmentCreateComponent implements OnInit {
   approvedOrders: Order[] = [];
   loading = true;
 
-  searchTerm      = '';
-  isDropdownOpen  = false;
+  searchTerm     = '';
+  isDropdownOpen = false;
   selectedOrder: Order | null = null;
 
-  shipmentDate  = '';
-  carrierMethod = '';
-  notes         = '';
+  carrierName          = 'FedEx Express';
+  trackingNumber       = '';
+  expectedDeliveryDate = '';
+  notes                = '';
 
   showSuccessModal  = false;
   createdShipmentId = '';
@@ -29,19 +30,51 @@ export class ShipmentCreateComponent implements OnInit {
   errorMsg          = '';
 
   constructor(
+    private route: ActivatedRoute,
     private router: Router,
     private orderService: OrderService,
     private shipmentService: ShipmentService,
   ) {}
 
   ngOnInit(): void {
-    const today = new Date();
-    this.shipmentDate = today.toISOString().split('T')[0];
+    const defaultDate = new Date(Date.now() + 86400000 * 3);
+    this.expectedDeliveryDate = defaultDate.toISOString().split('T')[0];
+    this.trackingNumber = 'TRK-' + Math.floor(100000 + Math.random() * 900000);
 
-    this.orderService.getAll().subscribe(orders => {
-      this.approvedOrders = orders.filter(o => o.status === 'Approved');
-      if (this.approvedOrders.length > 0) this.selectOrder(this.approvedOrders[0]);
-      this.loading = false;
+    const targetOrderId = this.route.snapshot.queryParamMap.get('orderId');
+
+    this.orderService.getAll().subscribe({
+      next: (orders) => {
+        // Filter for orders with status PACKED or APPROVED
+        this.approvedOrders = orders.filter(o => {
+          const st = String(o.status || '').toUpperCase();
+          return st === 'PACKED' || st === 'APPROVED';
+        });
+
+        if (targetOrderId) {
+          const match = this.approvedOrders.find(o => String(o.id) === String(targetOrderId));
+          if (match) {
+            this.selectOrder(match);
+          } else {
+            // If order id passed but not in packed/approved list, fetch directly
+            this.orderService.getById(targetOrderId).subscribe({
+              next: (ord) => {
+                if (ord) {
+                  this.approvedOrders.unshift(ord);
+                  this.selectOrder(ord);
+                }
+              },
+              error: () => {}
+            });
+          }
+        } else if (this.approvedOrders.length > 0) {
+          this.selectOrder(this.approvedOrders[0]);
+        }
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
     });
   }
 
@@ -49,23 +82,18 @@ export class ShipmentCreateComponent implements OnInit {
     if (!this.searchTerm.trim()) return this.approvedOrders;
     const term = this.searchTerm.toLowerCase();
     return this.approvedOrders.filter(o =>
-      o.id.toLowerCase().includes(term) ||
+      String(o.id).toLowerCase().includes(term) ||
+      (o.orderNumber && o.orderNumber.toLowerCase().includes(term)) ||
       o.customerName.toLowerCase().includes(term)
     );
   }
-
-  orderItemSummary(o: Order): string {
-    return o.items.map(i => `${i.productName} ×${i.quantity}`).join(', ');
-  }
-
-  orderValue(o: Order): number { return o.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0); }
 
   toggleDropdown(): void { this.isDropdownOpen = !this.isDropdownOpen; }
   closeDropdown(): void { setTimeout(() => { this.isDropdownOpen = false; }, 200); }
 
   selectOrder(order: Order): void {
     this.selectedOrder  = order;
-    this.searchTerm     = `${order.id} - ${order.customerName}`;
+    this.searchTerm     = `${order.orderNumber || ('#ORD-' + order.id)} - ${order.customerName}`;
     this.isDropdownOpen = false;
   }
 
@@ -77,18 +105,27 @@ export class ShipmentCreateComponent implements OnInit {
 
   onSubmit(): void {
     this.formSubmitted = true;
-    if (!this.selectedOrder || !this.shipmentDate) return;
+    if (!this.selectedOrder || !this.carrierName.trim() || !this.trackingNumber.trim() || !this.expectedDeliveryDate) {
+      return;
+    }
     this.submitting = true;
     this.errorMsg   = '';
 
-    this.shipmentService.createFromOrder(this.selectedOrder.id).subscribe({
+    const req: CreateShipmentRequest = {
+      orderId:              this.selectedOrder.id,
+      carrierName:          this.carrierName.trim(),
+      trackingNumber:       this.trackingNumber.trim(),
+      expectedDeliveryDate: this.expectedDeliveryDate
+    };
+
+    this.shipmentService.createShipmentApi(req).subscribe({
       next: (shipment) => {
-        this.createdShipmentId = shipment.id;
+        this.createdShipmentId = shipment.shipmentNumber || String(shipment.id);
         this.showSuccessModal  = true;
         this.submitting        = false;
       },
       error: (err) => {
-        this.errorMsg  = err?.message || 'Could not create shipment.';
+        this.errorMsg   = err?.message || 'Could not create shipment.';
         this.submitting = false;
       },
     });

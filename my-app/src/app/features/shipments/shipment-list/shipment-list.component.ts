@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ShipmentService } from '../../../core/services/shipment.service';
-import { Shipment } from '../../../core/models/index';
+import { Shipment, ShipmentListParams } from '../../../core/models/index';
 
 @Component({
   selector: 'app-shipment-list',
@@ -12,10 +12,17 @@ export class ShipmentListComponent implements OnInit {
 
   shipments: Shipment[] = [];
   loading = true;
+  errorMsg = '';
+
   searchTerm     = '';
   selectedStatus = 'All';
 
-  statusOptions: string[] = ['All', 'Created', 'Ready for Dispatch', 'In Transit', 'Delivered', 'Returned'];
+  currentPage   = 1;
+  pageSize      = 10;
+  totalElements = 0;
+  totalPages    = 1;
+
+  statusOptions: string[] = ['All', 'CREATED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'];
 
   constructor(
     private shipmentService: ShipmentService,
@@ -23,44 +30,62 @@ export class ShipmentListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.shipmentService.getAll().subscribe(data => {
-      this.shipments = data;
-      this.loading   = false;
+    this.loadShipments();
+  }
+
+  loadShipments(): void {
+    this.loading = true;
+    this.errorMsg = '';
+
+    const params: ShipmentListParams = {
+      search: this.searchTerm ? this.searchTerm.trim() : undefined,
+      status: this.selectedStatus !== 'All' ? this.selectedStatus : undefined,
+      page: this.currentPage - 1,
+      size: this.pageSize,
+      sort: 'createdAt,desc'
+    };
+
+    this.shipmentService.getShipments(params).subscribe({
+      next: (res) => {
+        this.shipments     = res.shipments || [];
+        this.totalElements = res.totalElements || 0;
+        this.totalPages    = res.totalPages || 1;
+        this.loading       = false;
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Could not load shipments.';
+        this.loading  = false;
+      }
     });
   }
 
-  get filteredShipments(): Shipment[] {
-    return this.shipments.filter(s => {
-      const matchSearch =
-        !this.searchTerm.trim() ||
-        s.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        s.orderId.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        s.customerName.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchStatus = this.selectedStatus === 'All' || s.status === this.selectedStatus;
-      return matchSearch && matchStatus;
-    });
+  onSearch(): void {
+    this.currentPage = 1;
+    this.loadShipments();
   }
 
-  // Summary counts
-  get createdCount():   number { return this.shipments.filter(s => s.status === 'Created').length; }
-  get inTransitCount(): number { return this.shipments.filter(s => s.status === 'In Transit').length; }
-  get deliveredCount(): number { return this.shipments.filter(s => s.status === 'Delivered').length; }
-  get returnedCount():  number { return this.shipments.filter(s => s.status === 'Returned').length; }
+  setStatusFilter(status: string): void {
+    this.selectedStatus = status;
+    this.currentPage = 1;
+    this.loadShipments();
+  }
 
-  setStatusFilter(status: string): void { this.selectedStatus = status; }
+  viewShipment(id: string | number): void {
+    this.router.navigate(['/shipments', id]);
+  }
 
-  viewShipment(id: string): void { this.router.navigate(['/shipments', id]); }
-
-  createShipment(): void { this.router.navigate(['/shipments/new']); }
+  createShipment(): void {
+    this.router.navigate(['/shipments/new']);
+  }
 
   getStatusClass(status: string): string {
+    const s = (status || '').toUpperCase();
     const map: Record<string, string> = {
-      'Created':           'status-created',
-      'Ready for Dispatch':'status-ready',
-      'In Transit':        'status-in-transit',
-      'Delivered':         'status-delivered',
-      'Returned':          'status-returned',
+      'CREATED':     'status-created',
+      'IN_TRANSIT':  'status-in-transit',
+      'DELIVERED':   'status-delivered',
+      'CANCELLED':   'status-returned',
     };
-    return map[status] || '';
+    return map[s] || 'status-created';
   }
 }

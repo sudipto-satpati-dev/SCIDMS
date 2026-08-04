@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ShipmentService } from '../../../core/services/shipment.service';
-import { Shipment } from '../../../core/models/index';
+import { Shipment, ShipmentHistoryItem } from '../../../core/models/index';
 
 @Component({
   selector: 'app-shipment-detail',
@@ -12,10 +12,13 @@ export class ShipmentDetailComponent implements OnInit {
 
   shipmentId = '';
   shipment: Shipment | null = null;
+  historyLogs: ShipmentHistoryItem[] = [];
   loading = true;
   notFound = false;
+  errorMsg = '';
+  processingStatus = false;
 
-  // Failure modal
+  // Failure / Cancellation modal
   showFailureModal  = false;
   failureReason     = 'Customer Unavailable / Premises Closed';
   nextAction        = 'Return';
@@ -48,18 +51,58 @@ export class ShipmentDetailComponent implements OnInit {
   loadShipment(): void {
     this.loading  = true;
     this.notFound = false;
-    // Try requested id; fall back to first shipment when browsing via list
-    const id = this.shipmentId || 'SHP-4829102-X';
-    this.shipmentService.getById(id).subscribe({
-      next: (data) => { this.shipment = data; this.loading = false; },
+    this.errorMsg = '';
+
+    this.shipmentService.getById(this.shipmentId).subscribe({
+      next: (data) => {
+        this.shipment = data;
+        this.loading = false;
+        this.loadHistory();
+      },
       error: () => {
-        // fallback: load first available shipment
-        this.shipmentService.getAll().subscribe(list => {
-          this.shipment = list[0] ?? null;
-          this.notFound = !this.shipment;
-          this.loading  = false;
+        // Fallback: try loading first shipment from list
+        this.shipmentService.getShipments({ size: 1 }).subscribe({
+          next: (res) => {
+            this.shipment = res.shipments[0] || null;
+            this.notFound = !this.shipment;
+            this.loading = false;
+            if (this.shipment) this.loadHistory();
+          },
+          error: (err) => {
+            this.errorMsg = err?.message || 'Shipment not found.';
+            this.notFound = true;
+            this.loading  = false;
+          }
         });
       },
+    });
+  }
+
+  loadHistory(): void {
+    if (!this.shipment) return;
+    this.shipmentService.getShipmentHistory(this.shipment.id).subscribe({
+      next: (logs) => {
+        this.historyLogs = logs || [];
+      },
+      error: () => {}
+    });
+  }
+
+  changeStatus(newStatus: string, remark = 'Status updated'): void {
+    if (!this.shipment || this.processingStatus) return;
+    this.processingStatus = true;
+
+    this.shipmentService.updateShipmentStatus(this.shipment.id, newStatus, remark).subscribe({
+      next: (updated) => {
+        this.shipment = updated;
+        this.processingStatus = false;
+        this.showToast(`Shipment status updated to ${newStatus}`);
+        this.loadHistory();
+      },
+      error: (err) => {
+        this.showToast(err?.message || 'Could not update shipment status.');
+        this.processingStatus = false;
+      }
     });
   }
 
@@ -76,15 +119,18 @@ export class ShipmentDetailComponent implements OnInit {
     if (!this.failureReason || !this.shipment) return;
     this.submitting = true;
 
-    this.shipmentService.reportFailure(this.shipment.id, this.failureReason, this.nextAction).subscribe({
+    const remark = `Delivery Exception: ${this.failureReason} (${this.failureNotes || 'No notes'})`;
+
+    this.shipmentService.updateShipmentStatus(this.shipment.id, 'CANCELLED', remark).subscribe({
       next: (updated) => {
         this.shipment         = updated;
         this.showFailureModal = false;
         this.submitting       = false;
-        this.showToast(`Delivery failure reported for ${updated.id}. Status updated.`);
+        this.showToast(`Shipment marked as CANCELLED for ${updated.shipmentNumber || updated.id}.`);
+        this.loadHistory();
       },
       error: (err) => {
-        this.showToast(err?.message || 'Could not submit failure report.');
+        this.showToast(err?.message || 'Could not submit cancellation report.');
         this.submitting = false;
       },
     });
@@ -98,24 +144,21 @@ export class ShipmentDetailComponent implements OnInit {
   goBack(): void { this.router.navigate(['/shipments']); }
 
   // ── Stepper helpers ───────────────────────────────────────
-  readonly stepOrder = ['Created', 'Ready for Dispatch', 'In Transit', 'Delivered'];
+  readonly stepOrder = ['CREATED', 'IN_TRANSIT', 'DELIVERED'];
 
   isStepCompleted(step: string): boolean {
     if (!this.shipment) return false;
-    const cur = this.shipment.status;
-    if (cur === 'Returned') {
-      return ['Created', 'Ready for Dispatch', 'In Transit'].includes(step);
+    const cur = String(this.shipment.status || '').toUpperCase();
+    if (cur === 'CANCELLED' || cur === 'RETURNED') {
+      return step === 'CREATED';
     }
-    return this.stepOrder.indexOf(step) < this.stepOrder.indexOf(cur);
+    const curIdx = this.stepOrder.indexOf(cur);
+    const stepIdx = this.stepOrder.indexOf(step);
+    return stepIdx !== -1 && curIdx !== -1 && stepIdx < curIdx;
   }
 
   isStepActive(step: string): boolean {
-    return !!this.shipment && this.shipment.status === step;
-  }
-
-  getStepTimestamp(step: string): string {
-    if (!this.shipment) return '';
-    const ev = this.shipment.history.find(h => h.status === step);
-    return ev ? ev.timestamp.split('•')[0].trim() : '';
+    if (!this.shipment) return false;
+    return String(this.shipment.status || '').toUpperCase() === step;
   }
 }

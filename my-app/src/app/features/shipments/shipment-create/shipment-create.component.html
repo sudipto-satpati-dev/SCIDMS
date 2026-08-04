@@ -128,38 +128,18 @@
       <section class="card-step">
         <div class="step-header">
           <div class="step-number">2</div>
-          <h2 class="step-title">Logistics Configuration</h2>
+          <h2 class="step-title">Logistics & Carrier Details</h2>
         </div>
 
         <div class="form-row-2col">
           <div class="form-group">
-            <label class="form-label">Shipment Date <span class="required-star">*</span></label>
-            <div class="input-icon-wrapper">
-              <input 
-                type="date" 
-                class="form-control" 
-                [(ngModel)]="shipmentDate"
-              />
-              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </div>
-            <div *ngIf="formSubmitted && !shipmentDate" class="validation-error">
-              Shipment Date is required.
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Carrier/Method</label>
+            <label class="form-label">Carrier Name <span class="required-star">*</span></label>
             <div class="input-icon-wrapper">
               <input 
                 type="text" 
                 class="form-control" 
-                placeholder="e.g. FedEx Ground, Air Freight"
-                [(ngModel)]="carrierMethod"
+                placeholder="e.g. FedEx, DHL, RedX, Paperfly"
+                [(ngModel)]="carrierName"
               />
               <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="1" y="3" width="15" height="13"></rect>
@@ -168,17 +148,61 @@
                 <circle cx="18.5" cy="18.5" r="2.5"></circle>
               </svg>
             </div>
+            <div *ngIf="formSubmitted && !carrierName" class="validation-error">
+              Carrier Name is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tracking Number <span class="required-star">*</span></label>
+            <div class="input-icon-wrapper">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="e.g. TRK-987654"
+                [(ngModel)]="trackingNumber"
+              />
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+            <div *ngIf="formSubmitted && !trackingNumber" class="validation-error">
+              Tracking Number is required.
+            </div>
           </div>
         </div>
 
-        <div class="form-group margin-top-16">
-          <label class="form-label">Notes</label>
-          <textarea 
-            class="form-textarea" 
-            rows="3"
-            placeholder="Add any special handling instructions or shipment notes here..."
-            [(ngModel)]="notes"
-          ></textarea>
+        <div class="form-row-2col margin-top-16">
+          <div class="form-group">
+            <label class="form-label">Expected Delivery Date <span class="required-star">*</span></label>
+            <div class="input-icon-wrapper">
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="expectedDeliveryDate"
+              />
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div *ngIf="formSubmitted && !expectedDeliveryDate" class="validation-error">
+              Expected Delivery Date is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea 
+              class="form-textarea" 
+              rows="2"
+              placeholder="Add any special handling instructions or shipment notes here..."
+              [(ngModel)]="notes"
+            ></textarea>
+          </div>
         </div>
       </section>
 

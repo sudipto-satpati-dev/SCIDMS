@@ -317,5 +317,10 @@ export class OrderDetailComponent implements OnInit {
       }
     });
   }
+
+  dispatchOrder(): void {
+    if (!this.selected) return;
+    this.router.navigate(['/shipments/new'], { queryParams: { orderId: this.selected.id } });
+  }
 }
 
