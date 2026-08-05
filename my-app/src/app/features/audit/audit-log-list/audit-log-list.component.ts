@@ -117,6 +117,28 @@ export class AuditLogListComponent implements OnInit, OnDestroy {
     this.loadAuditLogs();
   }
 
+  /**
+   * Format timestamp to Date and Hour:Minute only (e.g. Aug 05, 2026 08:30)
+   */
+  formatShortTimestamp(timestamp: string): string {
+    if (!timestamp) return 'N/A';
+    try {
+      const d = new Date(timestamp);
+      if (isNaN(d.getTime())) {
+        return timestamp.slice(0, 16).replace('T', ' ');
+      }
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[d.getMonth()];
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      return `${month} ${day}, ${year} ${hours}:${mins}`;
+    } catch {
+      return timestamp.slice(0, 16).replace('T', ' ');
+    }
+  }
+
   exportCSV(): void {
     if (!this.auditLogs.length) {
       this.showToast('No audit log entries available to export.');

@@ -127,13 +127,12 @@
         <thead>
           <tr>
             <th>ID / Ref</th>
-            <th>Timestamp</th>
+            <th>Date &amp; Time</th>
             <th>User (Actor)</th>
             <th>Action</th>
             <th>Module</th>
             <th>Target Entity</th>
-            <th>Description</th>
-            <th class="text-right">Details</th>
+            <th class="text-right">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -143,8 +142,10 @@
               <strong>LOG-{{ log.id }}</strong>
             </td>
 
-            <!-- Timestamp -->
-            <td class="timestamp-cell">{{ log.timestamp }}</td>
+            <!-- Date & Time (Formatted Date & Hour:Minute only) -->
+            <td class="timestamp-cell">
+              {{ formatShortTimestamp(log.timestamp) }}
+            </td>
 
             <!-- User (Actor) -->
             <td class="actor-cell">
@@ -177,9 +178,6 @@
               <span class="entity-id muted">#{{ log.entityId }}</span>
             </td>
 
-            <!-- Description -->
-            <td class="description-cell">{{ log.description }}</td>
-
             <!-- View Details Link -->
             <td class="text-right action-link-cell" (click)="$event.stopPropagation()">
               <button type="button" class="btn-link-details" (click)="openDetails(log)">
@@ -189,7 +187,7 @@
           </tr>
 
           <tr *ngIf="auditLogs.length === 0">
-            <td colspan="8" class="empty-table-cell">
+            <td colspan="7" class="empty-table-cell">
               No audit logs found matching the selected filter parameters.
             </td>
           </tr>
@@ -219,54 +217,80 @@
     </div>
   </section>
 
-  <!-- Read-Only Full Audit Record Modal -->
+  <!-- Premium & Polished View Audit Details Modal -->
   <div class="modal-overlay" *ngIf="selectedEntry">
-    <div class="modal-card detail-modal">
+    <div class="modal-card polished-detail-modal">
+      
+      <!-- Modal Header -->
       <div class="modal-header">
-        <div class="header-info">
-          <span class="modal-tag">IMMUTABLE AUDIT LOG ENTRY</span>
-          <h3 class="modal-title">Audit Record: LOG-{{ selectedEntry.id }}</h3>
+        <div class="header-left">
+          <div class="shield-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="modal-subtitle-tag">IMMUTABLE LOG RECORD</span>
+            <h3 class="modal-title">Audit Record: LOG-{{ selectedEntry.id }}</h3>
+          </div>
         </div>
         <button type="button" class="close-btn" (click)="closeDetails()">&times;</button>
       </div>
 
+      <!-- Modal Body Grid -->
       <div class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <span class="label">LOG ID</span>
-            <strong class="val">LOG-{{ selectedEntry.id }}</strong>
+        
+        <!-- Metadata 2-column Grid -->
+        <div class="meta-details-grid">
+          
+          <div class="meta-card">
+            <span class="meta-label">TIMESTAMP</span>
+            <strong class="meta-val">{{ formatShortTimestamp(selectedEntry.timestamp) }}</strong>
           </div>
-          <div class="detail-item">
-            <span class="label">TIMESTAMP</span>
-            <strong class="val">{{ selectedEntry.timestamp }}</strong>
+
+          <div class="meta-card">
+            <span class="meta-label">USER / ACTOR</span>
+            <strong class="meta-val">{{ selectedEntry.username }} <span class="muted-id">(User ID: #{{ selectedEntry.userId }})</span></strong>
           </div>
-          <div class="detail-item">
-            <span class="label">USERNAME / USER ID</span>
-            <strong class="val">{{ selectedEntry.username }} (#{{ selectedEntry.userId }})</strong>
+
+          <div class="meta-card">
+            <span class="meta-label">ACTION</span>
+            <div>
+              <span class="action-pill" [ngClass]="getActionBadgeClass(selectedEntry.action)">
+                {{ selectedEntry.action }}
+              </span>
+            </div>
           </div>
-          <div class="detail-item">
-            <span class="label">ACTION</span>
-            <strong class="val" [ngClass]="getActionBadgeClass(selectedEntry.action)">{{ selectedEntry.action }}</strong>
+
+          <div class="meta-card">
+            <span class="meta-label">MODULE</span>
+            <div>
+              <span class="module-pill" [ngClass]="getModuleBadgeClass(selectedEntry.module)">
+                {{ selectedEntry.module }}
+              </span>
+            </div>
           </div>
-          <div class="detail-item">
-            <span class="label">MODULE</span>
-            <strong class="val">{{ selectedEntry.module }}</strong>
+
+          <div class="meta-card full-width">
+            <span class="meta-label">TARGET ENTITY</span>
+            <strong class="meta-val highlight-entity">{{ selectedEntry.entityType }} <span class="muted-id">(ID: #{{ selectedEntry.entityId }})</span></strong>
           </div>
-          <div class="detail-item">
-            <span class="label">TARGET ENTITY</span>
-            <strong class="val">{{ selectedEntry.entityType }} (ID: #{{ selectedEntry.entityId }})</strong>
-          </div>
+
         </div>
 
-        <div class="description-full-box">
-          <span class="label">EVENT DESCRIPTION & DIAGNOSTICS</span>
-          <p class="description-text">{{ selectedEntry.description }}</p>
+        <!-- Description Box -->
+        <div class="description-card">
+          <span class="meta-label">EVENT DESCRIPTION &amp; SYSTEM PAYLOAD</span>
+          <p class="description-text">{{ selectedEntry.description || 'No detailed description provided.' }}</p>
         </div>
+
       </div>
 
+      <!-- Modal Footer -->
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-csv" (click)="closeDetails()">Close Record</button>
+        <button type="button" class="btn btn-close-modal" (click)="closeDetails()">Close Record</button>
       </div>
+
     </div>
   </div>
 
