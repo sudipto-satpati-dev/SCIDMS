@@ -254,8 +254,76 @@
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
+.table-toolbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .found-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+  }
+}
+
 .table-wrapper {
   overflow-x: auto;
+}
+
+.table-pagination-footer {
+  padding: 14px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .entries-info {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .pagination-controls {
+    display: flex;
+    gap: 6px;
+
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 6px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      &:hover:not([disabled]) {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+      }
+
+      &.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+      }
+
+      &[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
 }
 
 .audit-table {
