@@ -1,76 +1,172 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuditService } from '../../../core/services/audit.service';
-import { AuditLog, AuditModule } from '../../../core/models/index';
+import {
+  ApiAuditLog,
+  AuditLogListParams,
+  AUDIT_ACTIONS,
+  AUDIT_MODULES
+} from '../../../core/models/index';
 
 @Component({
   selector: 'app-audit-log-list',
   templateUrl: './audit-log-list.component.html',
   styleUrls: ['./audit-log-list.component.scss']
 })
-export class AuditLogListComponent implements OnInit {
+export class AuditLogListComponent implements OnInit, OnDestroy {
 
-  auditLogs: AuditLog[] = [];
+  auditLogs: ApiAuditLog[] = [];
   loading = true;
 
-  searchTerm     = '';
-  selectedModule = 'All Modules';
-  startDate      = '';
-  endDate        = '';
+  // Filter params
+  searchTerm = '';
+  selectedAction = '';
+  selectedModule = '';
+  entityType = '';
+  entityId: number | string = '';
 
-  selectedEntry: AuditLog | null = null;
-  toastMessage: string | null    = null;
+  // Pagination
+  page = 0;
+  size = 10;
+  sort = 'timestamp,desc';
+  totalElements = 0;
+  totalPages = 0;
 
-  modulesList: string[] = ['All Modules', 'PRODUCTS', 'WAREHOUSES', 'SHIPMENTS', 'ORDERS', 'USERS', 'INVENTORY'];
+  selectedEntry: ApiAuditLog | null = null;
+  toastMessage: string | null = null;
+
+  readonly actionsList = ['All Actions', ...AUDIT_ACTIONS];
+  readonly modulesList = ['All Modules', ...AUDIT_MODULES];
+
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   constructor(private auditService: AuditService) {}
 
   ngOnInit(): void {
-    this.auditService.getAll().subscribe(data => {
-      this.auditLogs = data;
-      this.loading   = false;
+    // 1-second debounce for search input
+    this.searchSubject.pipe(
+      debounceTime(1000),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(term => {
+      this.searchTerm = term;
+      this.page = 0;
+      this.loadAuditLogs();
+    });
+
+    this.loadAuditLogs();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onSearchInput(term: string): void {
+    this.searchSubject.next(term);
+  }
+
+  loadAuditLogs(): void {
+    this.loading = true;
+    const params: AuditLogListParams = {
+      page: this.page,
+      size: this.size,
+      sort: this.sort
+    };
+
+    if (this.searchTerm.trim()) params.search = this.searchTerm.trim();
+    if (this.selectedAction && this.selectedAction !== 'All Actions') params.action = this.selectedAction;
+    if (this.selectedModule && this.selectedModule !== 'All Modules') params.module = this.selectedModule;
+    if (this.entityType.trim()) params.entityType = this.entityType.trim();
+    if (this.entityId !== '') params.entityId = Number(this.entityId);
+
+    this.auditService.getAuditLogs(params).subscribe({
+      next: (res) => {
+        this.auditLogs = res.auditlogs || [];
+        this.totalElements = res.totalElements || 0;
+        this.totalPages = res.totalPages || 0;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.showToast(err?.message || 'Failed to load audit logs.');
+        this.loading = false;
+      }
     });
   }
 
-  get filteredAuditLogs(): AuditLog[] {
-    return this.auditLogs.filter(log => {
-      const matchSearch =
-        !this.searchTerm.trim() ||
-        log.actorName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        log.action.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        log.recordRef.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        log.reason.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchModule =
-        this.selectedModule === 'All Modules' || log.module === this.selectedModule;
-      return matchSearch && matchModule;
-    });
+  applyFilters(): void {
+    this.page = 0;
+    this.loadAuditLogs();
   }
 
-  applyFilters(): void { this.showToast('Filters applied to Audit Trail.'); }
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.selectedAction = '';
+    this.selectedModule = '';
+    this.entityType = '';
+    this.entityId = '';
+    this.page = 0;
+    this.loadAuditLogs();
+  }
+
+  goToPage(p: number): void {
+    if (p < 0 || (this.totalPages > 0 && p >= this.totalPages)) return;
+    this.page = p;
+    this.loadAuditLogs();
+  }
 
   exportCSV(): void {
-    const filename = `SCIDMS_Audit_Trail_${new Date().toISOString().slice(0, 10)}.csv`;
-    this.showToast(`📄 Exporting Audit Logs... Download starting for ${filename}`);
+    if (!this.auditLogs.length) {
+      this.showToast('No audit log entries available to export.');
+      return;
+    }
+
+    let csv = 'Audit ID,User ID,Username,Action,Module,Entity Type,Entity ID,Description,Timestamp\n';
+    this.auditLogs.forEach(log => {
+      csv += `"${log.id}","${log.userId}","${log.username || ''}","${log.action || ''}","${log.module || ''}","${log.entityType || ''}","${log.entityId}","${log.description || ''}","${log.timestamp || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `SCIDMS_Audit_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    this.showToast('📄 Audit Trail exported to CSV file successfully!');
   }
 
-  openDetails(entry: AuditLog): void  { this.selectedEntry = entry; }
-  closeDetails(): void                { this.selectedEntry = null;  }
+  openDetails(entry: ApiAuditLog): void {
+    this.selectedEntry = entry;
+  }
+
+  closeDetails(): void {
+    this.selectedEntry = null;
+  }
 
   showToast(msg: string): void {
     this.toastMessage = msg;
     setTimeout(() => { this.toastMessage = null; }, 3500);
   }
 
-  getActionClass(action: string): string {
-    const map: Record<string, string> = { Created: 'action-created', Updated: 'action-updated', Deleted: 'action-deleted' };
-    return map[action] || '';
+  getActionBadgeClass(action: string): string {
+    const act = String(action || '').toUpperCase();
+    if (act.includes('CREATED') || act.includes('SUCCESS') || act.includes('REGISTERED') || act.includes('APPROVED')) return 'action-success';
+    if (act.includes('UPDATED') || act.includes('STATUS') || act.includes('TRANSFERRED') || act.includes('ALLOCATED')) return 'action-info';
+    if (act.includes('FAILED') || act.includes('CANCELLED') || act.includes('REJECTED')) return 'action-danger';
+    return 'action-default';
   }
 
-  getModuleClass(module: string): string {
-    const map: Record<string, string> = {
-      PRODUCTS: 'mod-products', WAREHOUSES: 'mod-warehouses',
-      SHIPMENTS: 'mod-shipments', ORDERS: 'mod-orders',
-      USERS: 'mod-users', INVENTORY: 'mod-inventory',
-    };
-    return map[module] || '';
+  getModuleBadgeClass(module: string): string {
+    const mod = String(module || '').toUpperCase();
+    if (mod.includes('AUTHENTICATION')) return 'mod-auth';
+    if (mod.includes('USER')) return 'mod-user';
+    if (mod.includes('PRODUCT')) return 'mod-product';
+    if (mod.includes('WAREHOUSE')) return 'mod-warehouse';
+    if (mod.includes('INVENTORY')) return 'mod-inventory';
+    if (mod.includes('ORDER')) return 'mod-order';
+    if (mod.includes('SHIPMENT')) return 'mod-shipment';
+    return 'mod-default';
   }
 }

@@ -26,13 +26,13 @@
     </button>
   </header>
 
-  <!-- Filter Card Bar -->
+  <!-- Filter Card Bar with query parameters: search, action, module, entityType, entityId -->
   <section class="filter-card">
     <div class="filters-flex">
       
-      <!-- Search Input -->
-      <div class="filter-group search-group">
-        <label class="filter-label">Search</label>
+      <!-- Search Input (query param: search) with 1s Debounce -->
+      <div class="filter-group search-group flex-grow-1">
+        <label class="filter-label">SEARCH KEYWORD</label>
         <div class="input-icon-box">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
@@ -41,17 +41,33 @@
           <input 
             type="text" 
             class="filter-input" 
-            placeholder="Search by User or Action..." 
-            [(ngModel)]="searchTerm"
+            placeholder="Search by description or user..." 
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchInput($event)"
           />
         </div>
       </div>
 
-      <!-- Module Select Dropdown -->
+      <!-- Action Select Dropdown (query param: action) -->
       <div class="filter-group select-group">
-        <label class="filter-label">Module</label>
+        <label class="filter-label">ACTION</label>
         <div class="select-wrapper">
-          <select class="filter-select" [(ngModel)]="selectedModule">
+          <select class="filter-select" [(ngModel)]="selectedAction" (change)="applyFilters()">
+            <option value="">All Actions</option>
+            <option *ngFor="let act of actionsList" [value]="act">{{ act }}</option>
+          </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Module Select Dropdown (query param: module) -->
+      <div class="filter-group select-group">
+        <label class="filter-label">MODULE</label>
+        <div class="select-wrapper">
+          <select class="filter-select" [(ngModel)]="selectedModule" (change)="applyFilters()">
+            <option value="">All Modules</option>
             <option *ngFor="let mod of modulesList" [value]="mod">{{ mod }}</option>
           </select>
           <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -60,30 +76,35 @@
         </div>
       </div>
 
-      <!-- Date Range -->
-      <div class="filter-group date-group">
-        <label class="filter-label">Date Range</label>
-        <div class="input-icon-box">
-          <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <input 
-            type="text" 
-            class="filter-input date-text-input" 
-            value="Oct 01, 2023 - Oct 24, 2023"
-            readonly
-          />
-        </div>
+      <!-- Entity Type Filter (query param: entityType) -->
+      <div class="filter-group">
+        <label class="filter-label">ENTITY TYPE</label>
+        <input 
+          type="text" 
+          class="filter-input" 
+          placeholder="Entity type..." 
+          [(ngModel)]="entityType"
+          (keyup.enter)="applyFilters()"
+          style="width: 130px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;"
+        />
       </div>
 
-      <!-- Apply Filters Button -->
+      <!-- Entity ID Filter (query param: entityId) -->
+      <div class="filter-group">
+        <label class="filter-label">ENTITY ID</label>
+        <input 
+          type="number" 
+          class="filter-input" 
+          placeholder="ID..." 
+          [(ngModel)]="entityId"
+          (keyup.enter)="applyFilters()"
+          style="width: 90px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;"
+        />
+      </div>
+
+      <!-- Reset & Apply Buttons -->
       <div class="filter-action-group">
-        <button type="button" class="btn btn-primary-apply" (click)="applyFilters()">
-          Apply Filters
-        </button>
+        <button type="button" class="btn btn-reset-filters" (click)="resetFilters()">Reset</button>
       </div>
 
     </div>
@@ -91,64 +112,73 @@
 
   <!-- Audit Table Card -->
   <section class="table-card">
-    <div class="table-wrapper">
+    <div class="table-toolbar">
+      <span class="found-count">Showing {{ auditLogs.length }} of {{ totalElements }} Audit Records</span>
+    </div>
+
+    <!-- Table Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading Audit Logs...</p>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading">
       <table class="audit-table">
         <thead>
           <tr>
+            <th>ID / Ref</th>
             <th>Timestamp</th>
             <th>User (Actor)</th>
             <th>Action</th>
             <th>Module</th>
-            <th>Record Ref</th>
-            <th>Change Delta (Old &rarr; New)</th>
-            <th>Reason</th>
+            <th>Target Entity</th>
+            <th>Description</th>
             <th class="text-right">Details</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of filteredAuditLogs" (click)="openDetails(log)" class="clickable-row">
+          <tr *ngFor="let log of auditLogs" (click)="openDetails(log)" class="clickable-row">
+            <!-- ID / Ref -->
+            <td class="ref-cell">
+              <strong>LOG-{{ log.id }}</strong>
+            </td>
+
             <!-- Timestamp -->
             <td class="timestamp-cell">{{ log.timestamp }}</td>
 
             <!-- User (Actor) -->
             <td class="actor-cell">
               <div class="actor-flex">
-                <div class="avatar-circle">{{ log.actorInitials }}</div>
+                <div class="avatar-circle">{{ (log.username || 'User').slice(0, 2).toUpperCase() }}</div>
                 <div class="actor-info">
-                  <span class="actor-name">{{ log.actorName }}</span>
-                  <span class="actor-role">{{ log.actorRole }}</span>
+                  <span class="actor-name">{{ log.username || 'System' }}</span>
+                  <span class="actor-role muted">ID: #{{ log.userId }}</span>
                 </div>
               </div>
             </td>
 
             <!-- Action -->
             <td class="action-cell">
-              <span class="action-text" [ngClass]="getActionClass(log.action)">
+              <span class="action-pill" [ngClass]="getActionBadgeClass(log.action)">
                 {{ log.action }}
               </span>
             </td>
 
             <!-- Module -->
             <td class="module-cell">
-              <span class="module-pill" [ngClass]="getModuleClass(log.module)">
+              <span class="module-pill" [ngClass]="getModuleBadgeClass(log.module)">
                 {{ log.module }}
               </span>
             </td>
 
-            <!-- Record Ref -->
-            <td class="record-ref-cell">{{ log.recordRef }}</td>
-
-            <!-- Change Delta (Old -> New) -->
-            <td class="change-delta-cell">
-              <div class="diff-container">
-                <span class="diff-old">{{ log.oldValue }}</span>
-                <span class="diff-arrow">&rarr;</span>
-                <span class="diff-new">{{ log.newValue }}</span>
-              </div>
+            <!-- Entity Type & ID -->
+            <td class="entity-cell">
+              <span class="entity-type">{{ log.entityType }}</span>
+              <span class="entity-id muted">#{{ log.entityId }}</span>
             </td>
 
-            <!-- Reason -->
-            <td class="reason-cell">{{ log.reason }}</td>
+            <!-- Description -->
+            <td class="description-cell">{{ log.description }}</td>
 
             <!-- View Details Link -->
             <td class="text-right action-link-cell" (click)="$event.stopPropagation()">
@@ -158,23 +188,44 @@
             </td>
           </tr>
 
-          <tr *ngIf="filteredAuditLogs.length === 0">
+          <tr *ngIf="auditLogs.length === 0">
             <td colspan="8" class="empty-table-cell">
-              No audit logs found matching the selected search term or module filter.
+              No audit logs found matching the selected filter parameters.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Table Pagination Footer -->
+    <div class="table-pagination-footer" *ngIf="!loading && totalPages > 0">
+      <span class="entries-info">
+        Page {{ page + 1 }} of {{ totalPages }} (Total {{ totalElements }} entries)
+      </span>
+
+      <div class="pagination-controls">
+        <button type="button" class="page-btn" [disabled]="page === 0" (click)="goToPage(page - 1)">&lt;</button>
+        <button 
+          *ngFor="let p of [].constructor(totalPages); let i = index" 
+          type="button" 
+          class="page-btn" 
+          [class.active]="page === i" 
+          (click)="goToPage(i)"
+        >
+          {{ i + 1 }}
+        </button>
+        <button type="button" class="page-btn" [disabled]="page >= totalPages - 1" (click)="goToPage(page + 1)">&gt;</button>
+      </div>
+    </div>
   </section>
 
-  <!-- Read-Only Full Change Record Modal -->
+  <!-- Read-Only Full Audit Record Modal -->
   <div class="modal-overlay" *ngIf="selectedEntry">
     <div class="modal-card detail-modal">
       <div class="modal-header">
         <div class="header-info">
-          <span class="modal-tag">IMMUTABLE LOG RECORD</span>
-          <h3 class="modal-title">Audit Record: {{ selectedEntry.id }}</h3>
+          <span class="modal-tag">IMMUTABLE AUDIT LOG ENTRY</span>
+          <h3 class="modal-title">Audit Record: LOG-{{ selectedEntry.id }}</h3>
         </div>
         <button type="button" class="close-btn" (click)="closeDetails()">&times;</button>
       </div>
@@ -182,53 +233,39 @@
       <div class="modal-body">
         <div class="detail-grid">
           <div class="detail-item">
+            <span class="label">LOG ID</span>
+            <strong class="val">LOG-{{ selectedEntry.id }}</strong>
+          </div>
+          <div class="detail-item">
             <span class="label">TIMESTAMP</span>
             <strong class="val">{{ selectedEntry.timestamp }}</strong>
           </div>
           <div class="detail-item">
-            <span class="label">ACTOR</span>
-            <strong class="val">{{ selectedEntry.actorName }} ({{ selectedEntry.actorRole }})</strong>
+            <span class="label">USERNAME / USER ID</span>
+            <strong class="val">{{ selectedEntry.username }} (#{{ selectedEntry.userId }})</strong>
           </div>
           <div class="detail-item">
             <span class="label">ACTION</span>
-            <strong class="val" [ngClass]="getActionClass(selectedEntry.action)">{{ selectedEntry.action }}</strong>
+            <strong class="val" [ngClass]="getActionBadgeClass(selectedEntry.action)">{{ selectedEntry.action }}</strong>
           </div>
           <div class="detail-item">
             <span class="label">MODULE</span>
             <strong class="val">{{ selectedEntry.module }}</strong>
           </div>
           <div class="detail-item">
-            <span class="label">RECORD REF</span>
-            <strong class="val">{{ selectedEntry.recordRef }}</strong>
-          </div>
-          <div class="detail-item">
-            <span class="label">IP ADDRESS</span>
-            <strong class="val">{{ selectedEntry.ipAddress || '192.168.1.10' }}</strong>
+            <span class="label">TARGET ENTITY</span>
+            <strong class="val">{{ selectedEntry.entityType }} (ID: #{{ selectedEntry.entityId }})</strong>
           </div>
         </div>
 
-        <div class="diff-full-box">
-          <span class="label">DELTA COMPARISON</span>
-          <div class="diff-row-comparison">
-            <div class="diff-col old-col">
-              <div class="col-title">Previous State (Old Value)</div>
-              <pre class="code-box">{{ selectedEntry.oldValue }}</pre>
-            </div>
-            <div class="diff-col new-col">
-              <div class="col-title">New State (New Value)</div>
-              <pre class="code-box">{{ selectedEntry.newValue }}</pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="reason-full-box">
-          <span class="label">AUDIT REASON & DIAGNOSTICS</span>
-          <p class="reason-text">{{ selectedEntry.reason }}</p>
+        <div class="description-full-box">
+          <span class="label">EVENT DESCRIPTION & DIAGNOSTICS</span>
+          <p class="description-text">{{ selectedEntry.description }}</p>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-csv" (click)="closeDetails()">Close</button>
+        <button type="button" class="btn btn-outline-csv" (click)="closeDetails()">Close Record</button>
       </div>
     </div>
   </div>

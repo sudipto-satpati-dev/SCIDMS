@@ -61,7 +61,47 @@
   align-items: center;
   gap: 8px;
   border: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+}
+
+.action-pill, .module-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.action-success { background: #dcfce7; color: #15803d; }
+.action-info { background: #dbeafe; color: #1d4ed8; }
+.action-danger { background: #fee2e2; color: #b91c1c; }
+.action-default { background: #f1f5f9; color: #475569; }
+
+.mod-auth { background: #ede9fe; color: #6d28d9; }
+.mod-user { background: #e0f2fe; color: #0369a1; }
+.mod-product { background: #dcfce7; color: #15803d; }
+.mod-warehouse { background: #fef3c7; color: #b45309; }
+.mod-inventory { background: #fae8ff; color: #86198f; }
+.mod-order { background: #fee2e2; color: #b91c1c; }
+.mod-shipment { background: #dbeafe; color: #1d4ed8; }
+.mod-default { background: #f1f5f9; color: #475569; }
+
+.btn-reset-filters {
+  padding: 9px 16px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
 }
 
 .btn-outline-csv {
