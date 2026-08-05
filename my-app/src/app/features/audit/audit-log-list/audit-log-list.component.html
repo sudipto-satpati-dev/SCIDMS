@@ -217,27 +217,28 @@
     </div>
   </section>
 
-  <!-- Premium & Polished View Audit Details Modal -->
+  <!-- Read-Only Full Audit Record Modal (Standard SCIDMS Design System) -->
   <div class="modal-overlay" *ngIf="selectedEntry">
-    <div class="modal-card polished-detail-modal">
+    <div class="modal-card audit-detail-modal">
       
       <!-- Modal Header -->
       <div class="modal-header">
-        <div class="header-left">
-          <div class="shield-icon-badge">
+        <div class="modal-title-wrap">
+          <div class="modal-title-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
             </svg>
           </div>
           <div>
-            <span class="modal-subtitle-tag">IMMUTABLE LOG RECORD</span>
-            <h3 class="modal-title">Audit Record: LOG-{{ selectedEntry.id }}</h3>
+            <h3>Audit Record: LOG-{{ selectedEntry.id }}</h3>
+            <p class="modal-subtitle">Immutable event log and transactional details.</p>
           </div>
         </div>
-        <button type="button" class="close-btn" (click)="closeDetails()">&times;</button>
+        <button type="button" class="modal-close" (click)="closeDetails()">&times;</button>
       </div>
 
-      <!-- Modal Body Grid -->
+      <!-- Modal Body -->
       <div class="modal-body">
         
         <!-- Metadata 2-column Grid -->
@@ -249,8 +250,8 @@
           </div>
 
           <div class="meta-card">
-            <span class="meta-label">USER / ACTOR</span>
-            <strong class="meta-val">{{ selectedEntry.username }} <span class="muted-id">(User ID: #{{ selectedEntry.userId }})</span></strong>
+            <span class="meta-label">USER (ACTOR)</span>
+            <strong class="meta-val">{{ selectedEntry.username }} <span class="muted-id">(ID: #{{ selectedEntry.userId }})</span></strong>
           </div>
 
           <div class="meta-card">
@@ -278,9 +279,9 @@
 
         </div>
 
-        <!-- Description Box -->
+        <!-- Description Card -->
         <div class="description-card">
-          <span class="meta-label">EVENT DESCRIPTION &amp; SYSTEM PAYLOAD</span>
+          <span class="meta-label">EVENT DESCRIPTION</span>
           <p class="description-text">{{ selectedEntry.description || 'No detailed description provided.' }}</p>
         </div>
 
@@ -288,7 +289,7 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer">
-        <button type="button" class="btn btn-close-modal" (click)="closeDetails()">Close Record</button>
+        <button type="button" class="btn btn-secondary" (click)="closeDetails()">Close Record</button>
       </div>
 
     </div>
