@@ -17,13 +17,12 @@
   border-bottom: 1px solid rgba(255,255,255,0.07);
   margin-bottom: 8px;
 
-  .brand-logo-img {
-    height: 32px;
-    width: auto;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    display: block;
-    margin-bottom: 4px;
+  .brand-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    margin: 0 0 2px;
   }
 
   .brand-version {
