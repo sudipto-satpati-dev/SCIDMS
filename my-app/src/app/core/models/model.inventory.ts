@@ -54,6 +54,19 @@ export interface InventoryListResult {
   totalPages: number;
 }
 
+export interface LowStockApiResponse {
+  success: boolean;
+  message: string;
+  timestamp?: string;
+  data: {
+    items: ApiInventoryItem[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
 
 export type TransactionType = 'Received' | 'Dispatched' | 'Transferred';
 

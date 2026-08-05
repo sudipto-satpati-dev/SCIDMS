@@ -43,7 +43,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Platform Users</span>
-          <span class="kpi-value">{{ summary.totalUsers | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalUsers) }}</span>
           <span class="kpi-badge green">{{ summary.activeUsers }} Active Users</span>
         </div>
       </div>
@@ -57,7 +57,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Catalog Products</span>
-          <span class="kpi-value">{{ summary.totalProducts | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalProducts) }}</span>
           <span class="kpi-badge blue">{{ summary.activeProducts }} Active SKU Products</span>
         </div>
       </div>
@@ -72,7 +72,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Warehouses</span>
-          <span class="kpi-value">{{ summary.totalWarehouses | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalWarehouses) }}</span>
           <span class="kpi-badge green">{{ summary.activeWarehouses }} Operational Facilities</span>
         </div>
       </div>
@@ -88,7 +88,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Low Stock Inventory Count</span>
-          <span class="kpi-value">{{ summary.lowStockInventoryCount | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.lowStockInventoryCount) }}</span>
           <span class="kpi-badge orange">Requires Re-order</span>
         </div>
       </div>
@@ -109,7 +109,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total On-Hand Quantity</span>
-          <span class="kpi-value">{{ summary.totalOnHandQuantity | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalOnHandQuantity) }}</span>
           <span class="kpi-badge blue">Physical warehouse stock</span>
         </div>
       </div>
@@ -124,7 +124,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Allocated Quantity</span>
-          <span class="kpi-value">{{ summary.totalAllocatedQuantity | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalAllocatedQuantity) }}</span>
           <span class="kpi-badge orange">Reserved for pending orders</span>
         </div>
       </div>
@@ -138,7 +138,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Available Quantity</span>
-          <span class="kpi-value">{{ summary.totalAvailableQuantity | number }}</span>
+          <span class="kpi-value">{{ formatNumber(summary.totalAvailableQuantity) }}</span>
           <span class="kpi-badge green">Free for new orders</span>
         </div>
       </div>
@@ -153,7 +153,7 @@
         </div>
         <div class="kpi-body">
           <span class="kpi-label">Total Order Value</span>
-          <span class="kpi-value">${{ summary.totalOrderValue | number:'1.2-2' }}</span>
+          <span class="kpi-value">{{ formatAmount(summary.totalOrderValue) }}</span>
           <span class="kpi-badge blue">Cumulative order volume</span>
         </div>
       </div>
@@ -167,7 +167,7 @@
       <div class="card">
         <div class="card-header">
           <h3>Orders Status Breakdown</h3>
-          <span class="card-period">Total: {{ summary.totalOrders }} Orders</span>
+          <span class="card-period">Total: {{ formatNumber(summary.totalOrders) }} Orders</span>
         </div>
         <div class="status-list">
           <div class="status-row">
@@ -212,7 +212,7 @@
       <div class="card">
         <div class="card-header">
           <h3>Shipment Status Breakdown</h3>
-          <span class="card-period">Total: {{ summary.totalShipments }} Shipments</span>
+          <span class="card-period">Total: {{ formatNumber(summary.totalShipments) }} Shipments</span>
         </div>
         <div class="status-list">
           <div class="status-row">
@@ -241,7 +241,7 @@
         </div>
       </div>
 
-      <!-- Low Stock Alerts List -->
+      <!-- Low Stock Alerts List (via GET /api/inventory/lowstock) -->
       <div class="card">
         <div class="card-header">
           <h3>Low Stock Items</h3>
@@ -255,7 +255,7 @@
             </div>
             <div class="alert-qty">
               <span class="qty-value" [class.text-danger]="item.outOfStock || item.availableQuantity === 0" [class.text-warning]="item.lowStock && item.availableQuantity > 0">
-                {{ item.availableQuantity }}
+                {{ formatNumber(item.availableQuantity) }}
               </span>
               <span class="qty-threshold muted">/ {{ item.lowStockThreshold }}</span>
             </div>
@@ -271,7 +271,7 @@
       </div>
 
       <!-- Recent Orders Table -->
-      <div class="card wide">
+      <div class="card recent-orders-card">
         <div class="card-header">
           <h3>Recent Orders</h3>
           <a routerLink="/orders" class="card-link">View All Orders</a>
@@ -292,7 +292,7 @@
               <td class="mono"><strong>{{ order.orderNumber || order.id }}</strong></td>
               <td>{{ order.customerName }}</td>
               <td>{{ getOrderTotalItems(order) }}</td>
-              <td><strong>${{ getOrderTotalPrice(order) | number:'1.2-2' }}</strong></td>
+              <td><strong>{{ formatAmount(getOrderTotalPrice(order)) }}</strong></td>
               <td><span class="badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
               <td class="muted">{{ order.createdAt }}</td>
             </tr>
@@ -301,6 +301,36 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Calendar Card beside Recent Orders -->
+      <div class="card calendar-card">
+        <div class="card-header calendar-header">
+          <div class="calendar-title">
+            <h3>Schedule Calendar</h3>
+            <span class="month-year-text">{{ monthNames[currentMonth] }} {{ currentYear }}</span>
+          </div>
+          <div class="calendar-nav-btns">
+            <button type="button" class="cal-btn" (click)="prevMonth()" title="Previous Month">&lt;</button>
+            <button type="button" class="cal-btn" (click)="nextMonth()" title="Next Month">&gt;</button>
+          </div>
+        </div>
+
+        <div class="calendar-body">
+          <div class="weekdays-grid">
+            <span *ngFor="let day of weekDays" class="weekday-header">{{ day }}</span>
+          </div>
+          <div class="days-grid">
+            <div 
+              *ngFor="let dayObj of calendarDays" 
+              class="day-cell" 
+              [class.other-month]="!dayObj.isCurrentMonth"
+              [class.today-highlight]="dayObj.isToday"
+            >
+              <span>{{ dayObj.date }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>

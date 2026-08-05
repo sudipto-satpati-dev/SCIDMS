@@ -6,7 +6,7 @@ import { MockApiService } from './mock-api.service';
 import {
   InventoryRow, InventoryTransaction,
   StockReceiveRequest, StockDispatchRequest, StockTransferRequest,
-  InventoryListParams, InventoryListApiResponse, InventoryListResult, ApiInventoryItem,
+  InventoryListParams, InventoryListApiResponse, InventoryListResult, ApiInventoryItem, LowStockApiResponse,
   ApiReceiveStockRequest, ReceiveStockData, ReceiveStockApiResponse,
   ApiDispatchStockRequest,
   DispatchStockData,
@@ -162,6 +162,43 @@ export class InventoryService {
   getAll(): Observable<InventoryRow[]>                                  { return this.api.getInventory(); }
   getByWarehouse(id: string): Observable<InventoryRow[]>               { return this.api.getInventoryByWarehouse(id); }
   getLowStock(): Observable<InventoryRow[]>                             { return this.api.getLowStockItems(); }
+
+  /**
+   * GET /api/inventory/lowstock
+   */
+  getLowStockItemsApi(params: InventoryListParams = {}): Observable<InventoryListResult> {
+    const lowStockUrl = `${environment.apiBaseUrl}/api/inventory/lowstock`;
+    let httpParams = new HttpParams();
+    if (params.productId != null && params.productId !== '') {
+      httpParams = httpParams.set('productId', params.productId.toString());
+    }
+    if (params.warehouseId != null && params.warehouseId !== '') {
+      httpParams = httpParams.set('warehouseId', params.warehouseId.toString());
+    }
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.page != null) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size != null) httpParams = httpParams.set('size', params.size.toString());
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<LowStockApiResponse>(lowStockUrl, { params: httpParams })
+      .pipe(
+        map(res => {
+          if (!res.success) {
+            throw { message: res.message || 'Failed to fetch low stock inventory.' };
+          }
+          const d = res.data;
+          return {
+            products: d.items || [],
+            page: d.page ?? 0,
+            size: d.size ?? 0,
+            totalElements: d.totalElements ?? 0,
+            totalPages: d.totalPages ?? 0,
+          };
+        }),
+        catchError(this._handleError)
+      );
+  }
   getTransactions(): Observable<InventoryTransaction[]>                 { return this.api.getTransactions(); }
   receiveStock(req: StockReceiveRequest): Observable<InventoryTransaction>  { return this.api.receiveStock(req); }
   dispatchStock(req: StockDispatchRequest): Observable<InventoryTransaction> { return this.api.dispatchStock(req); }
