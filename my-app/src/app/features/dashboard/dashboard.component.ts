@@ -176,7 +176,7 @@ export class DashboardComponent implements OnInit {
       },
       error: () => {
         // Fallback to standard inventory if lowstock endpoint is pending backend startup
-        this.inventoryService.getInventory({ page: 0, size: 5, sort: 'availableQuantity,asc' }).subscribe({
+        this.inventoryService.getInventory({ page: 0, size: 5, sort: 'updatedAt,desc' }).subscribe({
           next: (res) => {
             this.lowStockList = (res.products || []).filter(p => p.lowStock || p.outOfStock || p.availableQuantity <= p.lowStockThreshold).slice(0, 5);
           },
