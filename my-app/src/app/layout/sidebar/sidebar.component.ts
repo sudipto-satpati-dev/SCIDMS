@@ -16,6 +16,17 @@ interface NavItem {
 })
 export class SidebarComponent {
 
+  showChangePasswordModal = false;
+  currentPassword = '';
+  newPassword = '';
+  confirmPassword = '';
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+  changePasswordLoading = false;
+  changePasswordError = '';
+  changePasswordSuccess = '';
+
   constructor(public auth: AuthService) {}
 
   readonly navItems: NavItem[] = [
@@ -24,7 +35,7 @@ export class SidebarComponent {
     { label: 'Warehouses',       route: '/warehouses', role: 'warehouses', icon: 'home'  },
     { label: 'Orders',           route: '/orders',     role: 'orders',     icon: 'cart'  },
     { label: 'Shipments',        route: '/shipments',  role: 'shipments',  icon: 'truck' },
-    { label: 'User MANAGER',  route: '/users',      role: 'users',      icon: 'users' },
+    { label: 'User Management',  route: '/users',      role: 'users',      icon: 'users' },
     { label: 'Inventory',        route: '/inventory',  role: 'inventory',  icon: 'list'  },
     { label: 'Reports',          route: '/reports',    role: 'reports',    icon: 'bar'   },
     { label: 'Audit',            route: '/audit',      role: 'audit',      icon: 'file'  },
@@ -47,4 +58,57 @@ export class SidebarComponent {
   }
 
   logout(): void { this.auth.logout(); }
+
+  openChangePasswordModal(): void {
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+    this.changePasswordError = '';
+    this.changePasswordSuccess = '';
+    this.showChangePasswordModal = true;
+  }
+
+  closeChangePasswordModal(): void {
+    this.showChangePasswordModal = false;
+  }
+
+  submitChangePassword(): void {
+    this.changePasswordError = '';
+    this.changePasswordSuccess = '';
+
+    if (!this.currentPassword) {
+      this.changePasswordError = 'Please enter your current password.';
+      return;
+    }
+    if (!this.newPassword) {
+      this.changePasswordError = 'Please enter a new password.';
+      return;
+    }
+    if (this.newPassword.length < 8) {
+      this.changePasswordError = 'New password must be at least 8 characters long.';
+      return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.changePasswordError = 'New passwords do not match.';
+      return;
+    }
+
+    this.changePasswordLoading = true;
+    this.auth.changePassword(this.currentPassword, this.newPassword).subscribe({
+      next: (res) => {
+        this.changePasswordLoading = false;
+        this.changePasswordSuccess = res.message || 'Password updated successfully!';
+        setTimeout(() => {
+          this.closeChangePasswordModal();
+        }, 1800);
+      },
+      error: (err) => {
+        this.changePasswordLoading = false;
+        this.changePasswordError = err?.message || 'Failed to change password. Please check your current password.';
+      }
+    });
+  }
 }
