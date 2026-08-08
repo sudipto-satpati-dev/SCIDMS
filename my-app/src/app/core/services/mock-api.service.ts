@@ -34,11 +34,14 @@ import {
   ApiReceiveStockRequest, ReceiveStockData
 } from '../models/index';
 
+import { ServerStatusService } from './server-status.service';
+
 /** Simulated network latency in ms */
 const LATENCY = 400;
 
 @Injectable({ providedIn: 'root' })
 export class MockApiService {
+  constructor(private serverStatusService: ServerStatusService) {}
 
   // ── In-memory state (deep-cloned on service instantiation) ──────────
   private users        = structuredClone(MOCK_USERS) as User[];
@@ -51,6 +54,13 @@ export class MockApiService {
   private auditLogs    = structuredClone(MOCK_AUDIT_LOGS) as AuditLog[];
 
   private respond<T>(data: T): Observable<T> {
+    if (this.serverStatusService.isServerDown) {
+      return throwError(() => ({
+        status: 503,
+        statusText: 'Service Unavailable',
+        message: 'Unable to connect to SCIDMS backend service.',
+      })).pipe(delay(LATENCY));
+    }
     return of(structuredClone(data) as T).pipe(delay(LATENCY));
   }
 

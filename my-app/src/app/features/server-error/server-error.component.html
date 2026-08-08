@@ -1,0 +1,99 @@
+<div class="server-error-container">
+  <!-- Subtle Background Gradients -->
+  <div class="glow-sphere sphere-1"></div>
+  <div class="glow-sphere sphere-2"></div>
+
+  <div class="error-card">
+    <!-- Server Status Illustration Header -->
+    <div class="illustration-wrapper">
+      <div class="pulse-ring ring-1"></div>
+      <div class="pulse-ring ring-2"></div>
+      <div class="server-icon-badge">
+        <svg class="server-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line>
+          <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+        <div class="offline-indicator">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Headline & Subtitle -->
+    <div class="headline-section">
+      <div class="brand-tag">SCIDMS System Communication</div>
+      <h1 class="main-title">It's not you, it's us.</h1>
+      <p class="subtitle">
+        We're having trouble connecting to the SCIDMS server right now.
+        This could be due to brief server maintenance or a network disruption.
+      </p>
+    </div>
+
+    <!-- Live Status Banner / Result Feedback -->
+    <div *ngIf="checkResult" class="status-alert" [ngClass]="{'alert-success': checkResult.success, 'alert-danger': !checkResult.success}">
+      <span class="alert-icon">{{ checkResult.success ? '✓' : '⚠️' }}</span>
+      <span class="alert-text">{{ checkResult.message }}</span>
+    </div>
+
+    <!-- Diagnostics Breakdown Card -->
+    <div class="diagnostics-card">
+      <div class="diag-header">
+        <span class="diag-title">Technical Diagnostics</span>
+        <span class="status-code-badge" [ngClass]="{'badge-500': (errorInfo?.status || 0) >= 500, 'badge-0': (errorInfo?.status || 0) < 500}">
+          HTTP {{ errorInfo?.status || 'OFFLINE' }}
+        </span>
+      </div>
+      <div class="diag-grid">
+        <div class="diag-item">
+          <span class="diag-label">Status</span>
+          <span class="diag-value text-warning">{{ errorInfo?.statusText || 'Server Unreachable' }}</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Endpoint</span>
+          <span class="diag-value font-mono">{{ errorInfo?.url || '/api/health' }}</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Reported At</span>
+          <span class="diag-value">{{ errorInfo?.timestamp || 'Just now' }}</span>
+        </div>
+        <div class="diag-item full-width">
+          <span class="diag-label">Details</span>
+          <span class="diag-value text-muted">{{ errorInfo?.message || 'Failed to fetch response from backend node.' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Button Group -->
+    <div class="actions-group">
+      <button class="btn btn-primary btn-retry" (click)="retryConnection()" [disabled]="isChecking">
+        <span *ngIf="isChecking" class="spinner"></span>
+        <svg *ngIf="!isChecking" class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"></path>
+          <path d="M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        {{ isChecking ? 'Checking Connection...' : 'Retry Connection' }}
+      </button>
+
+      <button class="btn btn-secondary" (click)="goHome()">
+        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Return to App
+      </button>
+    </div>
+
+    <!-- Demo / Developer Test Mode Bar -->
+    <div class="demo-test-bar">
+      <span class="demo-label">🧪 Developer Test Controller:</span>
+      <button class="btn-link" (click)="toggleSimulation()">
+        {{ isSimulated ? '🟢 Restore Server (Clear Simulation)' : '🔴 Simulate Server Outage (Test Mode)' }}
+      </button>
+    </div>
+  </div>
+</div>

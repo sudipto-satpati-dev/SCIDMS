@@ -16,6 +16,10 @@ const routes: Routes = [
     path: 'delivery-verify/:id',
     component: DeliveryVerifyComponent,
   },
+  {
+    path: 'server-error',
+    loadChildren: () => import('./features/server-error/server-error.module').then(m => m.ServerErrorModule),
+  },
 
   // ── Protected routes (inside main layout) ────────────────────────────────
   {
