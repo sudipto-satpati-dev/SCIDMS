@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CategoryService } from '../../../core/services/category.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Category, CreateCategoryRequest } from '../../../core/models/index';
 
 @Component({
@@ -26,7 +27,10 @@ export class CategoryModalComponent implements OnChanges {
 
   formErrors: Record<string, string> = {};
 
-  constructor(private categoryService: CategoryService) {}
+  constructor(
+    private categoryService: CategoryService,
+    private toastService: ToastService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
@@ -83,6 +87,7 @@ export class CategoryModalComponent implements OnChanges {
       next: (newCategory) => {
         this.saving = false;
         this.successMsg = `Category "${newCategory.name}" added successfully!`;
+        this.toastService.success(`Category "${newCategory.name}" created!`, 'Category Added');
         this.formData = { name: '', description: '' };
         this.formErrors = {};
         this.categoryAdded.emit(newCategory);
@@ -95,6 +100,7 @@ export class CategoryModalComponent implements OnChanges {
       error: (err) => {
         this.saving = false;
         this.errorMsg = err?.message || 'Failed to add category. Please try again.';
+        this.toastService.error(this.errorMsg, 'Category Creation Failed');
       }
     });
   }

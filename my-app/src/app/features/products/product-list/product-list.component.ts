@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Product, Category, CreateProductRequest } from '../../../core/models/index';
 
 @Component({
@@ -49,7 +50,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
 
   constructor(
     private productService: ProductService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -195,9 +197,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
         } else {
           this.loadProducts();
         }
+        this.toastService.info(`Product status updated to ${updatedProduct.status}`, 'Status Updated');
       },
       error: (err) => {
         this.errorMsg = err?.message || 'Could not update product status.';
+        this.toastService.error(this.errorMsg, 'Status Update Failed');
       }
     });
   }
@@ -213,6 +217,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   onCategoryAdded(newCat: Category): void {
     if (newCat) {
       this.loadCategories();
+      this.toastService.success(`Category "${newCat.name}" added successfully!`, 'Category Created');
     }
   }
 
@@ -272,13 +277,16 @@ export class ProductListComponent implements OnInit, OnDestroy {
           } else {
             this.loadProducts();
           }
+          this.toastService.success(`Product "${savedProduct.name}" updated successfully!`, 'Product Updated');
         } else {
           this.loadProducts();
+          this.toastService.success(`Product "${savedProduct?.name || 'Item'}" created successfully!`, 'Product Created');
         }
       },
       error: (err) => {
         this.errorMsg = err?.message || (this.isEditMode ? 'Could not update product.' : 'Could not create product.');
         this.saving = false;
+        this.toastService.error(this.errorMsg, 'Product Save Failed');
       }
     });
   }

@@ -1,0 +1,113 @@
+.toast-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 380px;
+  width: calc(100% - 40px);
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border-radius: var(--radius, 8px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #94a3b8;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  font-family: 'Inter', sans-serif;
+
+  &.toast-success {
+    border-left-color: #16a34a;
+    .toast-icon {
+      color: #16a34a;
+      background-color: #f0fdf4;
+    }
+  }
+
+  &.toast-error {
+    border-left-color: #dc2626;
+    .toast-icon {
+      color: #dc2626;
+      background-color: #fef2f2;
+    }
+  }
+
+  &.toast-warning {
+    border-left-color: #d97706;
+    .toast-icon {
+      color: #d97706;
+      background-color: #fffbeb;
+    }
+  }
+
+  &.toast-info {
+    border-left-color: #2563eb;
+    .toast-icon {
+      color: #2563eb;
+      background-color: #eff6ff;
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toast-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.toast-message {
+  font-size: 0.84rem;
+  color: var(--text-secondary, #475569);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 4px;
+  margin-top: -2px;
+
+  &:hover {
+    color: var(--text-primary, #0f172a);
+  }
+}

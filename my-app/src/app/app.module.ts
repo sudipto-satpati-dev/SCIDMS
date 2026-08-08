@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LayoutModule } from './layout/layout.module';
 import { CoreModule } from './core/core.module';
+import { SharedModule } from './shared/shared.module';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { ServerErrorInterceptor } from './core/interceptors/server-error.interceptor';
 
@@ -16,6 +17,7 @@ import { ServerErrorInterceptor } from './core/interceptors/server-error.interce
     AppRoutingModule,
     LayoutModule,
     CoreModule,
+    SharedModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
