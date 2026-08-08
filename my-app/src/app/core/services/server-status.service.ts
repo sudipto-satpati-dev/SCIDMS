@@ -20,6 +20,8 @@ export class ServerStatusService {
   private lastErrorDetailsSubject = new BehaviorSubject<ServerErrorInfo | null>(null);
   public lastErrorDetails$: Observable<ServerErrorInfo | null> = this.lastErrorDetailsSubject.asObservable();
 
+  public previousUrl: string = '/dashboard';
+
   private isOfflineSimulated = false;
 
   constructor() {

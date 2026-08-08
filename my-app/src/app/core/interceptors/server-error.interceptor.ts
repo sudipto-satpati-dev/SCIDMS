@@ -38,6 +38,7 @@ export class ServerErrorInterceptor implements HttpInterceptor {
 
           // Redirect user to the "It's not you, it's us" page if not already there
           if (!this.router.url.includes('/server-error')) {
+            this.serverStatusService.previousUrl = this.router.url;
             this.router.navigate(['/server-error']);
           }
         }
