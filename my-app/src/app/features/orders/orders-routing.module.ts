@@ -7,6 +7,7 @@ import { OrderApprovalComponent } from './order-approval/order-approval.componen
 
 const routes: Routes = [
   { path: '', component: OrderListComponent },
+  { path: 'create', component: OrderCreateComponent },
   { path: 'new', component: OrderCreateComponent },
   { path: ':id', component: OrderDetailComponent },
   { path: ':id/approve', component: OrderApprovalComponent }

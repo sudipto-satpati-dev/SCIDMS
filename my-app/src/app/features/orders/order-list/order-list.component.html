@@ -240,64 +240,68 @@
       </div>
 
       <div class="items-table-wrap">
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th style="min-width: 240px;">Product</th>
-              <th>Unit Price</th>
-              <th>Quantity</th>
-              <th>Line Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of newItems; let i = index">
-              <td>
-                <div class="prod-search-cell">
-                  <div class="prod-search-input-wrap">
-                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input
-                      type="text"
-                      [ngModel]="item.productSearch"
-                      (ngModelChange)="onProductSearchInputRow(i, $event)"
-                      (focus)="onProductSearchFocus(i)"
-                      (blur)="closeProductDropdown(i)"
-                      placeholder="Search or select product by name or SKU..."
-                      class="prod-row-input"
-                    />
+        <div class="items-table-scroll">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="min-width: 240px;">Product</th>
+                <th>Unit Price</th>
+                <th>Quantity</th>
+                <th>Line Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of newItems; let i = index">
+                <td>
+                  <div class="prod-search-cell">
+                    <div class="prod-search-input-wrap">
+                      <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input
+                        type="text"
+                        [ngModel]="item.productSearch"
+                        (ngModelChange)="onProductSearchInputRow(i, $event)"
+                        (focus)="onProductSearchFocus(i)"
+                        (blur)="closeProductDropdown(i)"
+                        placeholder="Search or select product by name or SKU..."
+                        class="prod-row-input"
+                      />
+                    </div>
+                    <div class="product-dropdown" *ngIf="item.dropdownOpen">
+                      <div class="pd-loading" *ngIf="loadingProducts">Searching active products...</div>
+                      <ng-container *ngIf="!loadingProducts">
+                        <div class="pd-item" *ngFor="let p of products" (mousedown)="selectProductRow(i, p)">
+                          <span class="pd-name">{{ p.name }}</span>
+                          <span class="pd-meta">SKU: {{ p.sku }} · Unit Price: {{ fmt(p.unitPrice) }}</span>
+                        </div>
+                        <div class="pd-empty" *ngIf="products.length === 0">No matching active products found</div>
+                      </ng-container>
+                    </div>
                   </div>
-                  <div class="product-dropdown" *ngIf="item.dropdownOpen">
-                    <div class="pd-loading" *ngIf="loadingProducts">Searching active products...</div>
-                    <ng-container *ngIf="!loadingProducts">
-                      <div class="pd-item" *ngFor="let p of products" (mousedown)="selectProductRow(i, p)">
-                        <span class="pd-name">{{ p.name }}</span>
-                        <span class="pd-meta">SKU: {{ p.sku }} · Unit Price: {{ fmt(p.unitPrice) }}</span>
-                      </div>
-                      <div class="pd-empty" *ngIf="products.length === 0">No matching active products found</div>
-                    </ng-container>
-                  </div>
-                </div>
-              </td>
-              <td class="price-td">{{ item.unitPrice > 0 ? fmt(item.unitPrice) : '—' }}</td>
-              <td>
-                <input type="number" [(ngModel)]="item.quantity" placeholder="1" min="1" class="qty-input-sm" />
-              </td>
-              <td class="linetotal-td">
-                {{ item.unitPrice > 0 && item.quantity ? fmt(item.unitPrice * item.quantity) : '—' }}
-              </td>
-              <td>
-                <button class="remove-btn" (click)="removeItem(i)" [disabled]="newItems.length === 1" title="Remove row">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+                <td class="price-td">{{ item.unitPrice > 0 ? fmt(item.unitPrice) : '—' }}</td>
+                <td>
+                  <input type="number" [(ngModel)]="item.quantity" placeholder="1" min="1" class="qty-input-sm" />
+                </td>
+                <td class="linetotal-td">
+                  {{ item.unitPrice > 0 && item.quantity ? fmt(item.unitPrice * item.quantity) : '—' }}
+                </td>
+                <td>
+                  <button class="remove-btn" type="button" (click)="removeItem(i)" [disabled]="newItems.length === 1" title="Remove row">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <button class="btn-add-item" (click)="addItem()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Item
-        </button>
+        <div class="items-table-actions">
+          <button type="button" class="btn-add-item" (click)="addItem()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Item
+          </button>
+        </div>
       </div>
 
       <!-- Order total -->
