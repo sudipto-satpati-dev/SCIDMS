@@ -57,6 +57,11 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     private ngZone: NgZone
   ) {}
 
+  get canMutateInventory(): boolean {
+    const role = (this.authService.role || '').toUpperCase();
+    return role !== 'MANAGER';
+  }
+
   ngOnInit(): void {
     const role = this.authService.role;
     this.isWarehouseManager = role === 'WAREHOUSE_MANAGER' || role === 'Warehouse Manager';

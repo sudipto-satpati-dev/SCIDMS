@@ -5,6 +5,8 @@ import { WarehouseService } from '../../../core/services/warehouse.service';
 import { UserService } from '../../../core/services/user.service';
 import { Warehouse, WarehouseStatus, CreateWarehouseRequest, UpdateWarehouseRequest, User } from '../../../core/models/index';
 
+import { AuthService } from '../../../core/services/auth.service';
+
 @Component({
   selector: 'app-warehouse-list',
   templateUrl: './warehouse-list.component.html',
@@ -52,8 +54,14 @@ export class WarehouseListComponent implements OnInit, OnDestroy {
 
   constructor(
     private warehouseService: WarehouseService,
-    private userService: UserService
+    private userService: UserService,
+    private authService: AuthService
   ) {}
+
+  get canAddWarehouse(): boolean {
+    const r = (this.authService.role || '').toUpperCase();
+    return r !== 'MANAGER';
+  }
 
   ngOnInit(): void {
     this.searchSubject

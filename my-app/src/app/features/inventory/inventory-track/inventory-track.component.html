@@ -21,15 +21,15 @@
           <svg class="caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
-      <button class="btn-new" (click)="openReceiveStockModal()">
+      <button class="btn-new" *ngIf="canMutateInventory" (click)="openReceiveStockModal()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         + Receive Stock
       </button>
-      <button class="btn-new btn-dispatch-action" (click)="openDispatchStockModal()">
+      <button class="btn-new btn-dispatch-action" *ngIf="canMutateInventory" (click)="openDispatchStockModal()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
         - Dispatch Stock
       </button>
-      <button class="btn-new btn-transfer-action" (click)="openTransferStockModal()">
+      <button class="btn-new btn-transfer-action" *ngIf="canMutateInventory" (click)="openTransferStockModal()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         ⇄ Transfer Stock
       </button>

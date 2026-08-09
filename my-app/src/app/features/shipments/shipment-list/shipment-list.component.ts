@@ -31,6 +31,11 @@ export class ShipmentListComponent implements OnInit {
     private router: Router,
   ) {}
 
+  get canCreateShipment(): boolean {
+    const role = (this.authService.role || '').toUpperCase();
+    return role !== 'MANAGER';
+  }
+
   ngOnInit(): void {
     this.loadShipments();
   }

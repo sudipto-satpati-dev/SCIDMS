@@ -6,6 +6,8 @@ import { CategoryService } from '../../../core/services/category.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Product, Category, CreateProductRequest } from '../../../core/models/index';
 
+import { AuthService } from '../../../core/services/auth.service';
+
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
@@ -51,8 +53,14 @@ export class ProductListComponent implements OnInit, OnDestroy {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService
   ) {}
+
+  get canAddProduct(): boolean {
+    const r = (this.authService.role || '').toUpperCase();
+    return r !== 'MANAGER';
+  }
 
   ngOnInit(): void {
     this.searchSubject

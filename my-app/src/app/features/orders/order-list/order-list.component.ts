@@ -76,6 +76,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
     private authService: AuthService
   ) {}
 
+  get canCreateOrder(): boolean {
+    const role = (this.authService.role || '').toUpperCase();
+    return !this.isWarehouseManager && role !== 'MANAGER';
+  }
+
   ngOnInit(): void {
     const roleStr = String(this.authService.role || '').toUpperCase();
     this.isWarehouseManager = roleStr.includes('WAREHOUSE');
