@@ -322,5 +322,146 @@ export class OrderDetailComponent implements OnInit {
     if (!this.selected) return;
     this.router.navigate(['/shipments/new'], { queryParams: { orderId: this.selected.id } });
   }
+
+  printInvoice(): void {
+    if (!this.selected) return;
+
+    const order = this.selected;
+    const printWin = window.open('', '_blank', 'width=900,height=800');
+    if (!printWin) {
+      alert('Could not open print window. Please allow popups in your browser.');
+      return;
+    }
+
+    const orderRef = order.orderNumber || order.id;
+    const invoiceDate = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    const subtotal = this.orderTotal(order);
+    const grandTotal = subtotal;
+
+    const itemsHtml = (order.items || []).map((item, index) => `
+      <tr>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; text-align:center;">${index + 1}</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-weight:600; color:#0f172a;">${item.productName}</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; text-align:center;">${item.quantity}</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; text-align:right;">${this.fmt(item.unitPrice)}</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; text-align:right; font-weight:600;">${this.fmt(item.lineTotal || (item.unitPrice * item.quantity))}</td>
+      </tr>
+    `).join('');
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${orderRef}</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 20px; }
+              @page { size: auto; margin: 15mm; }
+            }
+            body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; padding: 30px; margin: 0; background: #fff; }
+            .invoice-container { max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 36px; box-sizing: border-box; }
+            .header-bar { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 24px; }
+            .company-brand { display: flex; align-items: center; gap: 12px; }
+            .logo-title { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em; }
+            .logo-sub { font-size: 11px; color: #64748b; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.05em; }
+            .invoice-tag { text-align: right; }
+            .inv-title { font-size: 28px; font-weight: 900; color: #2563eb; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+            .inv-ref { font-size: 14px; font-weight: 700; color: #334155; margin-top: 4px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; background: #f8fafc; padding: 18px 20px; border-radius: 8px; border: 1px solid #f1f5f9; }
+            .info-col-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+            .info-val { font-size: 13.5px; color: #1e293b; line-height: 1.5; }
+            .info-val strong { color: #0f172a; }
+            .status-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: #dcfce7; color: #15803d; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 13.5px; }
+            .items-table th { background: #0f172a; color: #ffffff; padding: 10px 12px; font-weight: 600; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+            .total-card { margin-left: auto; width: 280px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 30px; }
+            .total-row { display: flex; justify-content: space-between; font-size: 13px; color: #475569; padding: 4px 0; }
+            .total-row.grand { font-size: 16px; font-weight: 800; color: #0f172a; border-top: 1px solid #e2e8f0; margin-top: 6px; padding-top: 8px; }
+            .terms-footer { font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <div class="header-bar">
+              <div class="company-brand">
+                <div>
+                  <h1 class="logo-title">SCIDMS</h1>
+                  <p class="logo-sub">Supply Chain Inventory &amp; Distribution</p>
+                </div>
+              </div>
+              <div class="invoice-tag">
+                <h2 class="inv-title">TAX INVOICE</h2>
+                <div class="inv-ref">Ref: ${orderRef}</div>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;">Date: ${invoiceDate}</div>
+              </div>
+            </div>
+
+            <div class="info-grid">
+              <div>
+                <div class="info-col-title">BILLED TO / CUSTOMER</div>
+                <div class="info-val">
+                  <strong>${order.customerName}</strong><br>
+                  ${order.customerEmail ? order.customerEmail + '<br>' : ''}
+                  ${order.contactNumber ? order.contactNumber + '<br>' : ''}
+                  ${order.deliveryAddress || order.address || 'Standard Delivery Address'}
+                </div>
+              </div>
+              <div>
+                <div class="info-col-title">ORDER INFORMATION</div>
+                <div class="info-val">
+                  <strong>Order ID:</strong> ${orderRef}<br>
+                  <strong>Status:</strong> <span class="status-badge">${order.status}</span><br>
+                  ${order.warehouseName ? '<strong>Fulfillment Warehouse:</strong> ' + order.warehouseName + '<br>' : ''}
+                  ${order.approvedBy ? '<strong>Approved By:</strong> ' + order.approvedBy + '<br>' : ''}
+                </div>
+              </div>
+            </div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width:40px; text-align:center;">#</th>
+                  <th>Item &amp; Description</th>
+                  <th style="width:70px; text-align:center;">Qty</th>
+                  <th style="width:110px; text-align:right;">Unit Price</th>
+                  <th style="width:120px; text-align:right;">Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="total-card">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${this.fmt(subtotal)}</span>
+              </div>
+              <div class="total-row">
+                <span>Tax / VAT (0%):</span>
+                <span>$0.00</span>
+              </div>
+              <div class="total-row grand">
+                <span>Total Amount:</span>
+                <span>${this.fmt(grandTotal)}</span>
+              </div>
+            </div>
+
+            <div class="terms-footer">
+              Thank you for choosing SCIDMS. This is an official computer-generated invoice.<br>
+              SCIDMS Platform · Supply Chain &amp; Distribution Operations
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+      printWin.close();
+    }, 300);
+  }
 }
 
