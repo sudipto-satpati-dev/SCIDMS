@@ -152,7 +152,7 @@
         <button class="page-btn icon-btn" (click)="prevPage()" [disabled]="currentPage === 1">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <ng-container *ngFor="let p of pageNumbers">
+        <ng-container *ngFor="let p of pageNumbersList">
           <button class="page-btn" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
         </ng-container>
         <button class="page-btn icon-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
@@ -205,7 +205,7 @@
 
       <!-- Chart Canvas Wrapper -->
       <div class="chart-canvas-wrapper">
-        <canvas id="inventoryTransactionChart"></canvas>
+        <canvas #chartCanvas id="inventoryTransactionChart"></canvas>
       </div>
     </div>
 
@@ -215,7 +215,7 @@
         <h3>Capacity by Location</h3>
       </div>
       <div class="capacity-list">
-        <div class="cap-item" *ngFor="let c of capacityData">
+        <div class="cap-item" *ngFor="let c of capacityList">
           <div class="cap-top">
             <span class="cap-name">{{ c.name }}</span>
             <span class="cap-pct" [class.pct-danger]="c.pct >= 85" [class.pct-warn]="c.pct >= 65 && c.pct < 85">{{ c.pct }}%</span>

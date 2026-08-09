@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { ApiInventoryItem, Warehouse, InventoryListParams, ApiInventoryTransacti
   styleUrls: ['./inventory-track.component.scss']
 })
 export class InventoryTrackComponent implements OnInit, OnDestroy {
+  @ViewChild('chartCanvas') chartCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   items: ApiInventoryItem[] = [];
   warehouses: Warehouse[]   = [];
@@ -25,6 +26,8 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   pageSize                   = 10;
   totalElements              = 0;
   totalPages                 = 1;
+  pageNumbersList: number[]  = [1];
+  capacityList: { name: string; pct: number }[] = [];
 
   isWarehouseManager         = false;
 
@@ -50,7 +53,8 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     private router: Router,
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -74,6 +78,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
       this.warehouseService.getMyWarehouses().subscribe({
         next: (list) => {
           this.warehouses = list || [];
+          this.updateCapacityList();
           this.loadInventory();
           this.loadTransactionChartData();
         },
@@ -86,6 +91,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
       this.warehouseService.getAll().subscribe({
         next: (res) => {
           this.warehouses = Array.isArray(res) ? res : res.warehouses || [];
+          this.updateCapacityList();
           this.loadInventory();
           this.loadTransactionChartData();
         },
@@ -128,6 +134,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
         this.items = res.products || [];
         this.totalElements = res.totalElements || this.items.length;
         this.totalPages = res.totalPages || Math.ceil(this.totalElements / this.pageSize) || 1;
+        this.updatePageNumbersList();
         this.loading = false;
       },
       error: () => {
@@ -196,82 +203,89 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   }
 
   private renderChart(): void {
-    const canvas = document.getElementById('inventoryTransactionChart') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    if (this.chart) {
-      this.chart.destroy();
-      this.chart = null;
+    if (!this.chartCanvasRef || !this.chartCanvasRef.nativeElement) {
+      return;
     }
+    const canvas = this.chartCanvasRef.nativeElement;
 
-    const labels = ['Received (Inbound)', 'Dispatched (Outbound)', 'Transferred', 'Allocated'];
-    const data = [
-      this.totalReceivedQty,
-      this.totalDispatchedQty,
-      this.totalTransferredQty,
-      this.totalAllocatedQty
-    ];
-
-    const backgroundColors = [
-      'rgba(16, 185, 129, 0.85)',
-      'rgba(37, 99, 235, 0.85)',
-      'rgba(245, 158, 11, 0.85)',
-      'rgba(139, 92, 246, 0.85)'
-    ];
-
-    const borderColors = [
-      '#10b981',
-      '#2563eb',
-      '#f59e0b',
-      '#8b5cf6'
-    ];
-
-    this.chart = new Chart(canvas, {
-      type: this.chartView,
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Stock Units',
-            data: data,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1.5,
-            borderRadius: this.chartView === 'bar' ? 6 : 0,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: this.chartView === 'doughnut',
-            position: 'bottom',
-            labels: {
-              font: { family: 'Inter', size: 12 },
-              padding: 14,
-              usePointStyle: true,
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => ` ${context.label}: ${context.formattedValue} units`
-            }
-          }
-        },
-        scales: this.chartView === 'bar' ? {
-          y: {
-            beginAtZero: true,
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { family: 'Inter', size: 11 } }
-          },
-          x: {
-            grid: { display: false },
-            ticks: { font: { family: 'Inter', size: 11 } }
-          }
-        } : {}
+    this.ngZone.runOutsideAngular(() => {
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
       }
+
+      const labels = ['Received (Inbound)', 'Dispatched (Outbound)', 'Transferred', 'Allocated'];
+      const data = [
+        this.totalReceivedQty,
+        this.totalDispatchedQty,
+        this.totalTransferredQty,
+        this.totalAllocatedQty
+      ];
+
+      const backgroundColors = [
+        'rgba(16, 185, 129, 0.85)',
+        'rgba(37, 99, 235, 0.85)',
+        'rgba(245, 158, 11, 0.85)',
+        'rgba(139, 92, 246, 0.85)'
+      ];
+
+      const borderColors = [
+        '#10b981',
+        '#2563eb',
+        '#f59e0b',
+        '#8b5cf6'
+      ];
+
+      this.chart = new Chart(canvas, {
+        type: this.chartView,
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Stock Units',
+              data: data,
+              backgroundColor: backgroundColors,
+              borderColor: borderColors,
+              borderWidth: 1.5,
+              borderRadius: this.chartView === 'bar' ? 6 : 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 400
+          },
+          plugins: {
+            legend: {
+              display: this.chartView === 'doughnut',
+              position: 'bottom',
+              labels: {
+                font: { family: 'Inter', size: 12 },
+                padding: 14,
+                usePointStyle: true,
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => ` ${context.label}: ${context.formattedValue} units`
+              }
+            }
+          },
+          scales: this.chartView === 'bar' ? {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { family: 'Inter', size: 11 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 } }
+            }
+          } : {}
+        }
+      });
     });
   }
 
@@ -299,8 +313,15 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     return Math.min(this.currentPage * this.pageSize, this.totalElements);
   }
 
-  get pageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  private updatePageNumbersList(): void {
+    this.pageNumbersList = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  private updateCapacityList(): void {
+    this.capacityList = this.warehouses.map(w => ({
+      name: w.name,
+      pct: Math.round((w.occupiedCapacity / w.totalCapacity) * 100) || 0,
+    }));
   }
 
   get totalSKUs(): number {
@@ -336,13 +357,6 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
       this.currentPage++;
       this.loadInventory();
     }
-  }
-
-  get capacityData(): { name: string; pct: number }[] {
-    return this.warehouses.map(w => ({
-      name: w.name,
-      pct: Math.round((w.occupiedCapacity / w.totalCapacity) * 100) || 0,
-    }));
   }
 
   // ── Stock Modal Handlers ───────────────────────────
