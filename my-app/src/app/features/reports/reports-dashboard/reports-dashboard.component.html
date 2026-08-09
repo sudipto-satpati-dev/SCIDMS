@@ -17,6 +17,7 @@
       <!-- Horizontal Navigation Tabs -->
       <nav class="report-tabs-nav">
         <button 
+          *ngIf="canAccessInventoryReport"
           type="button" 
           class="tab-btn" 
           [class.active]="activeTab === 'inventory'" 
@@ -26,6 +27,7 @@
         </button>
 
         <button 
+          *ngIf="canAccessOrderReport"
           type="button" 
           class="tab-btn" 
           [class.active]="activeTab === 'orders'" 
@@ -35,6 +37,7 @@
         </button>
 
         <button 
+          *ngIf="canAccessShipmentReport"
           type="button" 
           class="tab-btn" 
           [class.active]="activeTab === 'shipments'" 

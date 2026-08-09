@@ -6,6 +6,7 @@ import { WarehouseService } from '../../../core/services/warehouse.service';
 import { ProductService } from '../../../core/services/product.service';
 import { OrderService } from '../../../core/services/order.service';
 import { ShipmentService } from '../../../core/services/shipment.service';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   ApiInventoryItem,
   InventoryListParams,
@@ -61,9 +62,47 @@ export class ReportsDashboardComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private orderService: OrderService,
     private shipmentService: ShipmentService,
+    private authService: AuthService
   ) {}
 
+  get isWarehouseManager(): boolean {
+    const r = (this.authService.role || '').toUpperCase();
+    return r.includes('WAREHOUSE');
+  }
+
+  get isSalesExecutive(): boolean {
+    const r = (this.authService.role || '').toUpperCase();
+    return r.includes('SALES');
+  }
+
+  get isDistributionManager(): boolean {
+    const r = (this.authService.role || '').toUpperCase();
+    return r.includes('DISTRIBUTION') || r.includes('DISPATCH');
+  }
+
+  get canAccessInventoryReport(): boolean {
+    if (this.isSalesExecutive || this.isDistributionManager) {
+      return false;
+    }
+    return true;
+  }
+
+  get canAccessOrderReport(): boolean {
+    return true;
+  }
+
+  get canAccessShipmentReport(): boolean {
+    if (this.isWarehouseManager) {
+      return false;
+    }
+    return true;
+  }
+
   ngOnInit(): void {
+    if (!this.canAccessInventoryReport && this.activeTab === 'inventory') {
+      this.activeTab = 'orders';
+    }
+
     // Setup 1-second debounce for search query across all tabs
     this.searchSubject.pipe(
       debounceTime(1000),
@@ -90,6 +129,10 @@ export class ReportsDashboardComponent implements OnInit, OnDestroy {
   }
 
   setTab(tab: ReportTab): void {
+    if (tab === 'inventory' && !this.canAccessInventoryReport) return;
+    if (tab === 'shipments' && !this.canAccessShipmentReport) return;
+    if (tab === 'orders' && !this.canAccessOrderReport) return;
+
     this.activeTab = tab;
     this.searchQuery = '';
     this.selectedWarehouseId = '';
