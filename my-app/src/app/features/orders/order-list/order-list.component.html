@@ -117,7 +117,7 @@
             </span>
           </td>
           <td class="num-cell">{{ itemCount(o) }} items ({{ totalUnits(o) }} units)</td>
-          <td class="value-cell">{{ fmt(o.totalAmount) }}</td>
+          <td class="value-cell" [attr.title]="fullFmt(o.totalAmount)">{{ fmt(o.totalAmount) }}</td>
           <td class="actor-cell">{{ o.createdBy || 'System User' }}</td>
           <td class="date-cell">{{ o.createdAt | date:'mediumDate' }}</td>
           <td>

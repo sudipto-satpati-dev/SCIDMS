@@ -392,6 +392,20 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   fmt(n: number): string {
+    const val = n || 0;
+    if (Math.abs(val) <= 999000) {
+      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    if (Math.abs(val) >= 10000000) {
+      const cr = val / 10000000;
+      return '$' + cr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Cr';
+    } else {
+      const lakhs = val / 100000;
+      return '$' + lakhs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Lakhs';
+    }
+  }
+
+  fullFmt(n: number): string {
     return '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }
