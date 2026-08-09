@@ -8,6 +8,8 @@ type Userform = Omit<User, 'id'> & {
   id?: number;
 }
 
+import { AuthService } from '../../../core/services/auth.service';
+
 @Component({
   selector: 'app-user-list',
   templateUrl: './user-list.component.html',
@@ -46,7 +48,15 @@ export class UserListComponent implements OnInit {
   private avatarColors: Record<string, string> = {};
   private palette = ['#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#f5f3ff', '#ffedd5'];
 
-  constructor(private userService: UserService) { }
+  constructor(
+    private userService: UserService,
+    private authService: AuthService
+  ) { }
+
+  get canManageUsers(): boolean {
+    const role = (this.authService.role || '').toUpperCase();
+    return role !== 'MANAGER';
+  }
 
   ngOnInit(): void {
     this.loadUsers();
