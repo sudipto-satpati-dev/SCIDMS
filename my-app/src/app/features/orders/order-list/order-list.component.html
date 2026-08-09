@@ -87,49 +87,51 @@
     </div>
 
     <!-- Table -->
-    <table class="data-table" *ngIf="!loading && orders.length > 0">
-      <thead>
-        <tr>
-          <th>Order No</th>
-          <th>Customer</th>
-          <th>Warehouse</th>
-          <th>Status</th>
-          <th>Items / Units</th>
-          <th>Total Amount</th>
-          <th>Created By</th>
-          <th>Created At</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let o of orders">
-          <td class="oid">{{ o.orderNumber || ('#ORD-' + o.id) }}</td>
-          <td>
-            <div class="customer-cell">
-              <span class="cust-name">{{ o.customerName }}</span>
-              <span class="cust-contact">{{ o.customerEmail || o.contactNumber || '—' }}</span>
-            </div>
-          </td>
-          <td class="wh-cell">{{ o.warehouseName || '—' }}</td>
-          <td>
-            <span class="status-pill" [ngClass]="statusClass(o.status)">
-              <span class="sp-dot"></span>{{ o.status }}
-            </span>
-          </td>
-          <td class="num-cell">{{ itemCount(o) }} items ({{ totalUnits(o) }} units)</td>
-          <td class="value-cell" [attr.title]="fullFmt(o.totalAmount)">{{ fmt(o.totalAmount) }}</td>
-          <td class="actor-cell">{{ o.createdBy || 'System User' }}</td>
-          <td class="date-cell">{{ o.createdAt | date:'mediumDate' }}</td>
-          <td>
-            <div class="action-btns">
-              <button class="btn-icon" title="View order details" [routerLink]="['/orders', o.id]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive-wrapper" *ngIf="!loading && orders.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order No</th>
+            <th>Customer</th>
+            <th>Warehouse</th>
+            <th>Status</th>
+            <th>Items / Units</th>
+            <th>Total Amount</th>
+            <th>Created By</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of orders">
+            <td class="oid">{{ o.orderNumber || ('#ORD-' + o.id) }}</td>
+            <td>
+              <div class="customer-cell">
+                <span class="cust-name">{{ o.customerName }}</span>
+                <span class="cust-contact">{{ o.customerEmail || o.contactNumber || '—' }}</span>
+              </div>
+            </td>
+            <td class="wh-cell">{{ o.warehouseName || '—' }}</td>
+            <td>
+              <span class="status-pill" [ngClass]="statusClass(o.status)">
+                <span class="sp-dot"></span>{{ o.status }}
+              </span>
+            </td>
+            <td class="num-cell">{{ itemCount(o) }} items ({{ totalUnits(o) }} units)</td>
+            <td class="value-cell" [attr.title]="fullFmt(o.totalAmount)">{{ fmt(o.totalAmount) }}</td>
+            <td class="actor-cell">{{ o.createdBy || 'System User' }}</td>
+            <td class="date-cell">{{ o.createdAt | date:'mediumDate' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon" title="View order details" [routerLink]="['/orders', o.id]">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Empty State -->
     <div class="empty-state" *ngIf="!loading && orders.length === 0">
