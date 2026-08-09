@@ -93,7 +93,7 @@
 
             <div class="preview-field">
               <span class="field-label">SHIPPING ADDRESS</span>
-              <span class="field-value address-text">{{ selectedOrder.address }}</span>
+              <span class="field-value address-text">{{ selectedOrder.deliveryAddress || selectedOrder.address || 'Standard Shipping Address' }}</span>
             </div>
 
             <div class="preview-status-col">
@@ -290,8 +290,8 @@
             </svg>
           </div>
           <div class="route-details">
-            <div class="hub-name">{{ selectedOrder?.customerName ? 'Central Dispatch Hub' : 'Industrial Park Hub' }}</div>
-            <div class="transit-time">Estimated Transit: 4-6 hours</div>
+            <div class="hub-name">{{ selectedOrder ? (selectedOrder.warehouseName || 'Fulfillment Warehouse Hub') : 'Fulfillment Hub' }}</div>
+            <div class="transit-time">{{ selectedOrder ? ('Destination: ' + (selectedOrder.deliveryAddress || selectedOrder.address)) : 'Route Preview from Order Details' }}</div>
           </div>
         </div>
       </div>
