@@ -306,14 +306,21 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.errorMsg   = '';
 
     const itemsPayload = this.newItems
-      .filter(i => i.productId && i.quantity && i.quantity > 0)
-      .map(i => ({ productId: i.productId, quantity: i.quantity! }));
+      .filter(i => (i.productId !== '' && i.productId !== null && i.productId !== undefined) && i.quantity && i.quantity > 0)
+      .map(i => ({
+        productId: typeof i.productId === 'number' ? i.productId : (Number(i.productId) || i.productId),
+        quantity: i.quantity!
+      }));
+
+    const targetWarehouseId = typeof this.newOrder.warehouseId === 'number'
+      ? this.newOrder.warehouseId
+      : (Number(this.newOrder.warehouseId) || this.newOrder.warehouseId);
 
     const req: CreateOrderRequest = {
       customerName:    this.newOrder.customerName.trim(),
       customerEmail:   this.newOrder.customerEmail.trim(),
       deliveryAddress: this.newOrder.deliveryAddress.trim(),
-      warehouseId:     this.newOrder.warehouseId,
+      warehouseId:     targetWarehouseId,
       items:           itemsPayload
     };
 
