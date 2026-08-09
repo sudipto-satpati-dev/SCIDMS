@@ -6,7 +6,7 @@ import Chart from 'chart.js/auto';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ApiInventoryItem, Warehouse, InventoryListParams, ApiInventoryTransaction, InventoryTransaction } from '../../../core/models/index';
+import { ApiInventoryItem, Warehouse, InventoryListParams, ApiInventoryTransaction } from '../../../core/models/index';
 
 @Component({
   selector: 'app-inventory-track',
@@ -36,7 +36,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
   // Chart State
   private chart: Chart | null = null;
   public chartView: 'bar' | 'doughnut' = 'bar';
-  public rawTransactions: (ApiInventoryTransaction | InventoryTransaction)[] = [];
+  public rawTransactions: ApiInventoryTransaction[] = [];
   public totalReceivedQty    = 0;
   public totalDispatchedQty  = 0;
   public totalTransferredQty = 0;
@@ -146,25 +146,10 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     this.inventoryService.getTransactionHistory({ warehouseId: targetWarehouseId, size: 50 }).subscribe({
       next: (res) => {
         const txns = res.transactions || [];
-        if (txns.length > 0) {
-          this.processTransactionsAndRenderChart(txns);
-        } else {
-          this.fallbackToMockTransactions();
-        }
+        this.processTransactionsAndRenderChart(txns);
       },
       error: () => {
-        this.fallbackToMockTransactions();
-      }
-    });
-  }
-
-  private fallbackToMockTransactions(): void {
-    this.inventoryService.getTransactions().subscribe({
-      next: (txns) => {
-        this.processTransactionsAndRenderChart(txns || []);
-      },
-      error: () => {
-        this.loadingChart = false;
+        this.processTransactionsAndRenderChart([]);
       }
     });
   }
