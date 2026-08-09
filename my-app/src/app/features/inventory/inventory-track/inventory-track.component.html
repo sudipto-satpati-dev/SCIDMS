@@ -165,22 +165,47 @@
   <!-- Bottom section: Trends chart + Capacity sidebar -->
   <div class="bottom-grid">
 
-    <!-- Inventory Trends -->
+    <!-- Inventory Transaction Activity Chart -->
     <div class="card trends-card">
       <div class="card-header">
-        <h3>Inventory Trends (30 Days)</h3>
-        <div class="legend">
-          <span class="legend-item"><span class="legend-dot blue"></span> Inbound</span>
-          <span class="legend-item"><span class="legend-dot light"></span> Outbound</span>
+        <div>
+          <h3>Stock Movement &amp; Transaction Activity</h3>
+          <p class="card-subtitle">Live summary from Inventory Transaction History API</p>
+        </div>
+        <div class="chart-controls">
+          <button type="button" class="toggle-btn" [class.active]="chartView === 'bar'" (click)="setChartView('bar')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Bar
+          </button>
+          <button type="button" class="toggle-btn" [class.active]="chartView === 'doughnut'" (click)="setChartView('doughnut')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            Doughnut
+          </button>
         </div>
       </div>
-      <div class="bar-chart">
-        <div class="bar-group" *ngFor="let b of trendBars">
-          <div class="bar-pair">
-            <div class="bar inbound"  [style.height.px]="b.inbound"></div>
-            <div class="bar outbound" [style.height.px]="b.outbound"></div>
-          </div>
+
+      <!-- Live Transaction Stats Pills -->
+      <div class="chart-stats-row">
+        <div class="stat-pill received">
+          <span class="stat-dot green"></span>
+          <span class="stat-name">Received:</span>
+          <strong class="stat-val">{{ totalReceivedQty | number }} units</strong>
         </div>
+        <div class="stat-pill dispatched">
+          <span class="stat-dot blue"></span>
+          <span class="stat-name">Dispatched:</span>
+          <strong class="stat-val">{{ totalDispatchedQty | number }} units</strong>
+        </div>
+        <div class="stat-pill transferred">
+          <span class="stat-dot amber"></span>
+          <span class="stat-name">Transferred:</span>
+          <strong class="stat-val">{{ totalTransferredQty | number }} units</strong>
+        </div>
+      </div>
+
+      <!-- Chart Canvas Wrapper -->
+      <div class="chart-canvas-wrapper">
+        <canvas id="inventoryTransactionChart"></canvas>
       </div>
     </div>
 

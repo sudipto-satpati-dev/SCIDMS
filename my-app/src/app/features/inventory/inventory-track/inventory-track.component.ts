@@ -2,10 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import Chart from 'chart.js/auto';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ApiInventoryItem, Warehouse, InventoryListParams } from '../../../core/models/index';
+import { ApiInventoryItem, Warehouse, InventoryListParams, ApiInventoryTransaction, InventoryTransaction } from '../../../core/models/index';
 
 @Component({
   selector: 'app-inventory-track',
@@ -29,6 +30,18 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   // Modal State
   showReceiveModal           = false;
+  showDispatchModal          = false;
+  showTransferModal          = false;
+
+  // Chart State
+  private chart: Chart | null = null;
+  public chartView: 'bar' | 'doughnut' = 'bar';
+  public rawTransactions: (ApiInventoryTransaction | InventoryTransaction)[] = [];
+  public totalReceivedQty    = 0;
+  public totalDispatchedQty  = 0;
+  public totalTransferredQty = 0;
+  public totalAllocatedQty   = 0;
+  public loadingChart        = false;
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -62,9 +75,11 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
         next: (list) => {
           this.warehouses = list || [];
           this.loadInventory();
+          this.loadTransactionChartData();
         },
         error: () => {
           this.loadInventory();
+          this.loadTransactionChartData();
         }
       });
     } else {
@@ -72,15 +87,21 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
         next: (res) => {
           this.warehouses = Array.isArray(res) ? res : res.warehouses || [];
           this.loadInventory();
+          this.loadTransactionChartData();
         },
         error: () => {
           this.loadInventory();
+          this.loadTransactionChartData();
         }
       });
     }
   }
 
   ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -115,9 +136,164 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadTransactionChartData(): void {
+    this.loadingChart = true;
+    let targetWarehouseId = this.filterWarehouseId ? String(this.filterWarehouseId) : undefined;
+    if (this.isWarehouseManager && !targetWarehouseId && this.warehouses.length > 0) {
+      targetWarehouseId = this.warehouses.map(w => w.id).join(',');
+    }
+
+    this.inventoryService.getTransactionHistory({ warehouseId: targetWarehouseId, size: 50 }).subscribe({
+      next: (res) => {
+        const txns = res.transactions || [];
+        if (txns.length > 0) {
+          this.processTransactionsAndRenderChart(txns);
+        } else {
+          this.fallbackToMockTransactions();
+        }
+      },
+      error: () => {
+        this.fallbackToMockTransactions();
+      }
+    });
+  }
+
+  private fallbackToMockTransactions(): void {
+    this.inventoryService.getTransactions().subscribe({
+      next: (txns) => {
+        this.processTransactionsAndRenderChart(txns || []);
+      },
+      error: () => {
+        this.loadingChart = false;
+      }
+    });
+  }
+
+  private processTransactionsAndRenderChart(txns: any[]): void {
+    this.rawTransactions = txns;
+
+    let received = 0;
+    let dispatched = 0;
+    let transferred = 0;
+    let allocated = 0;
+
+    txns.forEach(t => {
+      const type = (t.transactionType || t.type || '').toString().toUpperCase();
+      const qty = Number(t.quantity || 0);
+
+      if (type.includes('RECEIVE') || type.includes('INBOUND')) {
+        received += qty;
+      } else if (type.includes('DISPATCH') || type.includes('OUTBOUND')) {
+        dispatched += qty;
+      } else if (type.includes('TRANSFER')) {
+        transferred += qty;
+      } else if (type.includes('ALLOCAT')) {
+        allocated += qty;
+      } else {
+        received += qty;
+      }
+    });
+
+    this.totalReceivedQty = received;
+    this.totalDispatchedQty = dispatched;
+    this.totalTransferredQty = transferred;
+    this.totalAllocatedQty = allocated;
+    this.loadingChart = false;
+
+    setTimeout(() => {
+      this.renderChart();
+    }, 50);
+  }
+
+  setChartView(mode: 'bar' | 'doughnut'): void {
+    this.chartView = mode;
+    this.renderChart();
+  }
+
+  private renderChart(): void {
+    const canvas = document.getElementById('inventoryTransactionChart') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+
+    const labels = ['Received (Inbound)', 'Dispatched (Outbound)', 'Transferred', 'Allocated'];
+    const data = [
+      this.totalReceivedQty,
+      this.totalDispatchedQty,
+      this.totalTransferredQty,
+      this.totalAllocatedQty
+    ];
+
+    const backgroundColors = [
+      'rgba(16, 185, 129, 0.85)',
+      'rgba(37, 99, 235, 0.85)',
+      'rgba(245, 158, 11, 0.85)',
+      'rgba(139, 92, 246, 0.85)'
+    ];
+
+    const borderColors = [
+      '#10b981',
+      '#2563eb',
+      '#f59e0b',
+      '#8b5cf6'
+    ];
+
+    this.chart = new Chart(canvas, {
+      type: this.chartView,
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Stock Units',
+            data: data,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1.5,
+            borderRadius: this.chartView === 'bar' ? 6 : 0,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: this.chartView === 'doughnut',
+            position: 'bottom',
+            labels: {
+              font: { family: 'Inter', size: 12 },
+              padding: 14,
+              usePointStyle: true,
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => ` ${context.label}: ${context.formattedValue} units`
+            }
+          }
+        },
+        scales: this.chartView === 'bar' ? {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { family: 'Inter', size: 11 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11 } }
+          }
+        } : {}
+      }
+    });
+  }
+
   onFilterChange(): void {
     this.currentPage = 1;
     this.loadInventory();
+    this.loadTransactionChartData();
   }
 
   onSearchInput(term: string): void {
@@ -177,15 +353,6 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Trend chart data (mock visualization)
-  trendBars = [
-    { inbound: 40, outbound: 28 }, { inbound: 55, outbound: 35 }, { inbound: 30, outbound: 22 },
-    { inbound: 70, outbound: 50 }, { inbound: 45, outbound: 30 }, { inbound: 90, outbound: 65 },
-    { inbound: 60, outbound: 42 }, { inbound: 38, outbound: 25 }, { inbound: 75, outbound: 55 },
-    { inbound: 50, outbound: 38 }, { inbound: 85, outbound: 60 }, { inbound: 65, outbound: 45 },
-    { inbound: 42, outbound: 30 }, { inbound: 78, outbound: 58 }, { inbound: 55, outbound: 40 },
-  ];
-
   get capacityData(): { name: string; pct: number }[] {
     return this.warehouses.map(w => ({
       name: w.name,
@@ -193,12 +360,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
     }));
   }
 
-  // ── Stock Receive Modal Handlers ───────────────────────────
-  // Modal State
-  //showReceiveModal  = false;
-  showDispatchModal = false;
-  showTransferModal = false;
-
+  // ── Stock Modal Handlers ───────────────────────────
   openReceiveStockModal(): void {
     this.showReceiveModal = true;
   }
@@ -209,6 +371,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   onStockReceived(): void {
     this.loadInventory();
+    this.loadTransactionChartData();
   }
 
   openDispatchStockModal(): void {
@@ -221,6 +384,7 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   onStockDispatched(): void {
     this.loadInventory();
+    this.loadTransactionChartData();
   }
 
   openTransferStockModal(): void {
@@ -233,10 +397,10 @@ export class InventoryTrackComponent implements OnInit, OnDestroy {
 
   onStockTransferred(): void {
     this.loadInventory();
+    this.loadTransactionChartData();
   }
 
   goToHistory(): void {
     this.router.navigate(['/inventory/history']);
   }
 }
-

@@ -363,53 +363,85 @@
   h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
 }
 
-// Trend chart
-.legend {
-  display: flex;
-  gap: 16px;
+.card-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
 }
 
-.legend-item {
+.chart-controls {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
   color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #0f172a;
+  }
+
+  &.active {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  &.blue  { background: #2563eb; }
-  &.light { background: #bfdbfe; }
-}
-
-.bar-chart {
+.chart-stats-row {
   display: flex;
-  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
   gap: 6px;
-  height: 120px;
-  padding-bottom: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+
+  .stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    &.green { background: #10b981; }
+    &.blue  { background: #2563eb; }
+    &.amber { background: #f59e0b; }
+  }
+
+  .stat-name {
+    color: #64748b;
+  }
+
+  .stat-val {
+    color: #0f172a;
+  }
 }
 
-.bar-group { display: flex; align-items: flex-end; flex: 1; }
-
-.bar-pair {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
+.chart-canvas-wrapper {
+  position: relative;
+  height: 240px;
   width: 100%;
-}
-
-.bar {
-  flex: 1;
-  border-radius: 4px 4px 0 0;
-  min-height: 4px;
-  transition: height 0.3s ease;
-
-  &.inbound  { background: #2563eb; }
-  &.outbound { background: #bfdbfe; }
 }
 
 // Capacity list
