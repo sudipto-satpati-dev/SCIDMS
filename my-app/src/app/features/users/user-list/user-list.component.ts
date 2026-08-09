@@ -191,10 +191,17 @@ export class UserListComponent implements OnInit {
         }
         this.saving = false;
         this.showFormModal = false;
+        this.errorMsg = '';
       },
       error: (err) => {
-        this.errorMsg = err?.message || 'Could not save user.';
+        const msg = err?.message || err?.error?.message || 'Could not save user.';
+        this.errorMsg = msg;
         this.saving = false;
+        if (msg.toLowerCase().includes('email')) {
+          this.formErrors['email'] = msg;
+        } else if (msg.toLowerCase().includes('username')) {
+          this.formErrors['username'] = msg;
+        }
       },
     });
   }

@@ -197,6 +197,12 @@
     <!-- Body -->
     <div class="modal-body" *ngIf="selectedUser">
 
+      <!-- Server / Form Error Alert Banner -->
+      <div class="alert alert-error" *ngIf="errorMsg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ errorMsg }}</span>
+      </div>
+
       <!-- Username -->
       <div class="form-row">
         <div class="form-group" [class.has-error]="formErrors['username']">
@@ -299,10 +305,11 @@
 
     <!-- Footer -->
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="showFormModal = false">Cancel</button>
-      <button class="btn-primary" (click)="saveUser()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        {{ isEditMode ? 'Save Changes' : 'Save User' }}
+      <button class="btn-secondary" (click)="showFormModal = false" [disabled]="saving">Cancel</button>
+      <button class="btn-primary" (click)="saveUser()" [disabled]="saving">
+        <span class="spinner-sm" *ngIf="saving"></span>
+        <svg *ngIf="!saving" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ saving ? 'Saving User...' : (isEditMode ? 'Save Changes' : 'Save User') }}
       </button>
     </div>
 
