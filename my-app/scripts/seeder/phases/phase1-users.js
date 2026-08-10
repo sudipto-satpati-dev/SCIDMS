@@ -5,7 +5,7 @@
 const logger = require('../logger');
 const SEED_DATA = require('../seed-data');
 const SEED_STATE = require('../seed-state');
-const { httpRequest } = require('../http-client');
+const { httpRequest, logAudit } = require('../http-client');
 const { validatePreSend, assertPostResponse } = require('../validators');
 
 async function phase1_Users() {
@@ -26,7 +26,6 @@ async function phase1_Users() {
 
     const postAssert = assertPostResponse('USER', res, { checkId: true });
     if (!postAssert.valid) {
-      // Check if user already exists (409 Conflict or message contains 'exists')
       if (res.statusCode === 409 || (res.rawMessage && res.rawMessage.toLowerCase().includes('already exists'))) {
         SEED_STATE.stats.skipped++;
         const existingUser = { id: Date.now(), ...userSpec };
@@ -40,6 +39,9 @@ async function phase1_Users() {
       const createdUser = res.data || { id: Date.now(), ...userSpec };
       SEED_STATE.users.push(createdUser);
       logger.success(`User '${userSpec.username}' seeded (ID: ${createdUser.id || 'N/A'})`);
+
+      // Post Audit Log to Audit Table
+      await logAudit('USER_CREATED', 'USER_MANAGEMENT', 'USER', createdUser.id || 0, `Seeded user ${userSpec.username} (${userSpec.email}) as ${userSpec.role}`);
     }
   }
 }

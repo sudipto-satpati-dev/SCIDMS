@@ -9,17 +9,12 @@ import {
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
-import { AuditService } from './audit.service';
-
 @Injectable({ providedIn: 'root' })
 export class ShipmentService {
   private readonly shipmentsUrl = `${environment.apiBaseUrl}/api/shipments`;
   private readonly createShipmentUrl = `${environment.apiBaseUrl}/api/shipment`;
 
-  constructor(
-    private http: HttpClient,
-    private auditService: AuditService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   /**
    * GET /api/shipments
@@ -68,18 +63,14 @@ export class ShipmentService {
           if (!res.success) {
             throw { message: res.message || 'Failed to create shipment.' };
           }
-          const s = res.data;
-          this._recordShipmentAudit('SHIPMENT_CREATED', s, `Created shipment '${s.shipmentNumber || s.id}' via ${s.carrierName} (Tracking: ${s.trackingNumber})`);
-          return s;
+          return res.data;
         }),
         catchError((err) => {
           // Fallback to /api/shipments if /api/shipment returns 404
           return this.http.post<SingleShipmentApiResponse>(this.shipmentsUrl, req).pipe(
             map(res => {
               if (!res.success) throw { message: res.message || 'Failed to create shipment.' };
-              const s = res.data;
-              this._recordShipmentAudit('SHIPMENT_CREATED', s, `Created shipment '${s.shipmentNumber || s.id}' via ${s.carrierName} (Tracking: ${s.trackingNumber})`);
-              return s;
+              return res.data;
             }),
             catchError(this._handleError)
           );
@@ -121,9 +112,7 @@ export class ShipmentService {
           if (!res.success) {
             throw { message: res.message || `Failed to update shipment status to ${status}.` };
           }
-          const s = res.data;
-          this._recordShipmentAudit('SHIPMENT_STATUS_CHANGED', s, `Updated status for shipment '${s.shipmentNumber || s.id}' to '${status}'${remark ? ` (${remark})` : ''}`);
-          return s;
+          return res.data;
         }),
         catchError(this._handleError)
       );
@@ -141,26 +130,10 @@ export class ShipmentService {
           if (!res.success) {
             throw { message: res.message || 'Invalid OTP code.' };
           }
-          const s = res.data;
-          this._recordShipmentAudit('SHIPMENT_STATUS_CHANGED', s, `Verified delivery OTP code for shipment '${s.shipmentNumber || s.id}'`);
-          return s;
+          return res.data;
         }),
         catchError(this._handleError)
       );
-  }
-
-  private _recordShipmentAudit(action: string, s: Shipment, description: string) {
-    const shipmentIdNum = typeof s.id === 'number' ? s.id : Number(s.id) || 0;
-    this.auditService.createAuditLog({
-      action,
-      module: 'SHIPMENT_MANAGEMENT',
-      entityType: 'SHIPMENT',
-      entityId: shipmentIdNum,
-      description
-    }).subscribe({
-      next: () => {},
-      error: (e) => console.warn('Audit log trigger failed for shipment operation:', e)
-    });
   }
 
   /**

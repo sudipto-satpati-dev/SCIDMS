@@ -102,8 +102,20 @@ async function httpRequest(method, path, body = null) {
   });
 }
 
+async function logAudit(action, moduleName, entityType, entityId, description) {
+  const payload = {
+    action,
+    module: moduleName,
+    entityType,
+    entityId: typeof entityId === 'number' ? entityId : Number(entityId) || 0,
+    description
+  };
+  return httpRequest('POST', '/api/audit/log', payload);
+}
+
 module.exports = {
   httpRequest,
+  logAudit,
   setAuthToken,
   getAuthToken
 };

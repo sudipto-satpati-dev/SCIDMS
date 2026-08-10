@@ -5,7 +5,7 @@
 const logger = require('../logger');
 const SEED_DATA = require('../seed-data');
 const SEED_STATE = require('../seed-state');
-const { httpRequest } = require('../http-client');
+const { httpRequest, logAudit } = require('../http-client');
 const { validatePreSend, assertPostResponse } = require('../validators');
 
 async function phase3_Products() {
@@ -42,6 +42,9 @@ async function phase3_Products() {
       const product = { id: productId, sku: `SKU-IND-${1000 + i}`, ...payload, ...(res.data || {}) };
       SEED_STATE.products.push(product);
       logger.success(`Product '${product.name}' seeded (ID: ${product.id}, SKU: ${product.sku})`);
+
+      // Post Audit Log to Audit Table
+      await logAudit('PRODUCT_CREATED', 'PRODUCT_MANAGEMENT', 'PRODUCT', product.id, `Seeded product '${product.name}' (SKU: ${product.sku}, Price: $${product.unitPrice})`);
     }
   }
 }

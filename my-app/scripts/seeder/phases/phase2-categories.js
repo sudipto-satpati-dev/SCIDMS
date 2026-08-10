@@ -5,7 +5,7 @@
 const logger = require('../logger');
 const SEED_DATA = require('../seed-data');
 const SEED_STATE = require('../seed-state');
-const { httpRequest } = require('../http-client');
+const { httpRequest, logAudit } = require('../http-client');
 const { validatePreSend, assertPostResponse } = require('../validators');
 
 async function phase2_Categories() {
@@ -34,6 +34,9 @@ async function phase2_Categories() {
       const category = { id: categoryId, ...catSpec, ...(res.data || {}) };
       SEED_STATE.categories.push(category);
       logger.success(`Category '${catSpec.name}' seeded (ID: ${category.id})`);
+
+      // Post Audit Log to Audit Table
+      await logAudit('CATEGORY_CREATED', 'PRODUCT_MANAGEMENT', 'CATEGORY', category.id, `Seeded product category '${catSpec.name}'`);
     }
   }
 }

@@ -5,7 +5,7 @@
 const logger = require('../logger');
 const SEED_DATA = require('../seed-data');
 const SEED_STATE = require('../seed-state');
-const { httpRequest } = require('../http-client');
+const { httpRequest, logAudit } = require('../http-client');
 const { validatePreSend, assertPostResponse } = require('../validators');
 
 async function phase4_Warehouses() {
@@ -41,6 +41,9 @@ async function phase4_Warehouses() {
       const warehouse = { id: warehouseId, ...payload, ...(res.data || {}) };
       SEED_STATE.warehouses.push(warehouse);
       logger.success(`Warehouse '${warehouse.name}' seeded (ID: ${warehouse.id})`);
+
+      // Post Audit Log to Audit Table
+      await logAudit('WAREHOUSE_STATUS_CHANGED', 'WAREHOUSE_MANAGEMENT', 'WAREHOUSE', warehouse.id, `Seeded warehouse '${warehouse.name}' in ${warehouse.location} (Capacity: ${warehouse.totalCapacity})`);
     }
   }
 }
