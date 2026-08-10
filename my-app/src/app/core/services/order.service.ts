@@ -9,11 +9,16 @@ import {
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
+import { AuditService } from './audit.service';
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly ordersUrl = `${environment.apiBaseUrl}/api/orders`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auditService: AuditService
+  ) {}
 
   /**
    * GET /api/orders
@@ -71,7 +76,22 @@ export class OrderService {
           if (!res.success) {
             throw { message: res.message || 'Failed to create order.' };
           }
-          return res.data;
+          const o = res.data;
+
+          // Record Audit Log for Order Creation
+          const orderIdNum = typeof o.id === 'number' ? o.id : Number(o.id) || 0;
+          this.auditService.createAuditLog({
+            action: 'ORDER_CREATED',
+            module: 'ORDER_MANAGEMENT',
+            entityType: 'ORDER',
+            entityId: orderIdNum,
+            description: `Created customer order '${o.orderNumber || o.id}' for ${o.customerName} (${o.customerEmail})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for order creation:', e)
+          });
+
+          return o;
         }),
         catchError(this._handleError)
       );
@@ -122,7 +142,22 @@ export class OrderService {
           if (!res.success) {
             throw { message: res.message || 'Failed to approve order.' };
           }
-          return res.data;
+          const o = res.data;
+
+          // Record Audit Log for Order Approval
+          const orderIdNum = typeof o.id === 'number' ? o.id : Number(o.id) || 0;
+          this.auditService.createAuditLog({
+            action: 'ORDER_APPROVED',
+            module: 'ORDER_MANAGEMENT',
+            entityType: 'ORDER',
+            entityId: orderIdNum,
+            description: `Approved order '${o.orderNumber || o.id}'`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for order approval:', e)
+          });
+
+          return o;
         }),
         catchError(this._handleError)
       );
@@ -141,7 +176,22 @@ export class OrderService {
           if (!res.success) {
             throw { message: res.message || `Failed to update order status to ${status}.` };
           }
-          return res.data;
+          const o = res.data;
+
+          // Record Audit Log for Order Status Update
+          const orderIdNum = typeof o.id === 'number' ? o.id : Number(o.id) || 0;
+          this.auditService.createAuditLog({
+            action: 'ORDER_STATUS_CHANGED',
+            module: 'ORDER_MANAGEMENT',
+            entityType: 'ORDER',
+            entityId: orderIdNum,
+            description: `Updated status for order '${o.orderNumber || o.id}' to '${status}'${remarks ? ` (${remarks})` : ''}`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for order status change:', e)
+          });
+
+          return o;
         }),
         catchError(this._handleError)
       );

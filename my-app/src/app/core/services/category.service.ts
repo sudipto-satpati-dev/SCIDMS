@@ -5,11 +5,16 @@ import { map, catchError } from 'rxjs/operators';
 import { Category, CreateCategoryRequest, CategoryApiResponse } from '../models/index';
 import { environment } from '../../../environments/environment';
 
+import { AuditService } from './audit.service';
+
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private readonly categoriesUrl = `${environment.apiBaseUrl}/api/categories`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auditService: AuditService
+  ) {}
 
   /**
    * GET /api/categories
@@ -47,6 +52,19 @@ export class CategoryService {
           if (!res.success) {
             throw { message: res.message || 'Failed to create category.' };
           }
+
+          // Record Audit Log for Category Creation
+          this.auditService.createAuditLog({
+            action: 'CATEGORY_CREATED',
+            module: 'PRODUCT_MANAGEMENT',
+            entityType: 'CATEGORY',
+            entityId: res.data.id,
+            description: `Created product category '${res.data.name}' (ID #${res.data.id})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for category creation:', e)
+          });
+
           return res.data;
         }),
         catchError(this._handleError)

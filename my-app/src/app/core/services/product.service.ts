@@ -15,11 +15,16 @@ import {
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
+import { AuditService } from './audit.service';
+
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly productsUrl = `${environment.apiBaseUrl}/api/products`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auditService: AuditService
+  ) {}
 
   /**
    * GET /api/products
@@ -67,7 +72,21 @@ export class ProductService {
           if (!res.success) {
             throw { message: res.message || 'Failed to create product.' };
           }
-          return res.data;
+          const p = res.data;
+
+          // Record Audit Log for Product Creation
+          this.auditService.createAuditLog({
+            action: 'PRODUCT_CREATED',
+            module: 'PRODUCT_MANAGEMENT',
+            entityType: 'PRODUCT',
+            entityId: p.id,
+            description: `Created product '${p.name}' (SKU: ${p.sku || 'N/A'}, Price: $${p.unitPrice})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for product creation:', e)
+          });
+
+          return p;
         }),
         catchError(this._handleError)
       );
@@ -86,7 +105,21 @@ export class ProductService {
           if (!res.success) {
             throw { message: res.message || 'Failed to update product.' };
           }
-          return res.data;
+          const p = res.data;
+
+          // Record Audit Log for Product Update
+          this.auditService.createAuditLog({
+            action: 'PRODUCT_UPDATED',
+            module: 'PRODUCT_MANAGEMENT',
+            entityType: 'PRODUCT',
+            entityId: p.id,
+            description: `Updated product '${p.name}' (ID #${p.id})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for product update:', e)
+          });
+
+          return p;
         }),
         catchError(this._handleError)
       );
@@ -108,7 +141,21 @@ export class ProductService {
           if (!res.success) {
             throw { message: res.message || 'Failed to update product status.' };
           }
-          return res.data;
+          const p = res.data;
+
+          // Record Audit Log for Product Status Toggle
+          this.auditService.createAuditLog({
+            action: 'PRODUCT_STATUS_CHANGED',
+            module: 'PRODUCT_MANAGEMENT',
+            entityType: 'PRODUCT',
+            entityId: p.id,
+            description: `Toggled product status for '${p.name}' to ${p.status}`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for product status toggle:', e)
+          });
+
+          return p;
         }),
         catchError(this._handleError)
       );

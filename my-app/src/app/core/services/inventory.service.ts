@@ -16,6 +16,8 @@ import {
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
+import { AuditService } from './audit.service';
+
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   private readonly inventoryUrl = `${environment.apiBaseUrl}/api/inventory`;
@@ -26,7 +28,8 @@ export class InventoryService {
 
   constructor(
     private http: HttpClient,
-    private api: MockApiService
+    private api: MockApiService,
+    private auditService: AuditService
   ) {}
 
   /**
@@ -41,7 +44,22 @@ export class InventoryService {
           if (!res.success) {
             throw { message: res.message || 'Failed to receive stock.' };
           }
-          return res.data;
+          const d = res.data;
+
+          // Record Audit Log for Stock Receive
+          const prodIdNum = typeof d.productId === 'number' ? d.productId : Number(d.productId) || 0;
+          this.auditService.createAuditLog({
+            action: 'STOCK_RECEIVED',
+            module: 'INVENTORY_MANAGEMENT',
+            entityType: 'INVENTORY',
+            entityId: prodIdNum,
+            description: `Received ${req.quantity} units of Product #${req.productId} into Warehouse #${req.warehouseId} (Ref: ${req.referenceNumber})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for stock receive:', e)
+          });
+
+          return d;
         }),
         catchError(this._handleError)
       );
@@ -59,7 +77,22 @@ export class InventoryService {
           if (!res.success) {
             throw { message: res.message || 'Failed to dispatch stock.' };
           }
-          return res.data;
+          const d = res.data;
+
+          // Record Audit Log for Stock Dispatch
+          const prodIdNum = typeof d.productId === 'number' ? d.productId : Number(d.productId) || 0;
+          this.auditService.createAuditLog({
+            action: 'STOCK_DISPATCHED',
+            module: 'INVENTORY_MANAGEMENT',
+            entityType: 'INVENTORY',
+            entityId: prodIdNum,
+            description: `Dispatched ${req.quantity} units of Product #${req.productId} from Warehouse #${req.warehouseId} (Ref: ${req.referenceNumber})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for stock dispatch:', e)
+          });
+
+          return d;
         }),
         catchError(this._handleError)
       );
@@ -77,7 +110,22 @@ export class InventoryService {
           if (!res.success) {
             throw { message: res.message || 'Failed to transfer stock.' };
           }
-          return res.data;
+          const d = res.data;
+
+          // Record Audit Log for Stock Transfer
+          const prodIdNum = typeof d.productId === 'number' ? d.productId : Number(d.productId) || 0;
+          this.auditService.createAuditLog({
+            action: 'STOCK_TRANSFERRED',
+            module: 'INVENTORY_MANAGEMENT',
+            entityType: 'INVENTORY',
+            entityId: prodIdNum,
+            description: `Transferred ${req.quantity} units of Product #${req.productId} from Warehouse #${req.sourceWarehouseId} to Warehouse #${req.destinationWarehouseId} (Ref: ${req.referenceNumber})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for stock transfer:', e)
+          });
+
+          return d;
         }),
         catchError(this._handleError)
       );

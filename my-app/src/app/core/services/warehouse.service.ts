@@ -17,13 +17,18 @@ import {
 } from '../models/index';
 import { environment } from '../../../environments/environment';
 
+import { AuditService } from './audit.service';
+
 @Injectable({ providedIn: 'root' })
 export class WarehouseService {
   private readonly warehousesUrl = `${environment.apiBaseUrl}/api/warehouses`;
   private readonly warehouseCreateUrl = `${environment.apiBaseUrl}/api/warehouse`;
   private readonly myWarehousesUrl = `${environment.apiBaseUrl}/api/warehouses/my-warehouses`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auditService: AuditService
+  ) {}
 
   /**
    * GET /api/warehouses/my-warehouses
@@ -93,7 +98,21 @@ export class WarehouseService {
           if (!res.success) {
             throw { message: res.message || 'Failed to create warehouse.' };
           }
-          return res.data;
+          const w = res.data;
+
+          // Record Audit Log for Warehouse Creation
+          this.auditService.createAuditLog({
+            action: 'WAREHOUSE_STATUS_CHANGED',
+            module: 'WAREHOUSE_MANAGEMENT',
+            entityType: 'WAREHOUSE',
+            entityId: w.id,
+            description: `Created warehouse '${w.name}' in ${w.location} (Capacity: ${w.totalCapacity} units)`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for warehouse creation:', e)
+          });
+
+          return w;
         }),
         catchError(this._handleError)
       );
@@ -112,7 +131,21 @@ export class WarehouseService {
           if (!res.success) {
             throw { message: res.message || 'Failed to update warehouse.' };
           }
-          return res.data;
+          const w = res.data;
+
+          // Record Audit Log for Warehouse Update
+          this.auditService.createAuditLog({
+            action: 'WAREHOUSE_STATUS_CHANGED',
+            module: 'WAREHOUSE_MANAGEMENT',
+            entityType: 'WAREHOUSE',
+            entityId: w.id,
+            description: `Updated warehouse details for '${w.name}' (ID #${w.id})`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for warehouse update:', e)
+          });
+
+          return w;
         }),
         catchError(this._handleError)
       );
@@ -134,7 +167,21 @@ export class WarehouseService {
           if (!res.success) {
             throw { message: res.message || 'Failed to update warehouse status.' };
           }
-          return res.data;
+          const w = res.data;
+
+          // Record Audit Log for Warehouse Status Toggle
+          this.auditService.createAuditLog({
+            action: 'WAREHOUSE_STATUS_CHANGED',
+            module: 'WAREHOUSE_MANAGEMENT',
+            entityType: 'WAREHOUSE',
+            entityId: w.id,
+            description: `Toggled status for warehouse '${w.name}' to ${w.status}`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for warehouse status toggle:', e)
+          });
+
+          return w;
         }),
         catchError(this._handleError)
       );
@@ -154,7 +201,21 @@ export class WarehouseService {
           if (!res.success) {
             throw { message: res.message || 'Failed to assign warehouse manager.' };
           }
-          return res.data;
+          const w = res.data;
+
+          // Record Audit Log for Warehouse Manager Assignment
+          this.auditService.createAuditLog({
+            action: 'WAREHOUSE_STATUS_CHANGED',
+            module: 'WAREHOUSE_MANAGEMENT',
+            entityType: 'WAREHOUSE',
+            entityId: w.id,
+            description: `Assigned manager (User ID #${managerId}) to warehouse '${w.name}'`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for warehouse manager assignment:', e)
+          });
+
+          return w;
         }),
         catchError(this._handleError)
       );
@@ -172,7 +233,21 @@ export class WarehouseService {
           if (!res.success) {
             throw { message: res.message || 'Failed to remove warehouse manager.' };
           }
-          return res.data;
+          const w = res.data;
+
+          // Record Audit Log for Warehouse Manager Removal
+          this.auditService.createAuditLog({
+            action: 'WAREHOUSE_STATUS_CHANGED',
+            module: 'WAREHOUSE_MANAGEMENT',
+            entityType: 'WAREHOUSE',
+            entityId: w.id,
+            description: `Removed manager assignment from warehouse '${w.name}'`
+          }).subscribe({
+            next: () => {},
+            error: (e) => console.warn('Audit log trigger failed for warehouse manager removal:', e)
+          });
+
+          return w;
         }),
         catchError(this._handleError)
       );
