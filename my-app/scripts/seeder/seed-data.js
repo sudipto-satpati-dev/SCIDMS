@@ -4,6 +4,7 @@
 
 const SEED_DATA = {
   users: [
+    { username: 'admin', email: 'admin@scidms.io', password: 'admin123', role: 'ADMIN' },
     { username: 'wh_manager_1', email: 'wh.manager1@scidms.io', password: 'Password123!', role: 'WAREHOUSE MANAGER' },
     { username: 'sales_exec_1', email: 'sales.exec1@scidms.io', password: 'Password123!', role: 'SALES EXECUTIVE' },
     { username: 'dist_manager_1', email: 'dist.manager1@scidms.io', password: 'Password123!', role: 'DISTRIBUTION MANAGER' },

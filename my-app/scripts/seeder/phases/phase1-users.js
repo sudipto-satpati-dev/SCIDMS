@@ -26,7 +26,15 @@ async function phase1_Users() {
 
     const postAssert = assertPostResponse('USER', res, { checkId: true });
     if (!postAssert.valid) {
-      SEED_STATE.stats.postAssertFails++;
+      // Check if user already exists (409 Conflict or message contains 'exists')
+      if (res.statusCode === 409 || (res.rawMessage && res.rawMessage.toLowerCase().includes('already exists'))) {
+        SEED_STATE.stats.skipped++;
+        const existingUser = { id: Date.now(), ...userSpec };
+        SEED_STATE.users.push(existingUser);
+        logger.warn(`User '${userSpec.username}' already exists in database (Skipped duplicate creation)`);
+      } else {
+        SEED_STATE.stats.postAssertFails++;
+      }
     } else {
       SEED_STATE.stats.postAssertPasses++;
       const createdUser = res.data || { id: Date.now(), ...userSpec };
